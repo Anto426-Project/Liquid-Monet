@@ -1,21 +1,19 @@
 package com.anto426.liquidmonet.motion
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.MutatorMutex
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.unit.IntSize
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
 import kotlin.math.abs
-import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 internal class DampedDragAnimation(
@@ -58,62 +56,138 @@ internal class DampedDragAnimation(
         onDrag = onDrag,
     )
 
-    private val valueAnimationSpec
-        get() = LiquidDragMotion.tracking(performance(), visibilityThreshold)
+    private val springs = LiquidSpringBatch(5)
+    private var configuredPerformance: LiquidGlassPerformanceState? = null
+    private var frameJob: Job? = null
+    private var velocityTracking = false
+    private var pendingRelease = false
+    private var releaseRequestedFrame = -1L
+    private var frameIndex = 0L
 
-    private val velocityAnimationSpec
-        get() = LiquidDragMotion.velocity(performance(), visibilityThreshold * 10f)
+    internal var frameJobStarts = 0
+        private set
 
-    private val pressProgressAnimationSpec
-        get() = LiquidDragMotion.tracking(performance(), 0.001f)
+    var value by mutableFloatStateOf(initialValue)
+        private set
 
-    private val scaleXAnimationSpec
-        get() = LiquidDragMotion.scaleX(performance())
+    var pressProgress by mutableFloatStateOf(0f)
+        private set
 
-    private val scaleYAnimationSpec
-        get() = LiquidDragMotion.scaleY(performance())
+    var scaleX by mutableFloatStateOf(initialScale)
+        private set
+
+    var scaleY by mutableFloatStateOf(initialScale)
+        private set
+
+    var velocity by mutableFloatStateOf(0f)
+        private set
+
+    init {
+        springs.initialize(Value, initialValue)
+        springs.initialize(Velocity, 0f)
+        springs.initialize(Press, 0f)
+        springs.initialize(ScaleX, initialScale)
+        springs.initialize(ScaleY, initialScale)
+        configureSprings()
+    }
 
     val motionEnabled
         get() = performance().motionScale > 0f
 
-    private val valueAnimation = Animatable(initialValue, visibilityThreshold)
-    private val velocityAnimation = Animatable(0f, 5f)
-    private val pressProgressAnimation = Animatable(0f, 0.001f)
-    private val scaleXAnimation = Animatable(initialScale, 0.001f)
-    private val scaleYAnimation = Animatable(initialScale, 0.001f)
-
-    private val mutatorMutex = MutatorMutex()
-    private val velocityTracker = VelocityTracker()
-    private var pressJob: Job? = null
-    private var releaseJob: Job? = null
-
-    val value: Float
-        get() = valueAnimation.value
+    val targetValue
+        get() = springs.target(Value)
 
     val progress: Float
         get() {
             val span = valueRange.endInclusive - valueRange.start
             return if (span.isFinite() && span > 0f) {
                 ((value - valueRange.start) / span).coerceIn(0f, 1f)
-            } else {
-                0f
-            }
+            } else 0f
         }
 
-    val targetValue: Float
-        get() = valueAnimation.targetValue
+    private fun configureSprings() {
+        val state = performance()
+        if (configuredPerformance == state) return
+        configuredPerformance = state
+        springs.configure(
+            Value,
+            LiquidDragMotion.tracking(state, visibilityThreshold),
+            visibilityThreshold,
+        )
+        springs.configure(
+            Velocity,
+            LiquidDragMotion.velocity(state, visibilityThreshold * 10f),
+            visibilityThreshold * 10f,
+        )
+        springs.configure(Press, LiquidDragMotion.tracking(state, 0.001f), 0.001f)
+        springs.configure(ScaleX, LiquidDragMotion.scaleX(state), 0.001f)
+        springs.configure(ScaleY, LiquidDragMotion.scaleY(state), 0.001f)
+    }
 
-    val pressProgress: Float
-        get() = pressProgressAnimation.value
+    private fun publish() {
+        value = springs.value(Value)
+        velocity = springs.value(Velocity)
+        pressProgress = springs.value(Press)
+        scaleX = springs.value(ScaleX)
+        scaleY = springs.value(ScaleY)
+    }
 
-    val scaleX: Float
-        get() = scaleXAnimation.value
-
-    val scaleY: Float
-        get() = scaleYAnimation.value
-
-    val velocity: Float
-        get() = velocityAnimation.value
+    /** All pointer updates change targets synchronously; one frame loop owns the five springs. */
+    private fun ensureFrames() {
+        if (frameJob?.isActive == true) return
+        frameJobStarts++
+        frameJob =
+            animationScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                try {
+                    var previousFrame = withFrameNanos { it }
+                    while (isActive) {
+                        val frame = withFrameNanos { it }
+                        frameIndex++
+                        configureSprings()
+                        if (velocityTracking) {
+                            val span = valueRange.endInclusive - valueRange.start
+                            springs.setTarget(
+                                Velocity,
+                                if (motionEnabled && span.isFinite() && span > 0f)
+                                    springs.velocity(Value) / span
+                                else 0f,
+                            )
+                        }
+                        val moving =
+                            springs.step(
+                                ((frame - previousFrame).coerceAtLeast(0L) / 1_000_000_000.0)
+                                    .toFloat()
+                            )
+                        previousFrame = frame
+                        if (pendingRelease && frameIndex > releaseRequestedFrame) {
+                            val threshold =
+                                maxOf(
+                                    visibilityThreshold,
+                                    (valueRange.endInclusive - valueRange.start) * 0.025f,
+                                )
+                            if (abs(springs.value(Value) - targetValue) <= threshold) {
+                                pendingRelease = false
+                                springs.setTarget(Press, 0f)
+                                springs.setTarget(ScaleX, initialScale)
+                                springs.setTarget(ScaleY, initialScale)
+                            }
+                        }
+                        publish()
+                        // A release may have created new targets after this frame's integration.
+                        if (
+                            !moving &&
+                                !pendingRelease &&
+                                springs.value(Press) == springs.target(Press) &&
+                                springs.value(ScaleX) == springs.target(ScaleX) &&
+                                springs.value(ScaleY) == springs.target(ScaleY)
+                        )
+                            break
+                    }
+                } finally {
+                    frameJob = null
+                }
+            }
+    }
 
     val modifier: Modifier =
         Modifier.pointerInput(Unit) {
@@ -145,64 +219,46 @@ internal class DampedDragAnimation(
     }
 
     fun press() {
-        releaseJob?.cancel()
-        pressJob?.cancel()
-        velocityTracker.resetTracking()
-        pressJob = animationScope.launch {
-            launch { pressProgressAnimation.animateTo(1f, pressProgressAnimationSpec) }
-            val scale = if (motionEnabled) pressedScale else initialScale
-            launch { scaleXAnimation.animateTo(scale, scaleXAnimationSpec) }
-            launch { scaleYAnimation.animateTo(scale, scaleYAnimationSpec) }
-        }
+        configureSprings()
+        pendingRelease = false
+        springs.setTarget(Press, 1f)
+        val scale = if (motionEnabled) pressedScale else initialScale
+        springs.setTarget(ScaleX, scale)
+        springs.setTarget(ScaleY, scale)
+        publish()
+        ensureFrames()
     }
 
     fun release() {
-        releaseJob?.cancel()
-        releaseJob = animationScope.launch {
-            withFrameNanos {}
-            if (value != targetValue) {
-                val threshold = (valueRange.endInclusive - valueRange.start) * 0.025f
-                snapshotFlow { valueAnimation.value }
-                    .filter { abs(it - valueAnimation.targetValue) < threshold }
-                    .first()
-            }
-            launch { pressProgressAnimation.animateTo(0f, pressProgressAnimationSpec) }
-            launch { scaleXAnimation.animateTo(initialScale, scaleXAnimationSpec) }
-            launch { scaleYAnimation.animateTo(initialScale, scaleYAnimationSpec) }
-        }
+        pendingRelease = true
+        releaseRequestedFrame = frameIndex
+        ensureFrames()
     }
 
     fun updateValue(value: Float) {
-        val targetValue = value.coerceIn(valueRange)
-        animationScope.launch {
-            launch {
-                valueAnimation.animateTo(targetValue, valueAnimationSpec) { updateVelocity() }
-            }
-        }
+        if (!value.isFinite()) return
+        configureSprings()
+        velocityTracking = true
+        springs.setTarget(Value, value.coerceIn(valueRange))
+        publish()
+        ensureFrames()
     }
 
     fun animateToValue(value: Float) {
-        animationScope.launch {
-            mutatorMutex.mutate {
-                press()
-                val targetValue = value.coerceIn(valueRange)
-                launch { valueAnimation.animateTo(targetValue, valueAnimationSpec) }
-                if (velocity != 0f) {
-                    launch { velocityAnimation.animateTo(0f, velocityAnimationSpec) }
-                }
-                release()
-            }
-        }
+        if (!value.isFinite()) return
+        press()
+        velocityTracking = false
+        springs.setTarget(Value, value.coerceIn(valueRange))
+        springs.setTarget(Velocity, 0f)
+        release()
+        publish()
     }
 
-    private fun updateVelocity() {
-        velocityTracker.addPosition(
-            Clock.System.now().toEpochMilliseconds(),
-            Offset(value, 0f),
-        )
-        val span = valueRange.endInclusive - valueRange.start
-        if (!span.isFinite() || span <= 0f) return
-        val targetVelocity = if (motionEnabled) velocityTracker.calculateVelocity().x / span else 0f
-        animationScope.launch { velocityAnimation.animateTo(targetVelocity, velocityAnimationSpec) }
+    private companion object {
+        const val Value = 0
+        const val Velocity = 1
+        const val Press = 2
+        const val ScaleX = 3
+        const val ScaleY = 4
     }
 }

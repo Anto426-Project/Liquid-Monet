@@ -1,3 +1,3 @@
-headers = liquid_wave.h
+headers = liquid_wave.h liquid_spring.h
 package = com.anto426.liquidmonet.nativewave
 staticLibraries = libliquidwave.a

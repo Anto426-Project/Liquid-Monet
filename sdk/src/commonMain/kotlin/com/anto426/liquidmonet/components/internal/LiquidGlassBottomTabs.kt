@@ -46,7 +46,7 @@ import com.anto426.liquidmonet.glass.runtime.LiquidGlassDynamicPresets
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPresets
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.motion.LiquidDragMotion
-import com.anto426.liquidmonet.motion.LiquidFloatMotion
+import com.anto426.liquidmonet.motion.LiquidElasticDrag
 import com.anto426.liquidmonet.motion.createLiquidNavigationSelectionMotion
 import com.anto426.liquidmonet.motion.liquidNavigationSelectionLayer
 import com.kyant.backdrop.Backdrop
@@ -58,7 +58,6 @@ import kotlin.math.abs
 import kotlin.math.sign
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.launch
 
 /** Shared segmented-control renderer used by navigation and category tabs. */
 @Composable
@@ -99,14 +98,17 @@ internal fun LiquidGlassBottomTabs(
             }
 
         val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
-        val offsetAnimation = remember { LiquidFloatMotion(0f) }
+        val animationScope = rememberCoroutineScope()
+        val panelDrag = remember(animationScope) { LiquidElasticDrag(animationScope, 1_000_000f) }
+        val currentTabWidth by rememberUpdatedState(tabWidth)
+        val currentIsLtr by rememberUpdatedState(isLtr)
         val panelOffset by
-            remember(density, constraints.maxWidth, motionEnabled) {
+            remember(panelDrag, density, constraints.maxWidth, motionEnabled) {
                 derivedStateOf {
                     if (!motionEnabled) 0f
                     else {
                         val fraction =
-                            (offsetAnimation.value / constraints.maxWidth.coerceAtLeast(1))
+                            (panelDrag.rawOffset / constraints.maxWidth.coerceAtLeast(1))
                                 .fastCoerceIn(-1f, 1f)
                         with(density) {
                             4.dp.toPx() * fraction.sign * EaseOut.transform(abs(fraction))
@@ -115,7 +117,6 @@ internal fun LiquidGlassBottomTabs(
                 }
             }
 
-        val animationScope = rememberCoroutineScope()
         val currentPerformance by rememberUpdatedState(performance)
         var currentIndex by remember {
             mutableIntStateOf(selectedTabIndex().coerceIn(0, maxIndex))
@@ -135,37 +136,20 @@ internal fun LiquidGlassBottomTabs(
                         } else {
                             currentIndex = targetIndex
                         }
-                        if (motionEnabled) {
-                            animationScope.launch {
-                                offsetAnimation.animateTo(
-                                    0f,
-                                    LiquidDragMotion.panelReturn(currentPerformance),
-                                )
-                            }
-                        }
+                        panelDrag.release(LiquidDragMotion.panelReturn(currentPerformance))
                     },
                     onDragCancelled = {
                         val targetIndex = currentIndex.coerceIn(0, maxIndex)
                         animateToValue(targetIndex.toFloat())
-                        if (motionEnabled) {
-                            animationScope.launch {
-                                offsetAnimation.animateTo(
-                                    0f,
-                                    LiquidDragMotion.panelReturn(currentPerformance),
-                                )
-                            }
-                        }
+                        panelDrag.release(LiquidDragMotion.panelReturn(currentPerformance))
                     },
                     onDrag = { _, dragAmount ->
                         updateValue(
-                            (targetValue + dragAmount.x / tabWidth * if (isLtr) 1f else -1f)
+                            (targetValue +
+                                    dragAmount.x / currentTabWidth * if (currentIsLtr) 1f else -1f)
                                 .fastCoerceIn(0f, maxIndex.toFloat())
                         )
-                        if (motionEnabled) {
-                            animationScope.launch {
-                                offsetAnimation.snapTo(offsetAnimation.value + dragAmount.x)
-                            }
-                        }
+                        if (currentPerformance.motionScale > 0f) panelDrag.dragBy(dragAmount.x)
                     },
                 )
             }
