@@ -1,5 +1,6 @@
 package com.anto426.liquidmonet.components.charts
 
+import com.anto426.liquidmonet.components.charts.model.formatLiquidChartValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

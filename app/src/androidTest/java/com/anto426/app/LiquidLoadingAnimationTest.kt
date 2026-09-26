@@ -15,8 +15,8 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.feedback.LiquidLoading
-import com.anto426.liquidmonet.components.feedback.LiquidLoadingStyle
+import com.anto426.liquidmonet.components.feedback.loading.LiquidLoading
+import com.anto426.liquidmonet.components.feedback.loading.LiquidLoadingStyle
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance

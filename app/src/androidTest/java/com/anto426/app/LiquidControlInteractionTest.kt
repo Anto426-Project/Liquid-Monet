@@ -15,10 +15,10 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
-import com.anto426.liquidmonet.components.buttons.LiquidIconButton
-import com.anto426.liquidmonet.components.buttons.LiquidIconButtonVariant
-import com.anto426.liquidmonet.components.cards.LiquidPreferenceItem
-import com.anto426.liquidmonet.components.inputs.LiquidSplitClearButton
+import com.anto426.liquidmonet.components.buttons.iconbutton.LiquidIconButton
+import com.anto426.liquidmonet.components.buttons.iconbutton.LiquidIconButtonVariant
+import com.anto426.liquidmonet.components.cards.preferenceitem.LiquidPreferenceItem
+import com.anto426.liquidmonet.components.inputs.splitclearbutton.LiquidSplitClearButton
 import com.anto426.liquidmonet.glass.LiquidGlassScene
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
