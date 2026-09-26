@@ -11,6 +11,32 @@ import kotlinx.coroutines.test.runTest
 @OptIn(ExperimentalCoroutinesApi::class)
 class LiquidNavigationFrameTest {
     @Test
+    fun reducedMotionPanelReleaseResetsImmediatelyWithoutRequestingFrames() = runTest {
+        val clock = BroadcastFrameClock()
+        val drag = LiquidElasticDrag(CoroutineScope(backgroundScope.coroutineContext + clock), 500f)
+        drag.dragBy(120f)
+        drag.release(LiquidDragMotion.panelReturn(LiquidGlassPerformanceState.Fallback))
+        assertTrue(clock.hasAwaiters)
+        drag.release(
+            LiquidDragMotion.panelReturn(
+                LiquidGlassPerformanceState.Fallback.copy(motionScale = 0f)
+            )
+        )
+        runCurrent()
+        assertEquals(0f, drag.rawOffset)
+        assertFalse(clock.hasAwaiters)
+        drag.dragBy(25f)
+        assertEquals(25f, drag.rawOffset, "The next gesture must start from the reset position")
+        drag.release(
+            LiquidDragMotion.panelReturn(
+                LiquidGlassPerformanceState.Fallback.copy(motionScale = 0f)
+            )
+        )
+        assertEquals(0f, drag.rawOffset)
+        assertFalse(clock.hasAwaiters)
+    }
+
+    @Test
     fun densePointerInputUsesOneFrameJobAndKeepsTheLatestTarget() = runTest {
         val clock = BroadcastFrameClock()
         val motion =

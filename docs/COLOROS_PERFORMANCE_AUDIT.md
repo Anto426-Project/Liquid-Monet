@@ -31,7 +31,7 @@ Verifiche locali del 26 settembre 2026:
 - 254 file Kotlin controllati, zero violazioni strutturali.
 - Kernel C11 compilati con warning trattati come errori; nuovo kernel spring
   passato anche con AddressSanitizer e UBSan.
-- 94 test host superati: confronto numerico con Compose, continuità alle inversioni,
+- 95 test host superati: confronto numerico con Compose, continuità alle inversioni,
   arresto del frame loop, ritorno al rilascio, movimento ridotto e input molto denso.
 - 33 test strumentali superati sul OnePlus 13 (CPH2653, Android 16). Il nuovo test
   JNI invoca direttamente la libreria nell’APK, senza accettare il fallback Kotlin.
@@ -39,6 +39,11 @@ Verifiche locali del 26 settembre 2026:
 - Confronto A/B degli otto sfondi (quattro effetti, due temi) a fase fissa sullo
   stesso emulatore Android 15: immagini 660 × 880 identiche pixel per pixel prima
   e dopo l’introduzione della cache. Il test verifica anche che continuino a muoversi.
+- La cache copre il moto continuo dei campi. Cambi di dimensioni, configurazione o
+  palette la invalidano intenzionalmente: durante il cambio di tema i gradienti
+  vengono ricreati con i colori interpolati per conservare la transizione cromatica.
+- Build common metadata e Android debug/release R8 superate; release installata e
+  avviata sul OnePlus senza crash o errori JNI nei log raccolti.
 - Il workflow macOS esegue i test del bridge C su simulatore iOS Arm64 e collega il
   framework per iPhone Arm64. Questi controlli non sostituiscono una prova visiva
   su iPhone fisico.
