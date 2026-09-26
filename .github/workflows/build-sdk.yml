@@ -36,7 +36,7 @@ jobs:
         with:
           packages: 'platform-tools'
       - name: Install Android platform and native toolchain
-        run: sdkmanager 'platforms;android-37' 'ndk;26.1.10909125'
+        run: sdkmanager 'platforms;android-37.0' 'ndk;26.1.10909125'
       - uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.12'

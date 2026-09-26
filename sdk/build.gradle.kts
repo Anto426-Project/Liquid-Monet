@@ -107,6 +107,7 @@ val liquidWaveSources = files(
     rootProject.file("native/src/liquid_wave.c"),
     rootProject.file("native/src/liquid_wave_jni.c")
 )
+val isMacOsHost = System.getProperty("os.name").contains("Mac", ignoreCase = true)
 val buildLiquidWaveAndroid = tasks.register<BuildLiquidWaveAndroid>("buildLiquidWaveAndroid") {
     nativeSources.from(liquidWaveSources)
     outputDirectory.set(layout.buildDirectory.dir("generated/liquidWave/android/jniLibs"))
@@ -181,6 +182,7 @@ kotlin {
         val nativeTask = tasks.register<BuildLiquidWaveIos>(
             "buildLiquidWave${iosTarget.name.replaceFirstChar { it.uppercase() }}"
         ) {
+            onlyIf { isMacOsHost }
             nativeSources.from(liquidWaveSources)
             this.appleSdk = appleSdk
             this.targetTriple = targetTriple
@@ -192,7 +194,10 @@ kotlin {
             extraOpts("-libraryPath", nativeTask.flatMap { it.outputDirectory }.get().asFile.absolutePath)
         }
         tasks.matching { it.name == "cinteropLiquidWave${iosTarget.name.replaceFirstChar { c -> c.uppercase() }}" }
-            .configureEach { dependsOn(nativeTask) }
+            .configureEach {
+                dependsOn(nativeTask)
+                onlyIf { isMacOsHost }
+            }
         iosTarget.binaries.framework {
             baseName = "LiquidMonet"
             isStatic = true
