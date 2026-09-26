@@ -1,0 +1,3 @@
+headers = liquid_wave.h
+package = com.anto426.liquidmonet.nativewave
+staticLibraries = libliquidwave.a

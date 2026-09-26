@@ -33,13 +33,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anto426.liquidmonet.components.feedback.LiquidLinearProgressIndicator
+import com.anto426.liquidmonet.components.internal.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
 import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
@@ -165,7 +165,7 @@ fun LiquidMediaController(
                 Box(
                     modifier = Modifier
                         .size(56.dp)
-                        .graphicsLayer(liquidControlLayerBlock(enabled, albumHighlight) ?: {})
+                        .liquidControlLayer(enabled, albumHighlight)
                         .liquidControlPressFeedback(
                             enabled = enabled,
                             interactiveHighlight = albumHighlight,
@@ -261,7 +261,7 @@ fun LiquidMediaController(
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .graphicsLayer(liquidControlLayerBlock(enabled, prevHighlight) ?: {})
+                        .liquidControlLayer(enabled, prevHighlight)
                         .liquidControlPressFeedback(
                             enabled = enabled,
                             interactiveHighlight = prevHighlight,
@@ -294,7 +294,7 @@ fun LiquidMediaController(
                 Box(
                     modifier = Modifier
                         .size(60.dp)
-                        .graphicsLayer(liquidControlLayerBlock(enabled, playHighlight) ?: {})
+                        .liquidControlLayer(enabled, playHighlight)
                         .liquidControlPressFeedback(
                             enabled = enabled,
                             interactiveHighlight = playHighlight,
@@ -353,7 +353,7 @@ fun LiquidMediaController(
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .graphicsLayer(liquidControlLayerBlock(enabled, nextHighlight) ?: {})
+                        .liquidControlLayer(enabled, nextHighlight)
                         .liquidControlPressFeedback(
                             enabled = enabled,
                             interactiveHighlight = nextHighlight,

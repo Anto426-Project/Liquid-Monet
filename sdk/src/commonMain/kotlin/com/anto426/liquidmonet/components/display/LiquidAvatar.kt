@@ -21,14 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
+import com.anto426.liquidmonet.components.internal.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
@@ -88,7 +87,7 @@ fun LiquidAvatar(
     Box(
         modifier = modifier
             .size(size)
-            .graphicsLayer(liquidControlLayerBlock(enabled, interactiveHighlight) ?: {})
+            .liquidControlLayer(enabled, interactiveHighlight)
             .liquidControlPressFeedback(
                 enabled = enabled,
                 interactiveHighlight = interactiveHighlight,
@@ -203,7 +202,7 @@ fun LiquidAvatarGroup(
             Box(
                 modifier = Modifier
                     .size(size)
-                    .graphicsLayer(liquidControlLayerBlock(true, overflowHighlight) ?: {})
+                    .liquidControlLayer(true, overflowHighlight)
                     .liquidControlPressFeedback(
                         enabled = true,
                         interactiveHighlight = overflowHighlight,

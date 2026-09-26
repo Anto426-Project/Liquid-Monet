@@ -27,6 +27,10 @@ for path in required:
 with zipfile.ZipFile(required[1]) as aar:
     if len(aar.read('classes.jar')) < 1000:
         raise SystemExit('Published Android classes are missing or unexpectedly empty')
+    for abi in ('arm64-v8a', 'armeabi-v7a', 'x86_64'):
+        native_lib = f'jni/{abi}/libliquidwave.so'
+        if native_lib not in aar.namelist() or aar.getinfo(native_lib).file_size < 1000:
+            raise SystemExit(f'Published Android native kernel is missing: {native_lib}')
 # Only this version belongs in the archive, even when staging contains older local builds.
 publication_dirs = [root, *(base / f'{artifact}-{suffix}' / a.version
                            for suffix in ('android', 'iosarm64', 'iossimulatorarm64'))]

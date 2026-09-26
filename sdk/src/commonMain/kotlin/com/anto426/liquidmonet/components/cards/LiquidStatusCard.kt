@@ -13,13 +13,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.components.buttons.LiquidButton
-import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
+import com.anto426.liquidmonet.components.internal.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.glass.LiquidGlassRole
@@ -83,7 +82,7 @@ fun LiquidStatusCard(
             Box(
                 modifier = Modifier
                     .size(42.dp)
-                    .graphicsLayer(liquidControlLayerBlock(true, iconHighlight) ?: {})
+                    .liquidControlLayer(true, iconHighlight)
                     .liquidControlPressFeedback(
                         enabled = true,
                         interactiveHighlight = iconHighlight,

@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -31,7 +30,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
+import com.anto426.liquidmonet.components.internal.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.glass.LiquidGlassRole
@@ -103,7 +102,7 @@ fun LiquidChip(
     Row(
         modifier = modifier
             .height(38.dp)
-            .graphicsLayer(liquidControlLayerBlock(enabled, interactiveHighlight) ?: {})
+            .liquidControlLayer(enabled, interactiveHighlight)
             .liquidControlPressFeedback(
                 enabled = enabled,
                 interactiveHighlight = interactiveHighlight,
@@ -183,7 +182,7 @@ fun LiquidChip(
                     modifier = Modifier
                         .size(20.dp)
                         .clip(Capsule())
-                        .graphicsLayer(liquidControlLayerBlock(enabled, closeHighlight) ?: {})
+                        .liquidControlLayer(enabled, closeHighlight)
                         .liquidControlPressFeedback(
                             enabled = enabled,
                             interactiveHighlight = closeHighlight,

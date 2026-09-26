@@ -38,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.display.LiquidSectionHeader
 import com.anto426.liquidmonet.components.display.LiquidSectionHeaderSize
-import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
+import com.anto426.liquidmonet.components.internal.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.glass.LiquidGlassRole
@@ -115,7 +115,7 @@ fun LiquidPreferenceItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer(liquidControlLayerBlock(isInteractive, interactiveHighlight) ?: {})
+            .liquidControlLayer(isInteractive, interactiveHighlight)
             .liquidControlPressFeedback(
                 enabled = isInteractive,
                 interactiveHighlight = interactiveHighlight,
@@ -141,7 +141,7 @@ fun LiquidPreferenceItem(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .graphicsLayer(liquidControlLayerBlock(true, iconHighlight) ?: {})
+                    .liquidControlLayer(true, iconHighlight)
                     .liquidControlPressFeedback(
                         enabled = true,
                         interactiveHighlight = iconHighlight,

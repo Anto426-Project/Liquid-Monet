@@ -24,12 +24,14 @@ import androidx.compose.ui.graphics.luminance
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.glass.runtime.animateBackground
 import com.anto426.liquidmonet.glass.runtime.renderDetailedBackground
+import com.anto426.liquidmonet.glass.internal.LiquidWaveMath
 import com.anto426.liquidmonet.motion.LiquidMotion
 import com.anto426.liquidmonet.theme.monet.LiquidMonetSeed
 import com.anto426.liquidmonet.theme.monet.blend
 import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
+
+private fun sin(phase: Float): Float = LiquidWaveMath.sin(phase)
+private fun cos(phase: Float): Float = LiquidWaveMath.cos(phase)
 
 /**
  * Stati cromatici e sfumature supportati da LiquidBackground.
@@ -111,7 +113,7 @@ fun LiquidBackground(
     val infiniteTransition = rememberInfiniteTransition(label = "LiquidBackgroundMotion")
     val twoPi = (2.0 * PI).toFloat()
 
-    val p1 by if (drawBackgroundMotion) {
+    val p1State = if (drawBackgroundMotion) {
         infiniteTransition.animateFloat(
             initialValue = 0f,
             targetValue = twoPi,
@@ -125,7 +127,7 @@ fun LiquidBackground(
         remember { mutableFloatStateOf(0f) }
     }
 
-    val p2 by if (drawBackgroundMotion) {
+    val p2State = if (drawBackgroundMotion) {
         infiniteTransition.animateFloat(
             initialValue = 0f,
             targetValue = twoPi,
@@ -139,7 +141,7 @@ fun LiquidBackground(
         remember { mutableFloatStateOf(1f) }
     }
 
-    val p3 by if (drawBackgroundMotion) {
+    val p3State = if (drawBackgroundMotion) {
         infiniteTransition.animateFloat(
             initialValue = 0f,
             targetValue = twoPi,
@@ -153,7 +155,7 @@ fun LiquidBackground(
         remember { mutableFloatStateOf(2f) }
     }
 
-    val p4 by if (drawBackgroundMotion) {
+    val p4State = if (drawBackgroundMotion) {
         infiniteTransition.animateFloat(
             initialValue = 0f,
             targetValue = twoPi,
@@ -198,6 +200,12 @@ fun LiquidBackground(
             .fillMaxSize()
             .background(baseBackgroundBrush)
     ) {
+        // Reading oscillator state in the draw phase invalidates only this canvas. Reading it
+        // during composition would recompose the whole background for every animation frame.
+        val p1 = p1State.value
+        val p2 = p2State.value
+        val p3 = p3State.value
+        val p4 = p4State.value
         val w = size.width
         val h = size.height
 

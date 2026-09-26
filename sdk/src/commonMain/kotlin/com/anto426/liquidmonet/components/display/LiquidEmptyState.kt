@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -30,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anto426.liquidmonet.components.buttons.LiquidButton
 import com.anto426.liquidmonet.components.buttons.LiquidButtonVariant
-import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
+import com.anto426.liquidmonet.components.internal.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import androidx.compose.runtime.CompositionLocalProvider
@@ -103,7 +102,7 @@ fun LiquidEmptyState(
                     Box(
                         modifier = Modifier
                             .size(iconBubbleSize)
-                            .graphicsLayer(liquidControlLayerBlock(true, iconHighlight) ?: {})
+                            .liquidControlLayer(true, iconHighlight)
                             .liquidControlPressFeedback(
                                 enabled = true,
                                 interactiveHighlight = iconHighlight,

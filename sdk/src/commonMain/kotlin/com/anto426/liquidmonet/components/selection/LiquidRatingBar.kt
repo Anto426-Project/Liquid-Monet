@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
+import com.anto426.liquidmonet.components.internal.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
@@ -96,7 +96,7 @@ fun LiquidRatingBar(
             Box(
                 modifier = Modifier
                     .size(starSize + 8.dp)
-                    .graphicsLayer(liquidControlLayerBlock(enabled, starHighlight) ?: {})
+                    .liquidControlLayer(enabled, starHighlight)
                     .graphicsLayer {
                         scaleX = animatedScale
                         scaleY = animatedScale

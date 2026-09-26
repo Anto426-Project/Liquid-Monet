@@ -1,5 +1,6 @@
 package com.anto426.liquidmonet.components.menu
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,7 +80,7 @@ fun LiquidMenuItem(
     }
     val resolvedColor = if (isActive || isHovered || selected) accentColor else defaultColor
 
-    val itemScale by androidx.compose.animation.core.animateFloatAsState(
+    val itemScale by animateFloatAsState(
         targetValue = if (isActive && performance.motionScale > 0f) 0.94f else 1f,
         animationSpec = LiquidMotion.spring(
             performance = performance,
@@ -87,13 +90,13 @@ fun LiquidMenuItem(
         label = "menuItemScale"
     )
 
-    val animatedAlpha by androidx.compose.animation.core.animateFloatAsState(
+    val animatedAlpha by animateFloatAsState(
         targetValue = if (enabled) 1f else 0.40f,
         animationSpec = LiquidMotion.tween(performance, LiquidMotion.FastDurationMillis),
         label = "menuItemAlpha"
     )
 
-    val backgroundColor by androidx.compose.animation.animateColorAsState(
+    val backgroundColor by animateColorAsState(
         targetValue = when {
             isActive -> accentColor.copy(alpha = glassColors.selectedContainer.alpha)
             isHovered -> accentColor.copy(alpha = glassColors.accentContainer.alpha)
@@ -104,7 +107,7 @@ fun LiquidMenuItem(
         label = "menuItemBg"
     )
 
-    val borderColor by androidx.compose.animation.animateColorAsState(
+    val borderColor by animateColorAsState(
         targetValue = when {
             isActive -> accentColor.copy(alpha = glassColors.focusIndicator.alpha)
             isHovered -> accentColor.copy(alpha = glassColors.focusIndicator.alpha * 0.62f)
@@ -121,12 +124,20 @@ fun LiquidMenuItem(
         modifier = modifier
             .liquidMenuDragTarget(dragSelection, dragKey, enabled, onClick)
             .fillMaxWidth()
+            .semantics { if (isSelectable) this.selected = selected }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
                 onClick = onClick
             )
+            .graphicsLayer {
+                // Keep the highlight and border attached to the label while the item bounces.
+                scaleX = itemScale
+                scaleY = itemScale
+                alpha = animatedAlpha
+                clip = false
+            }
             .background(
                 color = backgroundColor,
                 shape = itemShape
@@ -136,13 +147,7 @@ fun LiquidMenuItem(
                 color = borderColor,
                 shape = itemShape
             )
-            .padding(horizontal = 14.dp, vertical = 11.dp)
-            .graphicsLayer {
-                scaleX = itemScale
-                scaleY = itemScale
-                alpha = animatedAlpha
-                clip = false
-            },
+            .padding(horizontal = 14.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {

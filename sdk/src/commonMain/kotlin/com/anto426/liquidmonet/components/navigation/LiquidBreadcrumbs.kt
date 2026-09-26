@@ -98,7 +98,10 @@ private fun LiquidBreadcrumbItemView(
 
     Box(
         modifier = modifier
-            .graphicsLayer(liquidControlLayerBlock(isClickable, highlight) ?: {})
+            .then(
+                liquidControlLayerBlock(isClickable, highlight)
+                    ?.let { Modifier.graphicsLayer(it) } ?: Modifier
+            )
             .liquidControlPressFeedback(
                 enabled = isClickable,
                 interactiveHighlight = highlight,
