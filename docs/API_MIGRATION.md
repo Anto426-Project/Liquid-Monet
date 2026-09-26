@@ -29,7 +29,7 @@ Update explicit imports rather than using broad wildcard imports. Representative
 | `components.pickers.LiquidTimePickerState` | `components.pickers.timepicker.state.LiquidTimePickerState` |
 | `components.feedback.LiquidToastState` | `components.feedback.toast.state.LiquidToastState` |
 | `components.layout.LiquidLazyColumn` | `components.layout.lazy.LiquidLazyColumn` |
-| `components.charts.LiquidBarChartData` | `components.charts.model.LiquidBarChartData` |
+| `components.charts.LiquidChartEntry` | `components.charts.model.LiquidChartEntry` |
 
 All entries are relative to `com.anto426.liquidmonet`.
 
