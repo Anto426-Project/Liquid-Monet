@@ -29,6 +29,7 @@ abstract class BuildLiquidWaveAndroid : DefaultTask() {
             ?: error("Android NDK clang toolchain is unavailable")
         val root = project.rootProject.projectDir
         val source = root.resolve("native/src/liquid_wave.c")
+        val springSource = root.resolve("native/src/liquid_spring.c")
         val jniSource = root.resolve("native/src/liquid_wave_jni.c")
         val headers = root.resolve("native/include")
         val targets = mapOf(
@@ -42,7 +43,7 @@ abstract class BuildLiquidWaveAndroid : DefaultTask() {
             val command = listOf(
                 toolchain.resolve("bin/$compilerName").absolutePath,
                 "-std=c11", "-O3", "-Wall", "-Wextra", "-Werror", "-fPIC", "-shared",
-                "-I${headers.absolutePath}", source.absolutePath, jniSource.absolutePath,
+                "-I${headers.absolutePath}", source.absolutePath, springSource.absolutePath, jniSource.absolutePath,
                 "-Wl,-soname,libliquidwave.so", "-lm", "-o", output.absolutePath
             )
             check(ProcessBuilder(command).inheritIO().start().waitFor() == 0) {
@@ -76,21 +77,24 @@ abstract class BuildLiquidWaveIos : DefaultTask() {
         }
         val root = project.rootProject.projectDir
         val directory = outputDirectory.get().asFile.apply { mkdirs() }
-        val objectFile = directory.resolve("liquid_wave.o")
         val archive = directory.resolve("libliquidwave.a")
         val clang = xcrun("--find", "clang")
         val sysroot = xcrun("--show-sdk-path")
-        val command = listOf(
-            clang, "-target", targetTriple, "-isysroot", sysroot,
-            "-std=c11", "-O3", "-Wall", "-Wextra", "-Werror",
-            "-I${root.resolve("native/include").absolutePath}",
-            "-c", root.resolve("native/src/liquid_wave.c").absolutePath,
-            "-o", objectFile.absolutePath
-        )
-        check(ProcessBuilder(command).inheritIO().start().waitFor() == 0) {
-            "Native Liquid Wave build failed for $targetTriple"
+        val objects = listOf("liquid_wave", "liquid_spring").map { name ->
+            val objectFile = directory.resolve("$name.o")
+            val command = listOf(
+                clang, "-target", targetTriple, "-isysroot", sysroot,
+                "-std=c11", "-O3", "-Wall", "-Wextra", "-Werror",
+                "-I${root.resolve("native/include").absolutePath}",
+                "-c", root.resolve("native/src/$name.c").absolutePath,
+                "-o", objectFile.absolutePath
+            )
+            check(ProcessBuilder(command).inheritIO().start().waitFor() == 0) {
+                "Native Liquid build failed for $name / $targetTriple"
+            }
+            objectFile.absolutePath
         }
-        xcrun("ar", "rcs", archive.absolutePath, objectFile.absolutePath)
+        xcrun("ar", "rcs", archive.absolutePath, *objects.toTypedArray())
     }
 }
 
@@ -105,6 +109,8 @@ plugins {
 val liquidWaveSources = files(
     rootProject.file("native/include/liquid_wave.h"),
     rootProject.file("native/src/liquid_wave.c"),
+    rootProject.file("native/include/liquid_spring.h"),
+    rootProject.file("native/src/liquid_spring.c"),
     rootProject.file("native/src/liquid_wave_jni.c")
 )
 val isMacOsHost = System.getProperty("os.name").contains("Mac", ignoreCase = true)
