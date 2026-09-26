@@ -13,9 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,50 +33,6 @@ import com.anto426.liquidmonet.components.buttons.LiquidIconButton
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.RoundedRectangle
-
-/**
- * State holder for LiquidTimePicker.
- */
-@Stable
-class LiquidTimePickerState(
-    initialHour: Int = 12,
-    initialMinute: Int = 0
-) {
-    private val hourState = mutableIntStateOf(normalizeClockValue(initialHour, 24))
-    var hour: Int
-        get() = hourState.intValue
-        set(value) {
-            hourState.intValue = normalizeClockValue(value, 24)
-        }
-    private val minuteState = mutableIntStateOf(normalizeClockValue(initialMinute, 60))
-    var minute: Int
-        get() = minuteState.intValue
-        set(value) {
-            minuteState.intValue = normalizeClockValue(value, 60)
-        }
-
-    val formattedTime: String
-        get() = "${hour.twoDigits()}:${minute.twoDigits()}"
-
-    fun incrementHour() {
-        hour = (hour + 1) % 24
-    }
-
-    fun decrementHour() {
-        hour = (hour + 23) % 24
-    }
-
-    fun incrementMinute() {
-        minute = (minute + 1) % 60
-    }
-
-    fun decrementMinute() {
-        minute = (minute + 59) % 60
-    }
-}
-
-private fun normalizeClockValue(value: Int, modulus: Int): Int =
-    ((value % modulus) + modulus) % modulus
 
 @Composable
 fun rememberLiquidTimePickerState(
@@ -183,7 +137,6 @@ private fun LiquidTimeNumberColumn(
     }
 }
 
-private fun Int.twoDigits(): String = toString().padStart(2, '0')
 
 /**
  * LiquidTimePickerField - Liquid Glass Time Input Trigger Field.

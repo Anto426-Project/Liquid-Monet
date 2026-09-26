@@ -26,12 +26,10 @@ android {
             )
         }
         debug {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            // Instrumentation shares Kotlin/Compose classes with the tested APK.
+            // Shrinking this variant can remove entry points used only by the runner.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
     compileOptions {

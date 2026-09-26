@@ -31,6 +31,13 @@ def main() -> int:
                     errors.append(f"{relative}: platform import in common code: {name}")
         if "/components/" in path.as_posix():
             for name in imports:
+                if name.startswith((
+                    "androidx.lifecycle.ViewModel", "androidx.lifecycle.viewmodel",
+                    "io.ktor.client", "retrofit2.", "okhttp3.",
+                    "androidx.datastore.", "com.russhwolf.settings.",
+                    "android.content.SharedPreferences",
+                )) or name.rsplit(".", 1)[-1].endswith(("Repository", "ViewModel")):
+                    errors.append(f"{relative}: UI components must receive application state and events: {name}")
                 if name in {"com.kyant.backdrop.drawBackdrop", "com.kyant.backdrop.drawPlainBackdrop"}:
                     errors.append(f"{relative}: components must use the shared glass renderers")
                 if name == "androidx.compose.animation.core.spring":

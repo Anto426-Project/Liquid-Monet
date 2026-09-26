@@ -45,6 +45,21 @@ for execution boundaries, invalidation, recovery, workload limits and platform v
 entry points. Compatibility wrappers delegate to canonical implementations; do not copy the
 renderer or overlay lifecycle into each entry point.
 
+## UI and application state
+
+SDK controls receive application values and emit events: `value/onValueChange`,
+`checked/onCheckedChange`, `selectedIndex/onSelection`, data and `onClick`.
+The consumer's ViewModel owns business state, network calls, persistence and application
+coroutines. SDK composables do not instantiate ViewModels or depend on repositories.
+The structure checker rejects these dependencies under `components`.
+
+UI-local state covers focus, pointer tracking, animation, menu visibility and picker drafts.
+Date/time picker state holders live separately from their composables and can be hoisted by
+callers. Color conversion and input parsing have their own file without composables. Rendering,
+platform calibration and the C11 kernel belong to the glass/runtime and platform layers;
+they do not belong in an application ViewModel. The Android showcase uses local example
+state to demonstrate controls and does not represent a production MVVM application.
+
 ## Input and motion
 
 The gesture owner must remain in stable layout coordinates. Draw the material, content,
@@ -95,4 +110,7 @@ rendering and successful compilation do not establish visual or performance pari
 The Android device suite covers icon variants, callback replacement, disabled input, the single
 preference-row action and clear-button input with reduced motion. It also checks menu dragging,
 backdrop recording, resolution, card optics and loading animation. Run
-`./gradlew :app:connectedDebugAndroidTest` with an unlocked ADB device.
+`./gradlew :app:connectedDebugAndroidTest` with an unlocked ADB device, then
+`python3 scripts/check_android_test_results.py --minimum-tests 21`. A successful Gradle task
+with an empty report does not count as device acceptance. The debug variant retains the
+classes required by instrumentation; release still enables R8 and resource shrinking.
