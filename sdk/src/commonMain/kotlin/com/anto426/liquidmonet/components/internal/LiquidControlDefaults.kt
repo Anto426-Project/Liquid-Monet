@@ -8,4 +8,5 @@ internal object LiquidControlDefaults {
     val shape: Shape = Capsule()
 
     const val pressedScale: Float = 0.96f
+    const val deformationFactor: Float = 0.35f
 }

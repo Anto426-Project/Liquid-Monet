@@ -3,6 +3,7 @@
 **Liquid Monet** is a Compose Multiplatform UI library that combines adaptive Material 3 controls,
 Monet color and real optical glass (blur, lens refraction, chromatic aberration and highlights).
 The public API lives under `com.anto426.liquidmonet`; renderer implementation details are internal.
+SDK 2.0 groups each component with its state and motion: see [API migration](docs/API_MIGRATION.md).
 
 ---
 

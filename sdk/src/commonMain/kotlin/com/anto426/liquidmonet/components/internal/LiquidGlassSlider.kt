@@ -1,7 +1,6 @@
 package com.anto426.liquidmonet.components.internal
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import com.anto426.liquidmonet.motion.DampedDragAnimation
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
@@ -29,16 +28,17 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.lerp
-import com.anto426.liquidmonet.components.selection.requireLiquidSliderRange
-import com.anto426.liquidmonet.components.selection.snapLiquidSliderValue
+import com.anto426.liquidmonet.components.selection.slider.requireLiquidSliderRange
+import com.anto426.liquidmonet.components.selection.slider.snapLiquidSliderValue
 import com.anto426.liquidmonet.glass.LiquidGlassRole
-import com.anto426.liquidmonet.glass.liquidInteractiveZIndex
 import com.anto426.liquidmonet.glass.internal.liquidGlassDynamic
 import com.anto426.liquidmonet.glass.liquidGlass
+import com.anto426.liquidmonet.glass.liquidInteractiveZIndex
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassDynamicPresets
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPresets
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
+import com.anto426.liquidmonet.motion.DampedDragAnimation
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
@@ -48,8 +48,8 @@ import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.shapes.Capsule
 
 /**
- * LiquidGlassSlider - Liquid Glass Floating Thumb Slider.
- * Features a sleek track with an optical liquid glass floating thumb that elastically squashes and stretches on drag.
+ * LiquidGlassSlider - Liquid Glass Floating Thumb Slider. Features a sleek track with an optical
+ * liquid glass floating thumb that elastically squashes and stretches on drag.
  */
 @Composable
 internal fun LiquidGlassSlider(
@@ -62,7 +62,7 @@ internal fun LiquidGlassSlider(
     enabled: Boolean = true,
     tint: Color = Color.Unspecified,
     trackHeight: Dp = 8.dp,
-    thumbSize: Dp = 24.dp
+    thumbSize: Dp = 24.dp,
 ) {
     requireLiquidSliderRange(valueRange)
     val colorScheme = MaterialTheme.colorScheme
@@ -75,10 +75,8 @@ internal fun LiquidGlassSlider(
     val trackBackdrop = rememberLayerBackdrop()
 
     BoxWithConstraints(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        contentAlignment = Alignment.CenterStart
+        modifier = modifier.fillMaxWidth().height(48.dp),
+        contentAlignment = Alignment.CenterStart,
     ) {
         val trackWidth = constraints.maxWidth.toFloat().coerceAtLeast(1f)
         val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
@@ -90,20 +88,21 @@ internal fun LiquidGlassSlider(
         val inputInteractionSource = remember { MutableInteractionSource() }
         val isInputPressed by inputInteractionSource.collectIsPressedAsState()
         val isInputDragged by inputInteractionSource.collectIsDraggedAsState()
-        val dampedDragAnimation = remember(animationScope, valueRange, visibilityThreshold, performance) {
-            DampedDragAnimation(
-                animationScope = animationScope,
-                performance = performance,
-                initialValue = value.coerceIn(valueRange),
-                valueRange = valueRange,
-                visibilityThreshold = visibilityThreshold,
-                initialScale = 1f,
-                pressedScale = 1.5f,
-                onDragStarted = { },
-                onDragStopped = { },
-                onDrag = { _, _ -> }
-            )
-        }
+        val dampedDragAnimation =
+            remember(animationScope, valueRange, visibilityThreshold, performance) {
+                DampedDragAnimation(
+                    animationScope = animationScope,
+                    performance = performance,
+                    initialValue = value.coerceIn(valueRange),
+                    valueRange = valueRange,
+                    visibilityThreshold = visibilityThreshold,
+                    initialScale = 1f,
+                    pressedScale = 1.5f,
+                    onDragStarted = {},
+                    onDragStopped = {},
+                    onDrag = { _, _ -> },
+                )
+            }
 
         LaunchedEffect(value, dampedDragAnimation) {
             val targetValue = value.coerceIn(valueRange)
@@ -121,47 +120,42 @@ internal fun LiquidGlassSlider(
         }
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            contentAlignment = Alignment.CenterStart
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            contentAlignment = Alignment.CenterStart,
         ) {
             // Track Layer
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .layerBackdrop(trackBackdrop)
-            ) {
+            Box(Modifier.fillMaxWidth().layerBackdrop(trackBackdrop)) {
                 Box(
-                    Modifier
-                        .height(trackHeight)
+                    Modifier.height(trackHeight)
                         .fillMaxWidth()
                         .liquidGlass(
                             backdrop = effectiveBackdrop,
                             shape = Capsule(),
                             role = LiquidGlassRole.Control,
                             containerColor = trackColor,
-                            preset = LiquidGlassPresets.Subtle
+                            preset = LiquidGlassPresets.Subtle,
                         )
                 )
 
-                val visualProgress = if (isLtr) {
-                    dampedDragAnimation.progress
-                } else {
-                    1f - dampedDragAnimation.progress
-                }.fastCoerceIn(0f, 1f)
+                val visualProgress =
+                    if (isLtr) {
+                            dampedDragAnimation.progress
+                        } else {
+                            1f - dampedDragAnimation.progress
+                        }
+                        .fastCoerceIn(0f, 1f)
                 if (visualProgress > 0.001f) {
                     Box(
-                        Modifier
-                            .align(if (isLtr) Alignment.CenterStart else Alignment.CenterEnd)
+                        Modifier.align(if (isLtr) Alignment.CenterStart else Alignment.CenterEnd)
                             .fillMaxWidth(visualProgress)
                             .height(trackHeight)
                             .liquidGlass(
                                 backdrop = effectiveBackdrop,
                                 shape = Capsule(),
                                 role = LiquidGlassRole.Control,
-                                containerColor = accentColor.copy(alpha = glassColors.activeTrack.alpha),
-                                preset = LiquidGlassPresets.Subtle
+                                containerColor =
+                                    accentColor.copy(alpha = glassColors.activeTrack.alpha),
+                                preset = LiquidGlassPresets.Subtle,
                             )
                     )
                 }
@@ -169,30 +163,34 @@ internal fun LiquidGlassSlider(
 
             // Floating Optical Lens Thumb with Snell Refraction & Specular Highlights
             Box(
-                Modifier
-                    .graphicsLayer {
-                        val visualProgress = if (isLtr) {
-                            dampedDragAnimation.progress
-                        } else {
-                            1f - dampedDragAnimation.progress
-                        }.fastCoerceIn(0f, 1f)
+                Modifier.graphicsLayer {
+                        val visualProgress =
+                            if (isLtr) {
+                                    dampedDragAnimation.progress
+                                } else {
+                                    1f - dampedDragAnimation.progress
+                                }
+                                .fastCoerceIn(0f, 1f)
                         translationX =
-                            (-size.width / 2f + trackWidth * visualProgress)
-                                .fastCoerceIn(-size.width / 4f, trackWidth - size.width * 3f / 4f)
+                            (-size.width / 2f + trackWidth * visualProgress).fastCoerceIn(
+                                -size.width / 4f,
+                                trackWidth - size.width * 3f / 4f,
+                            )
                         alpha = if (enabled) 1f else 0.5f
                     }
                     .liquidGlassDynamic(
-                        backdrop = rememberCombinedBackdrop(
-                            effectiveBackdrop,
-                            rememberBackdrop(trackBackdrop) { drawBackdrop ->
-                                val progress = dampedDragAnimation.pressProgress
-                                val scaleX = lerp(2f / 3f, 1f, progress)
-                                val scaleY = lerp(0f, 1f, progress)
-                                scale(scaleX, scaleY) {
-                                    drawBackdrop()
-                                }
-                            }
-                        ),
+                        backdrop =
+                            rememberCombinedBackdrop(
+                                effectiveBackdrop,
+                                rememberBackdrop(trackBackdrop) { drawBackdrop ->
+                                    val progress = dampedDragAnimation.pressProgress
+                                    val scaleX = lerp(2f / 3f, 1f, progress)
+                                    val scaleY = lerp(0f, 1f, progress)
+                                    scale(scaleX, scaleY) {
+                                        drawBackdrop()
+                                    }
+                                },
+                            ),
                         shape = Capsule(),
                         preset = LiquidGlassDynamicPresets.SliderThumb,
                         performance = performance,
@@ -206,8 +204,10 @@ internal fun LiquidGlassSlider(
                         },
                         onDrawSurface = {
                             val progress = dampedDragAnimation.pressProgress
-                            drawRect(accentColor.copy(alpha = 0.70f * (1f - progress.coerceIn(0f, 1f))))
-                        }
+                            drawRect(
+                                accentColor.copy(alpha = 0.70f * (1f - progress.coerceIn(0f, 1f)))
+                            )
+                        },
                     )
                     .liquidInteractiveZIndex(enabled)
                     .size(thumbSize)
@@ -220,15 +220,13 @@ internal fun LiquidGlassSlider(
                 onValueChange = { nextValue ->
                     currentOnValueChange(snapLiquidSliderValue(nextValue, valueRange, steps))
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
                 enabled = enabled,
                 valueRange = valueRange,
                 steps = steps,
                 interactionSource = inputInteractionSource,
                 thumb = { Box(Modifier.size(48.dp)) },
-                track = { Box(Modifier.fillMaxWidth().height(1.dp)) }
+                track = { Box(Modifier.fillMaxWidth().height(1.dp)) },
             )
         }
     }

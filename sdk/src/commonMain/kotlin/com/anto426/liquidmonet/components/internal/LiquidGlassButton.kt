@@ -1,10 +1,7 @@
 package com.anto426.liquidmonet.components.internal
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,23 +16,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isSpecified
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.internal.LiquidControlDefaults
-import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
-import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
-import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
-import com.anto426.liquidmonet.glass.LiquidGlassRole
-import com.anto426.liquidmonet.glass.liquidGlass
-import com.anto426.liquidmonet.motion.LiquidMotion
+import com.anto426.liquidmonet.components.internal.glassbutton.motion.LiquidGlassButtonMotion
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.kyant.backdrop.Backdrop
 
 /**
  * LiquidGlassButton - Radiant Optical Liquid Glass Button with Animated Interactive States.
- * Balances vibrant saturated Monet colors with Snell lens refraction,
- * chromatic prismatic dispersion, and ambient specular highlights.
+ * Balances vibrant saturated Monet colors with Snell lens refraction, chromatic prismatic
+ * dispersion, and ambient specular highlights.
  */
 @Composable
 internal fun LiquidGlassButton(
@@ -50,60 +40,59 @@ internal fun LiquidGlassButton(
     border: BorderStroke? = null,
     tint: Color = Color.Unspecified,
     surfaceColor: Color = Color.Unspecified,
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) {
     val interactiveHighlight = rememberLiquidControlHighlight()
     val performance = LocalLiquidGlassPerformance.current
 
-    val targetContainerColor = when {
-        surfaceColor.isSpecified -> surfaceColor
-        tint.isSpecified -> tint
-        else -> null
-    }
+    val targetContainerColor =
+        when {
+            surfaceColor.isSpecified -> surfaceColor
+            tint.isSpecified -> tint
+            else -> null
+        }
 
-    val animatedContainerColor = if (targetContainerColor != null) {
-        animateColorAsState(
-            targetValue = if (enabled) {
-                targetContainerColor
-            } else {
-                targetContainerColor.copy(alpha = targetContainerColor.alpha * 0.45f)
-            },
-            animationSpec = LiquidMotion.tween(performance, 240),
-            label = "buttonContainerColor"
-        ).value
-    } else null
+    val animatedContainerColor =
+        if (targetContainerColor != null) {
+            LiquidGlassButtonMotion.animateColor(
+                    targetValue =
+                        if (enabled) {
+                            targetContainerColor
+                        } else {
+                            targetContainerColor.copy(alpha = targetContainerColor.alpha * 0.45f)
+                        },
+                    performance = performance,
+                    label = "buttonContainerColor",
+                )
+                .value
+        } else null
 
-    val animatedAlpha by animateFloatAsState(
-        targetValue = if (enabled) 1f else 0.50f,
-        animationSpec = LiquidMotion.tween(performance, 240),
-        label = "buttonAlpha"
-    )
-
-    val glassModifier = modifier
-        .liquidGlass(
-            backdrop = backdrop,
-            shape = shape,
-            role = LiquidGlassRole.Control,
-            containerColor = animatedContainerColor,
-            layerBlock = liquidControlLayerBlock(isInteractive, interactiveHighlight)
+    val animatedAlpha by
+        LiquidGlassButtonMotion.animateFloat(
+            targetValue = if (enabled) 1f else 0.50f,
+            performance = performance,
+            label = "buttonAlpha",
         )
-        .let { if (border != null) it.border(border, shape) else it }
-        .clickable(
-            interactionSource = null,
-            indication = null,
-            role = Role.Button,
-            enabled = isInteractive,
-            onClick = onClick
-        )
-        .liquidControlPressFeedback(isInteractive, interactiveHighlight, shape = shape)
-        .height(height)
-        .padding(contentPadding)
-        .graphicsLayer { alpha = animatedAlpha }
+
+    val glassModifier =
+        modifier
+            .liquidControlInteractive(
+                enabled = isInteractive && enabled,
+                interactiveHighlight = interactiveHighlight,
+                backdrop = backdrop,
+                shape = shape,
+                containerColor = animatedContainerColor,
+                onClick = onClick,
+            )
+            .let { if (border != null) it.border(border, shape) else it }
+            .height(height)
+            .padding(contentPadding)
+            .graphicsLayer { alpha = animatedAlpha }
 
     Row(
         modifier = glassModifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
-        content = content
+        content = content,
     )
 }

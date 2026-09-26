@@ -3,6 +3,7 @@ name: Build and publish SDK binaries
 on:
   push:
     branches: [master]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -15,11 +16,11 @@ concurrency:
 
 jobs:
   publish:
-    if: github.ref == 'refs/heads/master'
-    runs-on: [self-hosted, Linux, X64]
-    timeout-minutes: 60
+    runs-on: macos-26
+    timeout-minutes: 90
     env:
-      SDK_VERSION: 1.0.${{ github.run_number }}
+      SDK_VERSION: 2.0.${{ github.run_number }}
+      DEVELOPER_DIR: /Applications/Xcode_26.4.1.app/Contents/Developer
     defaults:
       run:
         shell: bash
@@ -34,15 +35,21 @@ jobs:
       - uses: android-actions/setup-android@v4.0.1
         with:
           packages: 'platform-tools'
+      - name: Install Android platform and native toolchain
+        run: sdkmanager 'platforms;android-37.0' 'ndk;26.1.10909125'
       - uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.12'
       - uses: gradle/actions/setup-gradle@v6.3.0
+      - name: Check SDK structure
+        run: python3 scripts/check_sdk_structure.py
       - name: Test and compile all published targets
         run: |
           set -euo pipefail
           ./gradlew --no-daemon --max-workers=2 -PsdkVersion="$SDK_VERSION" \
-            :sdk:testAndroidHostTest :sdk:publishAllPublicationsToStagingRepository
+            :sdk:compileCommonMainKotlinMetadata :sdk:testAndroidHostTest :sdk:iosSimulatorArm64Test \
+            :app:assembleDebug :app:assembleDebugAndroidTest \
+            :sdk:linkDebugFrameworkIosArm64 :sdk:publishAllPublicationsToStagingRepository
       - name: Verify and package Maven repository
         run: |
           python3 scripts/package_sdk.py --repository build/maven-repository \
@@ -60,12 +67,14 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       - name: Publish Maven packages for Gradle
+        if: github.ref == 'refs/heads/master'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           ./gradlew --no-daemon --max-workers=2 -PsdkVersion="$SDK_VERSION" \
             :sdk:publishAllPublicationsToGitHubPackagesRepository
       - name: Publish immutable SDK release
+        if: github.ref == 'refs/heads/master'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

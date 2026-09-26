@@ -31,35 +31,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.cards.LiquidAccordionItem
-import com.anto426.liquidmonet.components.display.LiquidAvatar
-import com.anto426.liquidmonet.components.display.LiquidAvatarGroup
-import com.anto426.liquidmonet.components.display.LiquidAvatarPresence
-import com.anto426.liquidmonet.components.display.LiquidSectionHeader
-import com.anto426.liquidmonet.components.layout.LiquidAnimatedSwitcher
-import com.anto426.liquidmonet.components.layout.LiquidLazyColumn
-import com.anto426.liquidmonet.components.layout.LiquidLazyRow
-import com.anto426.liquidmonet.components.layout.LiquidLazyFooter
-import com.anto426.liquidmonet.components.layout.LiquidLazyFooterOrientation
-import com.anto426.liquidmonet.components.layout.LiquidLazyFooterState
-import com.anto426.liquidmonet.components.layout.LiquidSwitcherTransition
-import com.anto426.liquidmonet.components.navigation.LiquidBreadcrumbItem
-import com.anto426.liquidmonet.components.navigation.LiquidBreadcrumbs
-import com.anto426.liquidmonet.components.cards.LiquidCard
-import com.anto426.liquidmonet.components.selection.LiquidChip
-import com.anto426.liquidmonet.components.selection.LiquidChipSelectionGroup
-import com.anto426.liquidmonet.components.display.LiquidEmptyState
-import com.anto426.liquidmonet.components.display.LiquidHorizontalDivider
-import com.anto426.liquidmonet.components.navigation.LiquidNavigationItem
-import com.anto426.liquidmonet.components.navigation.LiquidTabBar
-import com.anto426.liquidmonet.components.navigation.LiquidPageIndicator
-import com.anto426.liquidmonet.components.navigation.LiquidPagination
-import com.anto426.liquidmonet.components.cards.LiquidPreferenceItem
-import com.anto426.liquidmonet.components.selection.LiquidSlider
-import com.anto426.liquidmonet.components.display.LiquidSwipeToDismissBox
-import com.anto426.liquidmonet.components.selection.LiquidSwitch
-import com.anto426.liquidmonet.components.feedback.LiquidToastState
-import com.anto426.liquidmonet.components.feedback.LiquidToastType
+import com.anto426.liquidmonet.components.cards.accordion.LiquidAccordionItem
+import com.anto426.liquidmonet.components.display.avatar.LiquidAvatar
+import com.anto426.liquidmonet.components.display.avatar.LiquidAvatarGroup
+import com.anto426.liquidmonet.components.display.avatar.LiquidAvatarPresence
+import com.anto426.liquidmonet.components.display.sectionheader.LiquidSectionHeader
+import com.anto426.liquidmonet.components.layout.animatedswitcher.LiquidAnimatedSwitcher
+import com.anto426.liquidmonet.components.layout.lazy.LiquidLazyColumn
+import com.anto426.liquidmonet.components.layout.lazy.LiquidLazyRow
+import com.anto426.liquidmonet.components.layout.lazyfooter.LiquidLazyFooter
+import com.anto426.liquidmonet.components.layout.lazyfooter.LiquidLazyFooterOrientation
+import com.anto426.liquidmonet.components.layout.lazyfooter.LiquidLazyFooterState
+import com.anto426.liquidmonet.components.layout.animatedswitcher.LiquidSwitcherTransition
+import com.anto426.liquidmonet.components.navigation.breadcrumbs.LiquidBreadcrumbItem
+import com.anto426.liquidmonet.components.navigation.breadcrumbs.LiquidBreadcrumbs
+import com.anto426.liquidmonet.components.cards.card.LiquidCard
+import com.anto426.liquidmonet.components.selection.chip.LiquidChip
+import com.anto426.liquidmonet.components.selection.chipselectiongroup.LiquidChipSelectionGroup
+import com.anto426.liquidmonet.components.display.emptystate.LiquidEmptyState
+import com.anto426.liquidmonet.components.display.divider.LiquidHorizontalDivider
+import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigationItem
+import com.anto426.liquidmonet.components.navigation.tabbar.LiquidTabBar
+import com.anto426.liquidmonet.components.navigation.pagination.LiquidPageIndicator
+import com.anto426.liquidmonet.components.navigation.pagination.LiquidPagination
+import com.anto426.liquidmonet.components.cards.preferenceitem.LiquidPreferenceItem
+import com.anto426.liquidmonet.components.selection.slider.LiquidSlider
+import com.anto426.liquidmonet.components.display.swipetodismiss.LiquidSwipeToDismissBox
+import com.anto426.liquidmonet.components.selection.switch.LiquidSwitch
+import com.anto426.liquidmonet.components.feedback.toast.state.LiquidToastState
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.kyant.backdrop.Backdrop
 
@@ -121,9 +120,9 @@ fun NavigationHubScreen(
                         )
                         LiquidBreadcrumbs(
                             items = listOf(
-                                LiquidBreadcrumbItem("Home") { toastState.show("Navigato a Home", type = LiquidToastType.Info) },
-                                LiquidBreadcrumbItem("Impostazioni") { toastState.show("Navigato a Impostazioni", type = LiquidToastType.Info) },
-                                LiquidBreadcrumbItem("Sicurezza & Accesso") { toastState.show("Navigato a Sicurezza", type = LiquidToastType.Info) },
+                                LiquidBreadcrumbItem("Home") { toastState.show("Navigato a Home", icon = LiquidIcons.Home) },
+                                LiquidBreadcrumbItem("Impostazioni") { toastState.show("Navigato a Impostazioni", icon = LiquidIcons.Settings) },
+                                LiquidBreadcrumbItem("Sicurezza & Accesso") { toastState.show("Navigato a Sicurezza", icon = LiquidIcons.Info) },
                                 LiquidBreadcrumbItem("Attuale")
                             ),
                             backdropState = backdropState
@@ -317,8 +316,8 @@ fun NavigationHubScreen(
                             subtitle = "Scorri l'elemento per scoprire azioni contestuali e completarle."
                         )
                         LiquidSwipeToDismissBox(
-                            onDismissLeft = { toastState.show("Elemento archiviato!", type = LiquidToastType.Info) },
-                            onDismissRight = { toastState.show("Aggiunto ai preferiti!", type = LiquidToastType.Success) },
+                            onDismissLeft = { toastState.show("Elemento archiviato!", icon = LiquidIcons.Info) },
+                            onDismissRight = { toastState.show("Aggiunto ai preferiti!", icon = LiquidIcons.Star) },
                             backdropState = backdropState
                         ) {
                             LiquidPreferenceItem(
@@ -353,7 +352,7 @@ fun NavigationHubScreen(
                             description = "Tutte le notifiche e le attività sono state completate con successo.",
                             icon = LiquidIcons.Check,
                             actionButtonText = "Ricarica Dati",
-                            onActionClick = { toastState.show("Dati aggiornati!", type = LiquidToastType.Success) },
+                            onActionClick = { toastState.show("Dati aggiornati!", icon = LiquidIcons.Refresh) },
                             backdropState = backdropState
                         )
 

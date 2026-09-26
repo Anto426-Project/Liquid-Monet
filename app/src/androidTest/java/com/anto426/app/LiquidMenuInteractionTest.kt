@@ -24,8 +24,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.menu.LiquidDropdownMenu
-import com.anto426.liquidmonet.components.menu.LiquidMenuItem
+import com.anto426.liquidmonet.components.menu.dropdownmenu.LiquidDropdownMenu
+import com.anto426.liquidmonet.components.menu.menuitem.LiquidMenuItem
 import com.anto426.liquidmonet.glass.LiquidGlassScene
 import com.anto426.liquidmonet.glass.overlay.liquidGlassOverlayAnchor
 import com.anto426.liquidmonet.glass.overlay.rememberLiquidGlassOverlayAnchorState

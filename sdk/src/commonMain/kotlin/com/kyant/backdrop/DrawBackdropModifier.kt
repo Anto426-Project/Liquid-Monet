@@ -7,6 +7,7 @@ import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Shape
@@ -236,6 +237,9 @@ private class DrawBackdropElement(
     }
 
     override fun update(node: DrawBackdropNode) {
+        val effectsChanged = node.effects !== effects ||
+            node.shapeProvider.shapeBlock !== shapeProvider.shapeBlock ||
+            node.resolutionScale != resolutionScale
         node.backdrop = backdrop
         node.shapeProvider = shapeProvider
         node.effects = effects
@@ -249,7 +253,7 @@ private class DrawBackdropElement(
         node.onDrawSurface = onDrawSurface
         node.onDrawFront = onDrawFront
         node.resolutionScale = resolutionScale
-        node.invalidateDrawCache()
+        if (effectsChanged) node.invalidateDrawCache()
     }
 
     override fun InspectorInfo.inspectableProperties() {
@@ -319,6 +323,9 @@ private class DrawBackdropNode(
         }
 
     private var graphicsLayer: GraphicsLayer? = null
+    private var samplingScale: Float = resolutionScale
+    private var lastSamplingSize: Size = Size.Unspecified
+    private var lastRequestedScale: Float = Float.NaN
 
     private val layoutLayerBlock: GraphicsLayerScope.() -> Unit = {
         clip = true
@@ -331,7 +338,7 @@ private class DrawBackdropNode(
     private var padding by mutableFloatStateOf(0f)
 
     private val sourceDensity = object : Density {
-        override val density: Float get() = effectScope.density / resolutionScale
+        override val density: Float get() = effectScope.density / samplingScale
         override val fontScale: Float get() = effectScope.fontScale
     }
 
@@ -341,8 +348,8 @@ private class DrawBackdropNode(
         canvas.save()
         try {
             canvas.translate(padding, padding)
-            canvas.scale(resolutionScale, resolutionScale)
-            drawContext.size = previousSize / resolutionScale
+            canvas.scale(samplingScale, samplingScale)
+            drawContext.size = previousSize / samplingScale
             onDrawBackdrop {
                 with(backdrop) {
                     drawBackdrop(
@@ -362,8 +369,8 @@ private class DrawBackdropNode(
         val layer = graphicsLayer
         if (layer != null && size.width > 0f && size.height > 0f) {
             val padding = padding
-            val targetWidth = ceil(size.width * resolutionScale).toInt() + ceil(padding).toInt() * 2
-            val targetHeight = ceil(size.height * resolutionScale).toInt() + ceil(padding).toInt() * 2
+            val targetWidth = ceil(size.width * samplingScale).toInt() + ceil(padding).toInt() * 2
+            val targetHeight = ceil(size.height * samplingScale).toInt() + ceil(padding).toInt() * 2
 
             if (targetWidth > 0 && targetHeight > 0) {
                 recordLayer(
@@ -384,7 +391,7 @@ private class DrawBackdropNode(
     private val drawBackdropLayer: DrawScope.() -> Unit = {
         graphicsLayer?.let { layer ->
             withTransform({
-                scale(1f / resolutionScale, 1f / resolutionScale, Offset.Zero)
+                scale(1f / samplingScale, 1f / samplingScale, Offset.Zero)
                 translate(-padding, -padding)
             }) {
                 drawLayer(layer)
@@ -403,7 +410,12 @@ private class DrawBackdropNode(
     }
 
     override fun ContentDrawScope.draw() {
-        if (effectScope.update(this, resolutionScale)) {
+        if (size != lastSamplingSize || resolutionScale != lastRequestedScale) {
+            samplingScale = backdropSamplingScale(size.width, size.height, resolutionScale)
+            lastSamplingSize = size
+            lastRequestedScale = resolutionScale
+        }
+        if (effectScope.update(this, samplingScale)) {
             updateEffects()
         }
 

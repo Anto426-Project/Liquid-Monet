@@ -37,15 +37,14 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.navigation.LiquidTopBar
-import com.anto426.liquidmonet.components.buttons.LiquidFloatingActionButton
-import com.anto426.liquidmonet.components.navigation.LiquidNavigationBar
-import com.anto426.liquidmonet.components.navigation.LiquidNavigationItem
-import com.anto426.liquidmonet.components.inputs.LiquidSearchBar
-import com.anto426.liquidmonet.components.navigation.LiquidTopBarAction
-import com.anto426.liquidmonet.components.feedback.LiquidToastHost
-import com.anto426.liquidmonet.components.feedback.LiquidToastType
-import com.anto426.liquidmonet.components.feedback.rememberLiquidToastState
+import com.anto426.liquidmonet.components.navigation.topbar.LiquidTopBar
+import com.anto426.liquidmonet.components.buttons.floatingactionbutton.LiquidFloatingActionButton
+import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigationBar
+import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigationItem
+import com.anto426.liquidmonet.components.inputs.searchbar.LiquidSearchBar
+import com.anto426.liquidmonet.components.navigation.topbar.LiquidTopBarAction
+import com.anto426.liquidmonet.components.feedback.toast.LiquidToastHost
+import com.anto426.liquidmonet.components.feedback.toast.rememberLiquidToastState
 import com.anto426.liquidmonet.glass.LiquidBackgroundEffect
 import com.anto426.liquidmonet.glass.LiquidGlassScene
 import com.anto426.liquidmonet.glass.LiquidBackground
@@ -156,7 +155,7 @@ class MainActivity : ComponentActivity() {
                                                 toastState.show(
                                                     message = "Catalogo sincronizzato",
                                                     subtitle = "Interfaccia fluida a 120 FPS",
-                                                    type = LiquidToastType.Info
+                                                    icon = LiquidIcons.Refresh
                                                 )
                                             }
                                         ),
@@ -167,7 +166,7 @@ class MainActivity : ComponentActivity() {
                                                 toastState.show(
                                                     message = "Link copiato negli appunti",
                                                     subtitle = "https://github.com/Anto426/Antosdk",
-                                                    type = LiquidToastType.Success
+                                                    icon = LiquidIcons.Share
                                                 )
                                             }
                                         ),
@@ -178,7 +177,7 @@ class MainActivity : ComponentActivity() {
                                                 toastState.show(
                                                     message = "Liquid Monet Liquid Monet 2.0",
                                                     subtitle = "AGSL Optical Snell Refraction Engine",
-                                                    type = LiquidToastType.Info
+                                                    icon = LiquidIcons.Info
                                                 )
                                             }
                                         )
@@ -215,7 +214,7 @@ class MainActivity : ComponentActivity() {
                                 toastState.show(
                                     message = "Azione rapida eseguita!",
                                     subtitle = "Scheda attiva: ${pageTitles[currentTab]}",
-                                    type = LiquidToastType.Success
+                                    icon = LiquidIcons.Check
                                 )
                             },
                             visible = isNavBarVisible,

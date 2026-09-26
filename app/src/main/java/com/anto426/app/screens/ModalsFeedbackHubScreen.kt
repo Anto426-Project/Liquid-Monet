@@ -19,23 +19,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.buttons.LiquidButton
-import com.anto426.liquidmonet.components.buttons.LiquidButtonSize
-import com.anto426.liquidmonet.components.buttons.LiquidButtonVariant
-import com.anto426.liquidmonet.components.cards.LiquidCard
-import com.anto426.liquidmonet.components.feedback.LiquidDialog
-import com.anto426.liquidmonet.components.menu.LiquidDropdownMenu
-import com.anto426.liquidmonet.components.menu.LiquidMenuItem
-import com.anto426.liquidmonet.components.display.LiquidHorizontalDivider
-import com.anto426.liquidmonet.components.display.LiquidSectionHeader
-import com.anto426.liquidmonet.components.navigation.LiquidNavigationItem
-import com.anto426.liquidmonet.components.navigation.LiquidTabBar
-import com.anto426.liquidmonet.components.feedback.LiquidLoading
-import com.anto426.liquidmonet.components.feedback.LiquidLoadingStyle
-import com.anto426.liquidmonet.components.cards.LiquidPreferenceItem
-import com.anto426.liquidmonet.components.feedback.LiquidSheet
-import com.anto426.liquidmonet.components.feedback.LiquidToastState
-import com.anto426.liquidmonet.components.feedback.LiquidToastType
+import com.anto426.liquidmonet.components.buttons.button.LiquidButton
+import com.anto426.liquidmonet.components.buttons.button.LiquidButtonSize
+import com.anto426.liquidmonet.components.buttons.button.LiquidButtonVariant
+import com.anto426.liquidmonet.components.cards.card.LiquidCard
+import com.anto426.liquidmonet.components.feedback.dialog.LiquidDialog
+import com.anto426.liquidmonet.components.menu.dropdownmenu.LiquidDropdownMenu
+import com.anto426.liquidmonet.components.menu.menuitem.LiquidMenuItem
+import com.anto426.liquidmonet.components.display.divider.LiquidHorizontalDivider
+import com.anto426.liquidmonet.components.display.sectionheader.LiquidSectionHeader
+import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigationItem
+import com.anto426.liquidmonet.components.navigation.tabbar.LiquidTabBar
+import com.anto426.liquidmonet.components.feedback.loading.LiquidLoading
+import com.anto426.liquidmonet.components.feedback.loading.LiquidLoadingStyle
+import com.anto426.liquidmonet.components.cards.preferenceitem.LiquidPreferenceItem
+import com.anto426.liquidmonet.components.feedback.sheet.LiquidSheet
+import com.anto426.liquidmonet.components.feedback.toast.state.LiquidToastState
 import com.anto426.liquidmonet.glass.overlay.LiquidGlassDropdownPlacement
 import com.anto426.liquidmonet.glass.overlay.liquidGlassOverlayAnchor
 import com.anto426.liquidmonet.glass.overlay.rememberLiquidGlassOverlayAnchorState
@@ -165,9 +164,9 @@ fun ModalsFeedbackHubScreen(
                                         offset = DpOffset(0.dp, 6.dp),
                                         backdropState = backdropState
                                     ) {
-                                        LiquidMenuItem(text = "Condividi Elemento", icon = LiquidIcons.Share, onClick = { isMenuOpen = false; toastState.show("Condivisione avviata!", type = LiquidToastType.Info) })
-                                        LiquidMenuItem(text = "Salva nei Preferiti", icon = LiquidIcons.Star, onClick = { isMenuOpen = false; toastState.show("Aggiunto ai preferiti!", type = LiquidToastType.Success) })
-                                        LiquidMenuItem(text = "Elimina", icon = LiquidIcons.Delete, onClick = { isMenuOpen = false; toastState.show("Elemento rimosso", type = LiquidToastType.Error) })
+                                        LiquidMenuItem(text = "Condividi Elemento", icon = LiquidIcons.Share, onClick = { isMenuOpen = false; toastState.show("Condivisione avviata!", icon = LiquidIcons.Share) })
+                                        LiquidMenuItem(text = "Salva nei Preferiti", icon = LiquidIcons.Star, onClick = { isMenuOpen = false; toastState.show("Aggiunto ai preferiti!", icon = LiquidIcons.Star) })
+                                        LiquidMenuItem(text = "Elimina", icon = LiquidIcons.Delete, onClick = { isMenuOpen = false; toastState.show("Elemento rimosso", icon = LiquidIcons.Delete) })
                                     }
                                 }
                             }
@@ -188,7 +187,7 @@ fun ModalsFeedbackHubScreen(
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                                     LiquidButton(
                                         text = "Successo",
-                                        onClick = { toastState.show("Operazione completata!", "I dati sono stati sincronizzati su cloud", LiquidToastType.Success) },
+                                        onClick = { toastState.show("Operazione completata!", "I dati sono stati sincronizzati su cloud", icon = LiquidIcons.Check) },
                                         variant = LiquidButtonVariant.Primary,
                                         size = LiquidButtonSize.Small,
                                         backdropState = backdropState,
@@ -196,7 +195,7 @@ fun ModalsFeedbackHubScreen(
                                     )
                                     LiquidButton(
                                         text = "Informazione",
-                                        onClick = { toastState.show("Aggiornamento pronto", "Versione Liquid Monet 2.0.0 scaricata", LiquidToastType.Info) },
+                                        onClick = { toastState.show("Aggiornamento pronto", "Versione Liquid Monet 2.0.0 scaricata", icon = LiquidIcons.Info) },
                                         variant = LiquidButtonVariant.Secondary,
                                         size = LiquidButtonSize.Small,
                                         backdropState = backdropState,
@@ -206,7 +205,7 @@ fun ModalsFeedbackHubScreen(
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                                     LiquidButton(
                                         text = "Avviso",
-                                        onClick = { toastState.show("Batteria scarica", "Meno del 15% di carica residua", LiquidToastType.Warning) },
+                                        onClick = { toastState.show("Batteria scarica", "Meno del 15% di carica residua", icon = LiquidIcons.Warning) },
                                         variant = LiquidButtonVariant.Tonal,
                                         size = LiquidButtonSize.Small,
                                         backdropState = backdropState,
@@ -214,7 +213,7 @@ fun ModalsFeedbackHubScreen(
                                     )
                                     LiquidButton(
                                         text = "Errore",
-                                        onClick = { toastState.show("Errore di rete", "Impossibile contattare il server remoto", LiquidToastType.Error) },
+                                        onClick = { toastState.show("Errore di rete", "Impossibile contattare il server remoto", icon = LiquidIcons.Close) },
                                         variant = LiquidButtonVariant.Outlined,
                                         size = LiquidButtonSize.Small,
                                         backdropState = backdropState,
@@ -273,7 +272,7 @@ fun ModalsFeedbackHubScreen(
                     text = "Conferma",
                     onClick = {
                         isDialogOpen = false
-                        toastState.show("Impostazioni salvate!", type = LiquidToastType.Success)
+                        toastState.show("Impostazioni salvate!", icon = LiquidIcons.Check)
                     },
                     variant = LiquidButtonVariant.Primary,
                     modifier = Modifier.fillMaxWidth()
