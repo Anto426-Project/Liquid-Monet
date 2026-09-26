@@ -63,4 +63,5 @@ dependencies {
     implementation(libs.androidx.compose.preview)
     implementation(libs.androidx.material3)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.errorprone.annotations)
 }

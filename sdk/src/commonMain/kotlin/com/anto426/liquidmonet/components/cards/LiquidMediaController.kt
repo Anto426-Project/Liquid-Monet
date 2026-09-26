@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -30,7 +29,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
@@ -39,7 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anto426.liquidmonet.components.feedback.LiquidLinearProgressIndicator
-import com.anto426.liquidmonet.components.internal.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
 import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
@@ -52,6 +51,7 @@ import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.glass.runtime.animateBackground
+import com.anto426.liquidmonet.components.buttons.LiquidIconButton
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
@@ -123,10 +123,6 @@ fun LiquidMediaController(
 
     // Touch feedback highlights
     val containerHighlight = rememberLiquidControlHighlight()
-    val albumHighlight = rememberLiquidControlHighlight()
-    val playHighlight = rememberLiquidControlHighlight()
-    val prevHighlight = rememberLiquidControlHighlight()
-    val nextHighlight = rememberLiquidControlHighlight()
 
     Box(
         modifier = modifier
@@ -161,54 +157,26 @@ fun LiquidMediaController(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Vibrant Glowing Album Artwork Bubble
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .liquidControlLayer(enabled, albumHighlight)
-                        .liquidControlPressFeedback(
-                            enabled = enabled,
-                            interactiveHighlight = albumHighlight,
-                            shape = albumShape,
-                            drawHighlightOverlay = true
+                LiquidIconButton(
+                    icon = LiquidIcons.MusicNote,
+                    contentDescription = "Album",
+                    onClick = onPlayPauseClick,
+                    enabled = enabled,
+                    size = 56.dp,
+                    iconSize = 28.dp,
+                    shape = albumShape,
+                    backdropState = effectiveBackdrop,
+                    containerColor = primaryColor.copy(alpha = glassColors.accentContainer.alpha),
+                    iconModifier = Modifier.drawWithCache {
+                        val radius = 56.dp.toPx() * 0.65f
+                        val glow = Brush.radialGradient(
+                            listOf(primaryColor.copy(alpha = 0.24f), primaryColor.copy(alpha = 0f)),
+                            center = size.center,
+                            radius = radius
                         )
-                        .drawBehind {
-                            val glowRadius = size.maxDimension * 0.65f
-                            drawCircle(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        primaryColor.copy(alpha = 0.24f),
-                                        primaryColor.copy(alpha = 0f)
-                                    ),
-                                    center = center,
-                                    radius = glowRadius
-                                ),
-                                radius = glowRadius,
-                                center = center
-                            )
-                        }
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            role = Role.Button,
-                            enabled = enabled,
-                            onClick = onPlayPauseClick
-                        )
-                        .liquidGlass(
-                            backdrop = effectiveBackdrop,
-                            shape = albumShape,
-                            role = LiquidGlassRole.Control,
-                            containerColor = primaryColor.copy(alpha = glassColors.accentContainer.alpha)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = LiquidIcons.MusicNote,
-                        contentDescription = "Album",
-                        tint = colorScheme.onSurface,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                        onDrawBehind { drawCircle(glow, radius, center) }
+                    }
+                )
 
                 Column(modifier = Modifier.weight(1f)) {
                     BasicText(
@@ -257,130 +225,44 @@ fun LiquidMediaController(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Previous Bubble Button
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .liquidControlLayer(enabled, prevHighlight)
-                        .liquidControlPressFeedback(
-                            enabled = enabled,
-                            interactiveHighlight = prevHighlight,
-                            shape = controlShape,
-                            drawHighlightOverlay = true
+                LiquidIconButton(
+                    icon = LiquidIcons.SkipPrevious,
+                    contentDescription = "Precedente",
+                    onClick = onPreviousClick,
+                    enabled = enabled,
+                    size = 48.dp,
+                    shape = controlShape,
+                    backdropState = effectiveBackdrop
+                )
+                LiquidIconButton(
+                    icon = if (isPlaying) LiquidIcons.Pause else LiquidIcons.PlayArrow,
+                    contentDescription = if (isPlaying) "Pausa" else "Play",
+                    onClick = onPlayPauseClick,
+                    enabled = enabled,
+                    size = 60.dp,
+                    iconSize = if (isPlaying) 28.dp else 32.dp,
+                    shape = controlShape,
+                    backdropState = effectiveBackdrop,
+                    containerColor = primaryColor.copy(alpha = glassColors.selectedContainer.alpha),
+                    iconModifier = Modifier.drawWithCache {
+                        val radius = 60.dp.toPx() * 0.8f
+                        val glow = Brush.radialGradient(
+                            listOf(primaryColor.copy(alpha = 0.38f), primaryColor.copy(alpha = 0f)),
+                            center = size.center,
+                            radius = radius
                         )
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            role = Role.Button,
-                            enabled = enabled,
-                            onClick = onPreviousClick
-                        )
-                        .liquidGlass(
-                            backdrop = effectiveBackdrop,
-                            shape = controlShape,
-                            role = LiquidGlassRole.Control
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = LiquidIcons.SkipPrevious,
-                        contentDescription = "Precedente",
-                        tint = colorScheme.onSurface,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-
-                // Vibrant Radiant Play / Pause Bubble with Blooming Radial Halo
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .liquidControlLayer(enabled, playHighlight)
-                        .liquidControlPressFeedback(
-                            enabled = enabled,
-                            interactiveHighlight = playHighlight,
-                            shape = controlShape,
-                            drawHighlightOverlay = true
-                        )
-                        .drawBehind {
-                            val activePulse = playPulse
-                            val glowRadius = size.maxDimension * (0.65f + 0.15f * activePulse)
-                            drawCircle(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        primaryColor.copy(alpha = 0.28f + 0.10f * activePulse),
-                                        primaryColor.copy(alpha = 0f)
-                                    ),
-                                    center = center,
-                                    radius = glowRadius
-                                ),
-                                radius = glowRadius,
-                                center = center
-                            )
-                        }
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            role = Role.Button,
-                            enabled = enabled,
-                            onClick = onPlayPauseClick
-                        )
-                        .liquidGlass(
-                            backdrop = effectiveBackdrop,
-                            shape = controlShape,
-                            role = LiquidGlassRole.Control,
-                            containerColor = primaryColor.copy(alpha = glassColors.selectedContainer.alpha)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isPlaying) {
-                        Icon(
-                            imageVector = LiquidIcons.Pause,
-                            contentDescription = "Pausa",
-                            tint = colorScheme.onSurface,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = LiquidIcons.PlayArrow,
-                            contentDescription = "Play",
-                            tint = colorScheme.onSurface,
-                            modifier = Modifier.size(32.dp)
-                        )
+                        onDrawBehind { drawCircle(glow, radius, center, alpha = 0.7f + 0.3f * playPulse) }
                     }
-                }
-
-                // Next Bubble Button
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .liquidControlLayer(enabled, nextHighlight)
-                        .liquidControlPressFeedback(
-                            enabled = enabled,
-                            interactiveHighlight = nextHighlight,
-                            shape = controlShape,
-                            drawHighlightOverlay = true
-                        )
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            role = Role.Button,
-                            enabled = enabled,
-                            onClick = onNextClick
-                        )
-                        .liquidGlass(
-                            backdrop = effectiveBackdrop,
-                            shape = controlShape,
-                            role = LiquidGlassRole.Control
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = LiquidIcons.SkipNext,
-                        contentDescription = "Successivo",
-                        tint = colorScheme.onSurface,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                )
+                LiquidIconButton(
+                    icon = LiquidIcons.SkipNext,
+                    contentDescription = "Successivo",
+                    onClick = onNextClick,
+                    enabled = enabled,
+                    size = 48.dp,
+                    shape = controlShape,
+                    backdropState = effectiveBackdrop
+                )
             }
         }
         }

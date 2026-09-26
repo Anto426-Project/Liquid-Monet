@@ -20,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.isSpecified
@@ -38,6 +37,8 @@ import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.motion.LiquidMotion
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
+import com.anto426.liquidmonet.components.buttons.LiquidIconButton
+import com.anto426.liquidmonet.components.buttons.LiquidIconButtonVariant
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
@@ -64,7 +65,6 @@ fun LiquidChip(
     tint: Color = Color.Unspecified
 ) {
     val interactiveHighlight = rememberLiquidControlHighlight()
-    val closeHighlight = rememberLiquidControlHighlight()
     val performance = LocalLiquidGlassPerformance.current
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
@@ -178,32 +178,16 @@ fun LiquidChip(
 
             // Close Action with Tactile Bounce
             if (onCloseClick != null) {
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(Capsule())
-                        .liquidControlLayer(enabled, closeHighlight)
-                        .liquidControlPressFeedback(
-                            enabled = enabled,
-                            interactiveHighlight = closeHighlight,
-                            shape = Capsule(),
-                            drawHighlightOverlay = true
-                        )
-                        .clickable(
-                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                            indication = null,
-                            role = Role.Button,
-                            onClick = onCloseClick
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = LiquidIcons.Close,
-                        contentDescription = "Rimuovi",
-                        tint = animatedContentColor.copy(alpha = 0.75f),
-                        modifier = Modifier.size(14.dp)
-                    )
-                }
+                LiquidIconButton(
+                    icon = LiquidIcons.Close,
+                    contentDescription = "Rimuovi",
+                    onClick = onCloseClick,
+                    enabled = enabled,
+                    size = 20.dp,
+                    iconSize = 14.dp,
+                    variant = LiquidIconButtonVariant.Ghost,
+                    contentColor = animatedContentColor.copy(alpha = 0.75f)
+                )
             } else if (trailingIcon != null) {
                 Icon(
                     imageVector = trailingIcon,

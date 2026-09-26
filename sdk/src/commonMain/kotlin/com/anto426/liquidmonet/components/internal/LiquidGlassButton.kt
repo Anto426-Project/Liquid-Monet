@@ -4,7 +4,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,15 +18,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isSpecified
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.internal.LiquidControlDefaults
-import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
-import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
-import com.anto426.liquidmonet.glass.LiquidGlassRole
-import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.motion.LiquidMotion
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.kyant.backdrop.Backdrop
@@ -80,22 +74,15 @@ internal fun LiquidGlassButton(
     )
 
     val glassModifier = modifier
-        .liquidGlass(
+        .liquidControlInteractive(
+            enabled = isInteractive && enabled,
+            interactiveHighlight = interactiveHighlight,
             backdrop = backdrop,
             shape = shape,
-            role = LiquidGlassRole.Control,
             containerColor = animatedContainerColor,
-            layerBlock = liquidControlLayerBlock(isInteractive, interactiveHighlight)
-        )
-        .let { if (border != null) it.border(border, shape) else it }
-        .clickable(
-            interactionSource = null,
-            indication = null,
-            role = Role.Button,
-            enabled = isInteractive,
             onClick = onClick
         )
-        .liquidControlPressFeedback(isInteractive, interactiveHighlight, shape = shape)
+        .let { if (border != null) it.border(border, shape) else it }
         .height(height)
         .padding(contentPadding)
         .graphicsLayer { alpha = animatedAlpha }

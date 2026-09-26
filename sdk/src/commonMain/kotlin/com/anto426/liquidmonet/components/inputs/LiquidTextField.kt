@@ -3,7 +3,6 @@ package com.anto426.liquidmonet.components.inputs
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +47,8 @@ import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
+import com.anto426.liquidmonet.components.buttons.LiquidIconButton
+import com.anto426.liquidmonet.components.buttons.LiquidIconButtonVariant
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.motion.LiquidMotion
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
@@ -340,28 +341,30 @@ fun LiquidTextField(
 
                         if (effectiveTrailingIcon != null) {
                             Spacer(modifier = Modifier.width(8.dp))
-                            Icon(
-                                imageVector = effectiveTrailingIcon,
-                                contentDescription = when {
-                                    !isPassword -> null
-                                    isPasswordVisible -> "Nascondi password"
-                                    else -> "Mostra password"
-                                },
-                                tint = if (isFocused) primaryColor else contentColor.copy(alpha = 0.60f),
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    .let { iconModifier ->
-                                        if (effectiveTrailingIconClick != null) {
-                                            iconModifier.clickable(
-                                                interactionSource = remember { MutableInteractionSource() },
-                                                indication = null,
-                                                onClick = effectiveTrailingIconClick
-                                            )
-                                        } else {
-                                            iconModifier
-                                        }
-                                    }
-                            )
+                            val description = when {
+                                !isPassword -> null
+                                isPasswordVisible -> "Nascondi password"
+                                else -> "Mostra password"
+                            }
+                            val tint = if (isFocused) primaryColor else contentColor.copy(alpha = 0.60f)
+                            if (effectiveTrailingIconClick != null) {
+                                LiquidIconButton(
+                                    icon = effectiveTrailingIcon,
+                                    contentDescription = description,
+                                    onClick = effectiveTrailingIconClick,
+                                    enabled = enabled,
+                                    iconSize = 20.dp,
+                                    variant = LiquidIconButtonVariant.Ghost,
+                                    contentColor = tint
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = effectiveTrailingIcon,
+                                    contentDescription = description,
+                                    tint = tint,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }

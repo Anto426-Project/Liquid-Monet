@@ -15,6 +15,7 @@ material3Multiplatform = "1.12.0-alpha03"
 datetime = "0.8.0"
 coroutines = "1.11.0"
 navigationEvent = "1.1.0"
+errorProneAnnotations = "2.47.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -29,6 +30,7 @@ compose-material3-multiplatform = { group = "org.jetbrains.compose.material3", n
 navigationevent-compose = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "navigationEvent" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+errorprone-annotations = { module = "com.google.errorprone:error_prone_annotations", version.ref = "errorProneAnnotations" }
 
 
 [plugins]

@@ -2,6 +2,7 @@ package com.anto426.liquidmonet.glass
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
@@ -11,12 +12,15 @@ import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPreset
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.glass.runtime.effectPolicy
 import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.BackdropEffectScope
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.backdrop.drawBackdrop
@@ -38,7 +42,8 @@ fun Modifier.liquidGlass(
     performance: LiquidGlassPerformanceState = LocalLiquidGlassPerformance.current,
     layerBlock: (GraphicsLayerScope.() -> Unit)? = null,
     exportedBackdrop: LayerBackdrop? = null,
-    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
+    interactive: Boolean = layerBlock != null
 ): Modifier = liquidGlass(
     backdrop = backdrop,
     shape = shape,
@@ -49,7 +54,8 @@ fun Modifier.liquidGlass(
     performance = performance,
     layerBlock = layerBlock,
     exportedBackdrop = exportedBackdrop,
-    backdropPolicy = backdropPolicy
+    backdropPolicy = backdropPolicy,
+    interactive = interactive
 )
 
 /** Only LiquidCard selects this treatment. The flag stays local to its optical background. */
@@ -64,7 +70,8 @@ internal fun Modifier.liquidGlass(
     performance: LiquidGlassPerformanceState = LocalLiquidGlassPerformance.current,
     layerBlock: (GraphicsLayerScope.() -> Unit)? = null,
     exportedBackdrop: LayerBackdrop? = null,
-    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
+    interactive: Boolean = layerBlock != null
 ): Modifier {
     // A shared container already paid for backdrop sampling. Descendants retain their exact
     // shape, semantic tint and press deformation without multiplying blur/refraction passes.
@@ -73,35 +80,38 @@ internal fun Modifier.liquidGlass(
         backdropPolicy == LiquidGlassBackdropPolicy.SceneFirst
     ) {
         val groupedSurfaceColor = containerColor ?: Color.Transparent
+        val groupedSurface: ContentDrawScope.() -> Unit = remember(groupedSurfaceColor) {
+            {
+                if (groupedSurfaceColor.alpha > 0f) drawRect(groupedSurfaceColor)
+                drawContent()
+            }
+        }
         return this
             .then(if (layerBlock != null) Modifier.graphicsLayer(layerBlock) else Modifier)
             .clip(shape)
-            .drawWithContent {
-                if (groupedSurfaceColor.alpha > 0f) {
-                    drawRect(groupedSurfaceColor)
-                }
-                drawContent()
-            }
+            .drawWithContent(groupedSurface)
     }
 
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val colorScheme = MaterialTheme.colorScheme
-    val isLightSurface = colorScheme.surface.luminance() > 0.5f
-    val style = LiquidGlassStyleManager.resolve(role)
-    val tokens = (preset ?: style.preset).resolve(performance)
+    val isLightSurface = remember(colorScheme.surface) { colorScheme.surface.luminance() > 0.5f }
+    val style = remember(role) { LiquidGlassStyleManager.resolve(role) }
+    val tokens = remember(preset, style.preset, performance) {
+        (preset ?: style.preset).resolve(performance)
+    }
     val liquidStrength = performance.liquidIntensity.coerceIn(0f, 1f)
-    val ambientMonetTint = colorScheme.primary.copy(
-        alpha = LiquidGlassStyleManager.ambientTintAlpha(isLightSurface) *
-            (0.35f + 0.65f * liquidStrength)
-    )
+    val ambientMonetTint = remember(colorScheme.primary, isLightSurface, liquidStrength) {
+        colorScheme.primary.copy(
+            alpha = LiquidGlassStyleManager.ambientTintAlpha(isLightSurface) *
+                (0.35f + 0.65f * liquidStrength)
+        )
+    }
     val surfaceColor = containerColor
         ?: LiquidGlassStyleManager.surfaceColor(role, isLightSurface)
 
-    val effectPolicy = performance.effectPolicy(
-        role = role,
-        interactive = layerBlock != null,
-        isCardSurface = isCardSurface
-    )
+    val effectPolicy = remember(performance, role, interactive, isCardSurface) {
+        performance.effectPolicy(role, interactive, isCardSurface)
+    }
     val useBlur = effectPolicy.blur && tokens.blurRadius > 0.dp
     val useRefraction = effectPolicy.refraction &&
         tokens.refractionHeight > 0.dp && tokens.refractionAmount > 0.dp
@@ -112,10 +122,11 @@ internal fun Modifier.liquidGlass(
     val useInnerShadow = effectPolicy.innerShadow &&
         style.innerShadowRadius > 0.dp && style.innerShadowAlpha > 0f
 
-    return drawBackdrop(
-        backdrop = effectiveBackdrop,
-        shape = { shape },
-        effects = {
+    val shapeProvider = remember(shape) { { shape } }
+    val effects: BackdropEffectScope.() -> Unit = remember(
+        tokens, style, effectPolicy, role, isLightSurface, liquidStrength
+    ) {
+        {
             val compactReference = 48.dp.toPx()
             val largeReference = 240.dp.toPx()
             val sizeProgress = if (size.isSpecified) {
@@ -149,46 +160,48 @@ internal fun Modifier.liquidGlass(
                     chromaticAberration = useChromaticAberration
                 )
             }
-        },
-        highlight = if (useHighlight) {
-            {
-                Highlight.Plain.copy(
-                    alpha = style.highlightAlpha * (0.45f + 0.55f * liquidStrength)
-                )
-            }
-        } else {
-            null
-        },
-        shadow = if (useShadow) {
-            {
-                Shadow(
-                    radius = style.shadowRadius,
-                    color = Color.Black.copy(alpha = style.shadowAlpha)
-                )
-            }
-        } else {
-            null
-        },
-        innerShadow = if (useInnerShadow) {
-            {
-                InnerShadow(
-                    radius = style.innerShadowRadius,
-                    alpha = style.innerShadowAlpha * (0.55f + 0.45f * liquidStrength)
-                )
-            }
-        } else {
-            null
-        },
+        }
+    }
+    val highlight: (() -> Highlight?)? = remember(useHighlight, style.highlightAlpha, liquidStrength) {
+        if (useHighlight) {
+            val value = Highlight.Plain.copy(alpha = style.highlightAlpha * (0.45f + 0.55f * liquidStrength))
+            return@remember { value }
+        } else null
+    }
+    val shadow: (() -> Shadow?)? = remember(useShadow, style.shadowRadius, style.shadowAlpha) {
+        if (useShadow) {
+            val value = Shadow(radius = style.shadowRadius, color = Color.Black.copy(alpha = style.shadowAlpha))
+            return@remember { value }
+        } else null
+    }
+    val innerShadow: (() -> InnerShadow?)? = remember(
+        useInnerShadow, style.innerShadowRadius, style.innerShadowAlpha, liquidStrength
+    ) {
+        if (useInnerShadow) {
+            val value = InnerShadow(
+                radius = style.innerShadowRadius,
+                alpha = style.innerShadowAlpha * (0.55f + 0.45f * liquidStrength)
+            )
+            return@remember { value }
+        } else null
+    }
+    val drawSurface: DrawScope.() -> Unit = remember(surfaceColor, ambientMonetTint) {
+        {
+            if (surfaceColor.alpha > 0f) drawRect(surfaceColor)
+            if (ambientMonetTint.alpha > 0f) drawRect(ambientMonetTint)
+        }
+    }
+
+    return drawBackdrop(
+        backdrop = effectiveBackdrop,
+        shape = shapeProvider,
+        effects = effects,
+        highlight = highlight,
+        shadow = shadow,
+        innerShadow = innerShadow,
         layerBlock = layerBlock,
         exportedBackdrop = exportedBackdrop,
         resolutionScale = performance.renderResolutionScale,
-        onDrawSurface = {
-            if (surfaceColor.alpha > 0f) {
-                drawRect(surfaceColor)
-            }
-            if (ambientMonetTint.alpha > 0f) {
-                drawRect(ambientMonetTint)
-            }
-        }
+        onDrawSurface = drawSurface
     )
 }

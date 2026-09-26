@@ -2,6 +2,8 @@ package com.anto426.liquidmonet.components.internal
 
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -12,8 +14,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.Role
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
+import com.anto426.liquidmonet.glass.LiquidGlassRole
+import com.anto426.liquidmonet.glass.liquidGlass
+import com.anto426.liquidmonet.glass.runtime.LiquidGlassPreset
+import com.kyant.backdrop.Backdrop
 import com.anto426.liquidmonet.motion.LiquidMotion
 import kotlin.math.sqrt
 import kotlin.math.tanh
@@ -33,16 +40,16 @@ internal object LiquidControlMotion {
     fun pressProgress(isPressed: Boolean, performance: LiquidGlassPerformanceState): AnimationSpec<Float> =
         LiquidMotion.spring(
             performance = performance,
-            dampingRatio = if (isPressed) LiquidMotion.PressDampingRatio else LiquidMotion.ReleaseDampingRatio,
-            stiffness = if (isPressed) LiquidMotion.PressStiffness else LiquidMotion.ReleaseStiffness,
+            dampingRatio = if (isPressed) LiquidMotion.PressDampingRatio else LiquidMotion.SnappyDampingRatio,
+            stiffness = if (isPressed) LiquidMotion.PressStiffness else LiquidMotion.SnappyStiffness,
             visibilityThreshold = 0.001f
         )
 
     fun pointerPosition(performance: LiquidGlassPerformanceState): AnimationSpec<Offset> =
         LiquidMotion.spring(
             performance = performance,
-            dampingRatio = LiquidMotion.ReleaseDampingRatio,
-            stiffness = LiquidMotion.ReleaseStiffness,
+            dampingRatio = LiquidMotion.SnappyDampingRatio,
+            stiffness = LiquidMotion.SnappyStiffness,
             visibilityThreshold = Offset.VisibilityThreshold
         )
 }
@@ -51,10 +58,15 @@ internal object LiquidControlMotion {
 internal fun liquidControlLayerBlock(
     enabled: Boolean,
     interactiveHighlight: InteractiveHighlight,
-    stretchFactor: Float = 1f,
-    translationFactor: Float = 1f
+    stretchFactor: Float = LiquidControlDefaults.deformationFactor,
+    translationFactor: Float = LiquidControlDefaults.deformationFactor
 ): (GraphicsLayerScope.() -> Unit)? = if (enabled) {
     layer@{
+        scaleX = 1f
+        scaleY = 1f
+        translationX = 0f
+        translationY = 0f
+        clip = false
         if (!interactiveHighlight.motionEnabled) return@layer
         val width = size.width.coerceAtLeast(1f)
         val height = size.height.coerceAtLeast(1f)
@@ -97,6 +109,49 @@ internal fun Modifier.liquidControlLayer(
     interactiveHighlight: InteractiveHighlight
 ): Modifier = liquidControlLayerBlock(enabled, interactiveHighlight)
     ?.let { this.graphicsLayer(it) } ?: this
+
+/** Place before the surface so glass, content and highlight share one elastic layer. */
+@Composable
+internal fun Modifier.liquidControlInteractive(
+    enabled: Boolean,
+    interactiveHighlight: InteractiveHighlight,
+    shape: Shape,
+    role: Role = Role.Button,
+    stretchFactor: Float = LiquidControlDefaults.deformationFactor,
+    translationFactor: Float = LiquidControlDefaults.deformationFactor,
+    interactionSource: MutableInteractionSource? = null,
+    backdrop: Backdrop? = null,
+    containerColor: Color? = null,
+    preset: LiquidGlassPreset? = null,
+    onClick: () -> Unit
+): Modifier {
+    val currentOnClick = rememberUpdatedState(onClick)
+    val interaction = remember(
+        enabled, interactiveHighlight, shape, role, stretchFactor, translationFactor, interactionSource
+    ) {
+        val layer = liquidControlLayerBlock(enabled, interactiveHighlight, stretchFactor, translationFactor)
+        Modifier
+            .clickable(
+                enabled = enabled,
+                role = role,
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = { currentOnClick.value() }
+            )
+            .then(if (enabled) interactiveHighlight.gestureModifier else Modifier)
+            .then(if (layer != null) Modifier.graphicsLayer(layer) else Modifier)
+            .then(if (enabled) interactiveHighlight.modifier(clipShape = shape) else Modifier)
+    }
+    val control = then(interaction)
+    return if (backdrop == null) control else control.liquidGlass(
+        backdrop = backdrop,
+        shape = shape,
+        role = LiquidGlassRole.Control,
+        containerColor = containerColor,
+        preset = preset,
+        interactive = enabled
+    )
+}
 
 /** Adds the single press gesture and optical highlight used by Liquid controls. */
 internal fun Modifier.liquidControlPressFeedback(

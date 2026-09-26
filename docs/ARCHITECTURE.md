@@ -61,6 +61,23 @@ than launching a new pointer-position coroutine for every motion event. A new pr
 the previous release. Reduced motion must preserve selection and highlighting while disabling
 elastic scale and displacement.
 
+`LiquidIconButton` owns all actionable icons, including top-bar actions, dropdown anchors,
+media controls, text-field actions and dismissal controls. Its `Standard`, `TopBarAction`,
+`Ghost` and `DropdownAnchor` variants share one interaction implementation. A preference
+row owns its single spring; the leading icon changes color without starting a second spring.
+
+`liquidControlInteractive` centralizes click semantics, enabled state, highlight and the optical
+surface. Input modifiers precede the graphics layer so pointer coordinates remain stationary.
+`LiquidControlDefaults` sets deformation and translation factors to 0.35. Press uses the tactile
+spring and release/return use the Snappy spring; reduced motion clears elastic transforms.
+
+Surface tokens, theme tint, effect policy and backdrop providers are remembered with their
+actual inputs. Geometry and density remain draw-time inputs. Backdrop recording bounds the
+optical sample to about two million pixels while leaving foreground content at full resolution.
+The shared C11 wave kernel generates one periodic table; Android JNI and iOS cinterop use the
+same source, with Kotlin fallback. Animation phases are read during drawing instead of
+recomposing the background on every frame. See [native kernel](../native/README.md).
+
 ## Verification
 
 Run `python scripts/check_sdk_structure.py` to check the complete Kotlin source tree for
@@ -74,3 +91,8 @@ The menu interaction suite exercises hosted and popup menus, drag release target
 semantic clicks, disabled rows, changed callbacks, cancellation and multiple pointers.
 Optical appearance and frame cost also require device checks with effects enabled; fallback
 rendering and successful compilation do not establish visual or performance parity.
+
+The Android device suite covers icon variants, callback replacement, disabled input, the single
+preference-row action and clear-button input with reduced motion. It also checks menu dragging,
+backdrop recording, resolution, card optics and loading animation. Run
+`./gradlew :app:connectedDebugAndroidTest` with an unlocked ADB device.

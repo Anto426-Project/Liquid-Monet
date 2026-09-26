@@ -9,7 +9,7 @@ import com.anto426.liquidmonet.components.menu.LiquidMenuItem
 import com.anto426.liquidmonet.glass.overlay.liquidGlassOverlayAnchor
 import com.anto426.liquidmonet.glass.overlay.rememberLiquidGlassOverlayAnchorState
 import com.anto426.liquidmonet.motion.LiquidMotion
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -38,8 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.display.LiquidSectionHeader
 import com.anto426.liquidmonet.components.display.LiquidSectionHeaderSize
-import com.anto426.liquidmonet.components.internal.liquidControlLayer
-import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
+import com.anto426.liquidmonet.components.internal.liquidControlInteractive
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.liquidGlass
@@ -106,31 +105,29 @@ fun LiquidPreferenceItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val interactiveHighlight = rememberLiquidControlHighlight()
-    val iconHighlight = rememberLiquidControlHighlight()
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
+    val performance = LocalLiquidGlassPerformance.current
+    val rowShape = remember { RoundedRectangle(16.dp) }
+    val iconShape = remember { RoundedRectangle(12.dp) }
+    val iconContainerColor by animateColorAsState(
+        targetValue = if (isPressed && isInteractive) glassColors.accentContainer else glassColors.neutralContainer,
+        animationSpec = LiquidMotion.tween(performance, LiquidMotion.FastDurationMillis),
+        label = "preferenceIconContainer"
+    )
 
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .liquidControlLayer(isInteractive, interactiveHighlight)
-            .liquidControlPressFeedback(
-                enabled = isInteractive,
+            .then(if (onClick != null) Modifier.liquidControlInteractive(
+                enabled = true,
                 interactiveHighlight = interactiveHighlight,
-                shape = RoundedRectangle(16.dp),
-                drawHighlightOverlay = true
-            )
-            .then(
-                if (isInteractive) {
-                    Modifier.clickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = onClick
-                    )
-                } else Modifier
-            )
+                shape = rowShape,
+                interactionSource = interactionSource,
+                onClick = onClick
+            ) else Modifier)
             .padding(horizontal = 6.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -141,24 +138,11 @@ fun LiquidPreferenceItem(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .liquidControlLayer(true, iconHighlight)
-                    .liquidControlPressFeedback(
-                        enabled = true,
-                        interactiveHighlight = iconHighlight,
-                        shape = RoundedRectangle(12.dp),
-                        drawHighlightOverlay = true
-                    )
                     .liquidGlass(
                         backdrop = effectiveBackdrop,
-                        shape = RoundedRectangle(12.dp),
+                        shape = iconShape,
                         role = LiquidGlassRole.Control,
-                        containerColor = colorScheme.primary.copy(
-                            alpha = if (isPressed && isInteractive) {
-                                glassColors.accentContainer.alpha
-                            } else {
-                                glassColors.neutralContainer.alpha * 1.8f
-                            }
-                        )
+                        containerColor = iconContainerColor
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -177,7 +161,7 @@ fun LiquidPreferenceItem(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isPressed && onClick != null) FontWeight.SemiBold else FontWeight.Medium,
-                    color = glassColors.content
+                color = glassColors.content
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(

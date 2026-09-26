@@ -43,7 +43,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.lerp
 import com.anto426.liquidmonet.components.display.LiquidHorizontalDivider
 import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
 import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
@@ -54,7 +53,6 @@ import com.anto426.liquidmonet.glass.LocalLiquidGlassContainerMode
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
-import com.anto426.liquidmonet.glass.runtime.LiquidGlassPreset
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPresets
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.icons.LiquidIcons
@@ -147,8 +145,7 @@ fun LiquidAccordionItem(
     val cardHighlight = rememberLiquidControlHighlight()
     val cardLayerBlock = liquidControlLayerBlock(
         enabled = true,
-        interactiveHighlight = cardHighlight,
-        stretchFactor = if (isExpanded) 1.035f else 1.045f
+        interactiveHighlight = cardHighlight
     )
 
     Box(

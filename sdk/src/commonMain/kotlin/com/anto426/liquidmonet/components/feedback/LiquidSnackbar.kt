@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import com.anto426.liquidmonet.components.buttons.LiquidIconButton
+import com.anto426.liquidmonet.components.buttons.LiquidIconButtonVariant
 import com.anto426.liquidmonet.icons.LiquidIcons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -183,22 +185,14 @@ fun LiquidSnackbar(
                 }
 
                 if (onDismiss != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clickable(
-                                role = Role.Button,
-                                onClick = onDismiss
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = LiquidIcons.Close,
-                            contentDescription = "Chiudi",
-                            tint = glassColors.secondaryContent,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                    LiquidIconButton(
+                        icon = LiquidIcons.Close,
+                        contentDescription = "Chiudi",
+                        onClick = onDismiss,
+                        iconSize = 18.dp,
+                        variant = LiquidIconButtonVariant.Ghost,
+                        contentColor = glassColors.secondaryContent
+                    )
                 }
             }
         }

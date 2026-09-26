@@ -8,7 +8,6 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -25,15 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.internal.liquidControlLayerBlock
-import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
+import com.anto426.liquidmonet.components.internal.liquidControlInteractive
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
-import com.anto426.liquidmonet.glass.LiquidGlassRole
-import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
@@ -113,21 +108,14 @@ fun LiquidFloatingActionButton(
             }
             .height(size)
             .defaultMinSize(minWidth = size)
-            .liquidGlass(
+            .liquidControlInteractive(
+                enabled = enabled && visible,
+                interactiveHighlight = interactiveHighlight,
                 backdrop = effectiveBackdrop,
                 shape = shape,
-                role = LiquidGlassRole.Control,
                 containerColor = animatedContainerColor,
-                layerBlock = liquidControlLayerBlock(enabled && visible, interactiveHighlight)
-            )
-            .clickable(
-                interactionSource = null,
-                indication = null,
-                role = Role.Button,
-                enabled = enabled && visible,
                 onClick = onClick
             )
-            .liquidControlPressFeedback(enabled && visible, interactiveHighlight, shape = shape)
             .padding(horizontal = horizontalPadding),
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically

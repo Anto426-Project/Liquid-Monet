@@ -41,11 +41,14 @@ jobs:
         with:
           python-version: '3.12'
       - uses: gradle/actions/setup-gradle@v6.3.0
+      - name: Check SDK structure
+        run: python3 scripts/check_sdk_structure.py
       - name: Test and compile all published targets
         run: |
           set -euo pipefail
           ./gradlew --no-daemon --max-workers=2 -PsdkVersion="$SDK_VERSION" \
-            :sdk:testAndroidHostTest :sdk:iosSimulatorArm64Test \
+            :sdk:compileCommonMainKotlinMetadata :sdk:testAndroidHostTest :sdk:iosSimulatorArm64Test \
+            :app:assembleDebug :app:assembleDebugAndroidTest \
             :sdk:linkDebugFrameworkIosArm64 :sdk:publishAllPublicationsToStagingRepository
       - name: Verify and package Maven repository
         run: |
