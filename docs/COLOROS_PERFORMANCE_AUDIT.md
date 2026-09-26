@@ -24,6 +24,31 @@ e di [OnePlus su OxygenOS 16](https://www.oneplus.com/us/oxygenos16) descrive gl
 generali. Le decisioni nella tabella si basano anche sui riscontri nei file locali:
 non costituiscono una riproduzione completa dei motori proprietari.
 
+## Rifrazione più marcata
+
+I preset comuni aumentano l’ampiezza della lente senza aumentare il raggio del blur,
+il numero di campioni cromatici o la risoluzione dei buffer:
+
+| Preset | Altezza della fascia prima → dopo | Rifrazione prima → dopo |
+| --- | --- | --- |
+| Subtle | 10 → 10 dp | 16 → 20 dp |
+| Standard | 18 → 20 dp | 32 → 44 dp |
+| Navigation | 24 → 24 dp | 24 → 32 dp |
+| Interactive | 10 → 10 dp | 14 → 18 dp |
+| Immersive | 24 → 26 dp | 48 → 64 dp |
+
+Le scale ottiche MINIMAL/BALANCED/HIGH/ULTRA passano da 0,20/0,55/0,85/1,00 a
+0,40/0,70/0,95/1,00. MINIMAL abilita la lente soltanto per controlli e navigazione
+interattivi, senza aggiungere blur, dispersione cromatica o lenti ai grandi pannelli.
+BALANCED la abilita sulle superfici compatte; HIGH e ULTRA conservano le lenti estese.
+Intensità zero e piattaforme senza runtime shader continuano a disattivarla.
+
+La fascia hardware regola separatamente il campionamento (0,50/0,67/0,85/1,00):
+un dispositivo lento conserva quindi la geometria richiesta con meno pixel intermedi.
+Il test GPU confronta entrambe le estremità dell’intervallo a piena e mezza risoluzione,
+controllando che il contenuto in primo piano rimanga nitido. La verifica a risoluzione
+ridotta sul OnePlus non equivale a un benchmark su un telefono di fascia bassa.
+
 ## Verifica
 
 Verifiche locali del 26 settembre 2026:
@@ -31,9 +56,9 @@ Verifiche locali del 26 settembre 2026:
 - 254 file Kotlin controllati, zero violazioni strutturali.
 - Kernel C11 compilati con warning trattati come errori; nuovo kernel spring
   passato anche con AddressSanitizer e UBSan.
-- 95 test host superati: confronto numerico con Compose, continuità alle inversioni,
+- 96 test host superati: confronto numerico con Compose, continuità alle inversioni,
   arresto del frame loop, ritorno al rilascio, movimento ridotto e input molto denso.
-- 33 test strumentali superati sul OnePlus 13 (CPH2653, Android 16). Il nuovo test
+- 34 test strumentali superati sul OnePlus 13 (CPH2653, Android 16). Il nuovo test
   JNI invoca direttamente la libreria nell’APK, senza accettare il fallback Kotlin.
   La suite comprende gesture, indicatori, menu, testo, calendario e sfondi animati.
 - Confronto A/B degli otto sfondi (quattro effetti, due temi) a fase fissa sullo
