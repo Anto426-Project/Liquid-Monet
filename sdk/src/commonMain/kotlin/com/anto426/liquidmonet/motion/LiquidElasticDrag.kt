@@ -1,6 +1,7 @@
 package com.anto426.liquidmonet.motion
 
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.SnapSpec
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +39,10 @@ internal class LiquidElasticDrag(
     }
 
     fun release(specification: FiniteAnimationSpec<Float>) {
+        if (specification is SnapSpec && specification.delay == 0) {
+            reset()
+            return
+        }
         val start = rawOffset
         returnJob?.cancel()
         returnJob =
