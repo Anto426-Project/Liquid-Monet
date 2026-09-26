@@ -2,3 +2,4 @@
 # the application's whole-program R8 pass. Dependencies supply their own rules.
 -keepattributes Signature,InnerClasses,EnclosingMethod,*Annotation*
 -keep class com.anto426.liquidmonet.glass.internal.LiquidNativeWave { *; }
+-keep class com.anto426.liquidmonet.motion.LiquidNativeSpring { *; }

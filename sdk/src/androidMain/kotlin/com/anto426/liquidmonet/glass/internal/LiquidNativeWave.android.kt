@@ -5,7 +5,7 @@ internal actual fun fillNativeSineLookup(samples: FloatArray): Boolean =
 
 /** Kept by the SDK consumer rules because the entry point is resolved by JNI name. */
 internal object LiquidNativeWave {
-    private val loaded: Boolean by lazy {
+    val loaded: Boolean by lazy {
         runCatching { System.loadLibrary("liquidwave") }.isSuccess
     }
 
