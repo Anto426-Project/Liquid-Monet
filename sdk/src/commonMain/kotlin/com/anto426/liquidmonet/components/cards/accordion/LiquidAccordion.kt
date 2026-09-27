@@ -156,6 +156,7 @@ fun LiquidAccordionItem(
                 .liquidGlass(
                     backdrop = effectiveBackdrop,
                     shape = cardShape,
+                    isCardSurface = true,
                     role = LiquidGlassRole.Surface,
                     containerColor = null,
                     preset = LiquidGlassPresets.Navigation,

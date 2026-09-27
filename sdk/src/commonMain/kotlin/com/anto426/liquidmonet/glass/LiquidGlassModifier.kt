@@ -19,6 +19,7 @@ import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPreset
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.glass.runtime.effectPolicy
+import com.anto426.liquidmonet.glass.runtime.surfacePerformance
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.BackdropEffectScope
 import com.kyant.backdrop.backdrops.LayerBackdrop
@@ -97,9 +98,12 @@ internal fun Modifier.liquidGlass(
     val colorScheme = MaterialTheme.colorScheme
     val isLightSurface = remember(colorScheme.surface) { colorScheme.surface.luminance() > 0.5f }
     val style = remember(role) { LiquidGlassStyleManager.resolve(role) }
+    val surfacePerformance = remember(performance, isCardSurface) {
+        performance.surfacePerformance(isCardSurface)
+    }
     val tokens =
-        remember(preset, style.preset, performance) {
-            (preset ?: style.preset).resolve(performance)
+        remember(preset, style.preset, surfacePerformance) {
+            (preset ?: style.preset).resolve(surfacePerformance)
         }
     val liquidStrength = performance.liquidIntensity.coerceIn(0f, 1f)
     val ambientMonetTint =
@@ -113,8 +117,8 @@ internal fun Modifier.liquidGlass(
     val surfaceColor = containerColor ?: LiquidGlassStyleManager.surfaceColor(role, isLightSurface)
 
     val effectPolicy =
-        remember(performance, role, interactive, isCardSurface) {
-            performance.effectPolicy(role, interactive, isCardSurface)
+        remember(surfacePerformance, role, interactive, isCardSurface) {
+            surfacePerformance.effectPolicy(role, interactive, isCardSurface)
         }
     val useBlur = effectPolicy.blur && tokens.blurRadius > 0.dp
     val useRefraction =
@@ -229,7 +233,7 @@ internal fun Modifier.liquidGlass(
         innerShadow = innerShadow,
         layerBlock = layerBlock,
         exportedBackdrop = exportedBackdrop,
-        resolutionScale = performance.renderResolutionScale,
+        resolutionScale = surfacePerformance.renderResolutionScale,
         onDrawSurface = drawSurface,
     )
 }

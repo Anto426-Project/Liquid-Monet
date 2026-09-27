@@ -127,6 +127,7 @@ fun LiquidMediaController(
                 .liquidGlass(
                     backdrop = effectiveBackdrop,
                     shape = shape,
+                    isCardSurface = true,
                     role = LiquidGlassRole.Surface,
                     layerBlock =
                         if (onContainerClick != null)

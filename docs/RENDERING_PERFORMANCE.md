@@ -1,5 +1,18 @@
 # Motion, optical rendering and resource reuse
 
+## Budget delle card e dei controlli
+
+Le card grandi usano sempre un budget locale leggero: campionamento al massimo 0,5 per asse e
+materiale al massimo BALANCED, anche quando il tema richiede ULTRA. La superficie conserva il
+fondale campionato, la tinta Monet, il bordo luminoso e la profondità esterna; non attiva la lente
+estesa, il blur, la dispersione cromatica o l'ombra interna. Lo stesso trattamento copre LiquidCard,
+gli accordion e i contenitori multimediali.
+
+Il limite si applica solo allo sfondo. Testi e icone restano alla risoluzione del layout; i controlli
+interni, la navbar e le altre superfici mantengono il profilo del tema. Il campionamento a 0,5 usa
+circa un quarto dei pixel di una texture a scala 1, prima dei margini: è una riduzione del lavoro
+di campionamento, non una promessa equivalente sul consumo totale o sui tempi dei frame.
+
 Liquid Monet uses original portable C11 kernels and the Compose/Skia rendering backends.
 The SDK does not bundle firmware code, proprietary binaries or vendor scheduling APIs.
 

@@ -323,7 +323,7 @@ class LiquidGlassCalibrationTest {
     }
 
     @Test
-    fun cardTreatmentIsLocalAndKeepsLensAndOuterDepthOnEveryDevice() {
+    fun cardTreatmentKeepsOuterDepthWithoutSpendingTheControlLensBudget() {
         for (budget in LiquidGlassQualityTier.entries) {
             val state =
                 LiquidGlassPerformanceState.Fallback.copy(
@@ -335,12 +335,14 @@ class LiquidGlassCalibrationTest {
                     chromaticAberrationScale = 1f,
                 )
             val surface = state.effectPolicy(LiquidGlassRole.Surface)
-            val card = state.effectPolicy(LiquidGlassRole.Surface, isCardSurface = true)
+            val cardState = state.surfacePerformance(isCardSurface = true)
+            val card = cardState.effectPolicy(LiquidGlassRole.Surface, isCardSurface = true)
             assertFalse(card.blur)
             assertFalse(card.chromaticAberration)
             assertFalse(card.innerShadow)
-            assertTrue(card.refraction)
-            assertEquals(surface.refraction, card.refraction)
+            assertFalse(card.refraction)
+            assertEquals(LiquidGlassQualityTier.BALANCED, cardState.opticalQualityTier)
+            assertEquals(0.5f, cardState.renderResolutionScale)
             assertEquals(surface.highlight, card.highlight)
             assertEquals(surface.shadow, card.shadow)
             assertTrue(surface.blur)
@@ -353,6 +355,50 @@ class LiquidGlassCalibrationTest {
                 assertTrue(regular.chromaticAberration)
                 if (role != LiquidGlassRole.TopBar) assertTrue(regular.innerShadow)
             }
+        }
+    }
+
+    @Test
+    fun cardBudgetRespectsLowerRequestsAndLeavesChildrenAndCalibrationUnchanged() {
+        for (requested in LiquidGlassQualityTier.entries) {
+            val shared =
+                LiquidGlassPerformanceState.Fallback.copy(
+                    device = capable,
+                    qualityTier = LiquidGlassQualityTier.HIGH,
+                    opticalQualityTier = requested,
+                    calibration = report,
+                    renderResolutionScale = 0.85f,
+                    refractionScale = 1f,
+                    motionScale = 0.9f,
+                )
+            val card = shared.surfacePerformance(isCardSurface = true)
+            assertEquals(minOf(requested, LiquidGlassQualityTier.BALANCED), card.opticalQualityTier)
+            assertEquals(LiquidGlassQualityTier.MINIMAL, card.qualityTier)
+            assertEquals(0.5f, card.renderResolutionScale)
+            assertEquals(report, card.calibration)
+            assertEquals(shared.motionScale, card.motionScale)
+            assertEquals(shared, shared.surfacePerformance(isCardSurface = false))
+            assertEquals(requested, shared.opticalQualityTier)
+            assertEquals(0.85f, shared.renderResolutionScale)
+        }
+    }
+
+    @Test
+    fun cardSamplingNeverUpscalesAnExistingSmallOrInvalidBudget() {
+        val state = LiquidGlassPerformanceState.Fallback
+        for (scale in listOf(0.25f, 0.4f, 0.5f, 0.67f, 0.85f, 1f)) {
+            assertEquals(
+                minOf(scale, 0.5f),
+                state.copy(renderResolutionScale = scale)
+                    .surfacePerformance(isCardSurface = true).renderResolutionScale,
+            )
+        }
+        for (invalid in listOf(Float.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY)) {
+            assertEquals(
+                0.5f,
+                state.copy(renderResolutionScale = invalid)
+                    .surfacePerformance(isCardSurface = true).renderResolutionScale,
+            )
         }
     }
 }

@@ -6,8 +6,8 @@ import com.anto426.liquidmonet.glass.LiquidGlassRole
 /**
  * One global rendering decision shared by every Liquid Glass renderer.
  *
- * Components provide only their semantic [role]. They do not choose individual quality levels; the
- * active theme profile decides which effects are safe for that role.
+ * The theme selects the device budget; large cards receive a cheaper local material while compact
+ * navigation and controls retain that budget. A card never changes the profile of its children.
  */
 @Immutable
 internal data class LiquidGlassEffectPolicy(
@@ -18,6 +18,26 @@ internal data class LiquidGlassEffectPolicy(
     val shadow: Boolean,
     val innerShadow: Boolean,
 )
+
+/** Large card backgrounds do not need the sampling density or lens of a moving compact control. */
+internal fun LiquidGlassPerformanceState.surfacePerformance(
+    isCardSurface: Boolean,
+): LiquidGlassPerformanceState {
+    if (!isCardSurface) return this
+    val requestedOptics = opticalQualityTier ?: qualityTier
+    return copy(
+        qualityTier = LiquidGlassQualityTier.MINIMAL,
+        opticalQualityTier = minOf(requestedOptics, LiquidGlassQualityTier.BALANCED),
+        blurScale = minOf(blurScale, 0.4f),
+        refractionScale = minOf(refractionScale, 0.4f),
+        chromaticAberrationScale = 0f,
+        renderResolutionScale =
+            minOf(
+                renderResolutionScale.takeIf { it.isFinite() } ?: 0.5f,
+                LiquidGlassQualityTier.MINIMAL.renderResolutionScale,
+            ).coerceAtLeast(0.25f),
+    )
+}
 
 /** Resolves the one effect budget used by both public surfaces and internal renderers. */
 internal fun LiquidGlassPerformanceState.effectPolicy(
