@@ -2,7 +2,10 @@
 
 Android and iOS select a device sampling budget once before `LiquidMonetTheme` composes application
 content. Later launches load that same result. Material fidelity is a separate setting:
-`maximumGlassQuality` (HIGH by default) and `liquidIntensity` retain their optical meaning.
+`maximumGlassQuality = null` automatically selects ULTRA for ULTRA-capable hardware and HIGH
+for smaller hardware ceilings. Measured GPU sampling may be lower without attenuating that
+material. An explicit tier still selects that optical fidelity; `liquidIntensity`
+retains its optical meaning.
 A slow CPU or small memory budget must not silently remove refraction, highlights or depth.
 
 ## Responsibilities and execution
@@ -40,7 +43,7 @@ average where abundant RAM could hide a slow processor.
 | Arithmetic/transform workload | Single-core throughput: eight warm-ups, then five timed samples |
 | Memory transfers | Four observable 1 MiB transfers per sample, separate from arithmetic |
 | Core count, architecture, per-core maximum frequency | Supporting ceilings, not substitutes for measured speed |
-| Processor family and known generation introduction year | Manual CPU ceiling, resolved once on IO; see [family policy](PROCESSOR_FAMILIES.md) |
+| Processor family | Manual CPU ceiling, resolved once on IO; introduction year is metadata; see [family policy](PROCESSOR_FAMILIES.md) |
 | SoC, manufacturer, model, hardware, graphics API support | Hashed device/backend identity; no serial number or IMEI |
 | Resolution, density and maximum supported refresh | Account for pixels and frame budget |
 | Hardware-rendered scene | Background and six filtered panels at each candidate sampling resolution |
@@ -50,10 +53,26 @@ Unavailable frequency files mean unknown, not zero. Candidates retain the same c
 workload, including dispersion on Android 13+. Only their texture sampling resolution changes:
 MINIMAL 0.50, BALANCED 0.67, HIGH 0.85, ULTRA 1.00 along each axis.
 
+Policy version 3 uses more permissive independent ceilings:
+
+| Signal | Sampling ceiling |
+| --- | --- |
+| RAM below 1 GiB / below 2 GiB / below 3 GiB / at least 3 GiB | MINIMAL / BALANCED / HIGH / ULTRA |
+| Android low-RAM flag or known app heap below 96 MiB | At most BALANCED |
+| Known app heap 96–127 MiB or 32-bit architecture | At most HIGH |
+| At most 2 cores or known maximum clock below 1.2 GHz | At most HIGH |
+| Both CPU and copy P90 at most 3 / 8 / 16 ms | ULTRA / HIGH / BALANCED |
+| Either CPU or copy P90 above 16 ms, or invalid timings | MINIMAL |
+
+Unknown heap size or clock does not invent a restriction. The highest allowed graphics candidate
+is tested first, so a flagship can qualify for ULTRA without spending its deadline on lower tiers.
+A complete rejection moves to the next lower candidate. An incomplete probe returns an explicitly
+unmeasured capability estimate, bounded by any candidates already rejected.
+
 Two warm-ups precede five measured frames per graphics candidate. Two output buffers are bounded
 at about 1 MP on limited-memory devices or 4 MP on stronger-memory devices. Inter-frame pacing is
 outside the timed sample. Smaller test surfaces are conservatively charged for the full display
-pixel count, and a candidate must fit 70% of the refresh-rate frame interval.
+pixel count, and a candidate must fit 90% of the refresh-rate frame interval.
 
 Graphics timing includes recording, submission, completion and synchronization. It is an
 end-to-end estimate, not a GPU hardware counter. A frame commit and the image fence synchronize
@@ -66,13 +85,15 @@ They do not establish an application frame-rate guarantee.
 ## Persistence and recovery
 
 The atomic record lives at `noBackupFilesDir/liquid-glass-device-profile-v1`. The filename is stable;
-its internal format version is 2, distinguishing sampling budgets from the earlier experimental
-policy that reduced material fidelity. The record contains the hashed device key, tier, reason and
+its internal policy version is 3. Version 2 remains readable to preserve crash markers during
+migration. The record contains the hashed device key, tier, reason and
 measurements. It stays local and is excluded from backup/transfer.
 
 A pending record is committed before benchmarking. If the process dies, the next launch selects
-a stable conservative budget with reason `INTERRUPTED`. Missing capabilities, failed tests and
-startup power/thermal/memory constraints similarly produce explicit conservative results. None of
+a stable capability estimate instead of repeating the native test. Unavailable tests, timeout and
+startup power/thermal/memory constraints also produce `CAPABILITY_ESTIMATE` with zero measured
+timings. A lower estimate after a rejected candidate is preserved. Missing rendering capabilities
+remain hard limits. None of
 these reasons lowers the caller's requested optical fidelity. Supported platform capabilities
 still limit which shader APIs can actually run.
 
@@ -81,7 +102,10 @@ The coordinator waits at most 2.5 seconds for the benchmark. The render loop che
 never overwrite the selected profile. Temporary graphics resources are released when those calls
 return. Storage and hardware reads are outside the benchmark timeout and remain on IO.
 
-Normal app updates, transient pressure, rotation and battery saver do not change the saved profile.
+The version-3 upgrade measures completed version-2 `MEASURED` profiles once under the new policy.
+Old pending, failed or constrained profiles migrate directly to a capability estimate, preserving
+the no-retry guard. This is an explicit policy migration, not reclassification on every app update.
+Subsequent normal app updates, transient pressure, rotation and battery saver do not change the saved profile.
 Clearing app data, changing hardware/backend identity or an explicitly incompatible record version
 allows calibration again. There is no automatic reclassification during use.
 
@@ -91,11 +115,10 @@ is the measured sampling budget, `opticalQualityTier` is the caller's material s
 behavior of manually supplied performance states. Live pressure fields are diagnostics only.
 Loading feedback remains animated at every budget unless explicit `reduceMotion` disables motion.
 
-Processor family rules participate in new calibrations only. An SDK table update does not change
-the device identity, invalidate a saved profile or run another benchmark. Broad families with no
+Processor family rules participate in new calibrations only. An ordinary SDK table edit does not
+change the device identity or invalidate a current-policy saved profile. Broad families with no
 verified generation date retain an unknown year; neither the phone's release nor the Android
-version is used as the chip's age. Generation-era limits are fixed, without a calendar-driven
-annual downgrade.
+version is used as the chip's age. Introduction years add no ceiling or calendar-driven downgrade.
 
 ## Card-specific material
 
@@ -138,7 +161,7 @@ iOS reads physical RAM and core count through Apple's [ProcessInfo](https://deve
 screen pixels/density/refresh through UIKit, and [Metal GPU family support](https://developer.apple.com/documentation/metal/mtlgpufamily).
 The Metal device name identifies the actual Apple SoC when available (for example `Apple A19 Pro GPU`).
 It populates `device.socModel` and the same `LiquidGlassProcessorFamilies` used by Android; see
-[processor family policy](PROCESSOR_FAMILIES.md) for supported A/M generations and fixed age ceilings.
+[processor family policy](PROCESSOR_FAMILIES.md) for supported A/M generations and explicit ceilings.
 It no longer publishes the Android-shaped `Fallback` with zero RAM, unsupported shaders and a
 hard-coded MINIMAL tier. The Skia backend supplies the real effect-support flags. Android-only
 API level and app heap class remain zero (unknown) and do not penalize the iOS decision.
@@ -147,14 +170,13 @@ API level and app heap class remain zero (unknown) and do not penalize the iOS d
 
 | Signal | Sampling ceiling |
 | --- | --- |
-| RAM below 2 GiB / below 4 GiB / below 7 GiB / at least 7 GiB | MINIMAL / BALANCED / HIGH / ULTRA |
-| At most 2 cores / at most 4 cores / more cores | BALANCED / HIGH / ULTRA |
-| Apple GPU family 7 or later / family 4–6 / older or unknown family | ULTRA / HIGH / BALANCED |
-| Recognized Apple CPU generation | Its shared family/era ceiling, just as on Android |
+| RAM and topology | Shared version-3 ceilings above; unknown Android heap size adds no penalty |
+| Apple GPU family 4 or later / family 2–3 / older or unknown family | ULTRA / HIGH / BALANCED |
+| Recognized Apple CPU generation | Its explicit shared family ceiling, just as on Android |
 
 An unknown CPU model adds no family penalty: available capabilities and actual timings remain in
 charge. Generic GPU-family support never invents an exact CPU model. The family table contains
-SDK policy limits, not Apple performance ratings, and updates do not invalidate a saved profile.
+SDK policy limits, not Apple performance ratings. Current-policy profiles remain cached.
 
 `LiquidGlassIosDeviceCalibration` shares one process-owned operation across themes/windows. Only
 UIKit hardware/lifecycle reads run on Main; files, CPU probes and GPU work run on workers. Cancelling
@@ -189,7 +211,9 @@ or unavailable storage yields `CAPABILITY_ESTIMATE` with **zero measured timings
 hardware estimate instead of permanently forcing every recent phone to MINIMAL. Successful probes
 publish `MEASURED` with CPU/memory/render P90 and sample dimensions. Both completed results are
 stable across subsequent launches; pending recovery does not repeat potentially crashing native
-work. Clearing the SDK profile or changing its hardware/workload key permits a new calibration.
+work. Version-2 measured profiles migrate once; older crash markers migrate without retry, using
+the same shared policy as Android. Clearing the SDK profile or changing its hardware/workload key
+permits a new calibration.
 
 On measured-profile launches, a small 256 x 256 offscreen pass prepares all four actual SDK shaders
 on Metal. It is process-owned and independent of the permanent score; Skia source programs are
@@ -241,7 +265,7 @@ python3 scripts/check_sdk_structure.py
 ```
 
 Host tests cover independent CPU/RAM constraints, clocks, graphics budget, persistent records,
-processor aliases/generation eras, card-only treatment, optical-policy invariance, essential motion
+processor aliases/family ceilings, policy migration, card-only treatment, explicit optical-policy invariance, essential motion
 and shader cache reuse/invalidation/bounds. Android
 instrumentation covers nested recording, menu interaction, visible loading motion, backdrop
 alignment and retained refraction under downsampling. Compilation of instrumentation tests is not

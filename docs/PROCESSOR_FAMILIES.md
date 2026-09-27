@@ -11,25 +11,26 @@ and unknown identifiers return no family, leaving the existing measured classifi
 
 Each family contains a stable ID, display name, CPU budget ceiling and optional introduction year
 of the underlying generation. A rebrand keeps the original generation's year. The final CPU
-ceiling is the minimum of the manual limit, generation era, CPU/memory-copy timings, core/clock
+ceiling is the minimum of the manual limit, CPU/memory-copy timings, core/clock
 limits, RAM/heap limits and available graphics APIs. GPU rendering then selects a budget within
 that ceiling. A large RAM allocation cannot compensate for a weak CPU, nor can a flagship name
 compensate for failed or slow measurements.
 
-Generation eras use fixed policy boundaries: generations introduced through 2016 are capped at
-BALANCED, 2017–2020 at HIGH; later or unknown dates add no extra age ceiling. These are conservative
-SDK defaults, not manufacturer performance claims. No current-year arithmetic or age inferred
-from the phone, Android release, firmware or build timestamp is used. Unknown dates stay null.
+Introduction years are metadata, not additional quality ceilings. An M1 or A14 must not lose ULTRA
+eligibility simply because its generation was introduced in 2020. Family limits are SDK choices,
+not manufacturer performance claims. No current-year arithmetic or age inferred from the phone,
+Android release, firmware or build timestamp is used. Unknown dates stay null.
 
 The table currently covers Apple A8–A19 and M1–M5, Qualcomm Snapdragon, MediaTek Dimensity/Helio,
 Samsung Exynos, Google Tensor, UNISOC and Kirin families. Coverage and dated generations are deliberately partial.
-For example, unspecified Snapdragon 8 generations use a conservative series fallback rather than
+For example, unspecified Snapdragon 8 generations use a series fallback rather than
 inheriting the year of the first 8-series chip. Unverified MediaTek/Samsung board-code aliases are
 not inferred from a vendor prefix. Add a specific generation before its series fallback, document
 its source here and test both the commercial name and available board codes.
 
-Saved profiles retain their existing version and hardware key. Table changes affect only a new
-calibration, not an already persisted result. Family metadata is available through
+Policy version 3 migrates completed version-2 measurements with one new calibration. Old failed
+or pending records become a capability estimate without retrying potentially unsafe native work.
+Later launches reuse the migrated result; ordinary table edits do not invalidate it. Family metadata is available through
 `LocalLiquidGlassPerformance.current.device.processorFamily`. Optical fidelity and the explicit
 LiquidCard treatment are separate from the classification table.
 
@@ -37,10 +38,17 @@ On iOS the Metal device name supplies the SoC model. `Apple A18 Pro GPU`, for ex
 the A18 generation while preserving the exact model in `device.socModel`. A-series X/Z variants and
 M-series Pro/Max/Ultra variants retain the underlying generation's date. iPhone identifiers and
 generic `Apple GPU` strings are not CPU models and do not select a family. Future unknown chips
-still use the native benchmark and hardware ceilings. Existing fixed era rules apply equally:
-A10 generation is at most BALANCED; A11–A14 and M1 at most HIGH; later generations may reach ULTRA
-when RAM, measured CPU/memory traffic and real rendering also qualify. These thresholds need
+still use the native benchmark and hardware ceilings. A8–A11 are eligible for HIGH; A12 and later
+and all recognized M generations are eligible for ULTRA when RAM, CPU/memory traffic and real
+rendering also qualify. These thresholds need
 representative-device validation and do not guarantee that one chip is faster than another.
+
+On Android, Snapdragon 855/865/888 and modern 7/8 series, Dimensity 8000/9000 series, premium
+Exynos, Tensor and premium Kirin families may reach ULTRA. Midrange Snapdragon 4/6 and older 7
+series, Dimensity 6000/7000, Helio G/P and comparable families may reach HIGH. Entry families can
+reach BALANCED. The benchmark tries the highest allowed candidate first and descends only after
+a complete rejected sample set. Eligibility does not force a tier when measurements exceed its
+budget; see [shared thresholds and recovery](DEVICE_CALIBRATION.md).
 
 ## Primary references
 

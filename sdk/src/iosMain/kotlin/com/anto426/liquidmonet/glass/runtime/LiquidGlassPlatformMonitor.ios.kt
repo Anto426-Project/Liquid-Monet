@@ -19,38 +19,44 @@ import platform.UIKit.UIApplicationDidBecomeActiveNotification
 @Composable
 internal actual fun rememberLiquidGlassPerformanceState(
     liquidIntensity: Float,
-    maximumQuality: LiquidGlassQualityTier,
-    reduceMotion: Boolean
+    maximumQuality: LiquidGlassQualityTier?,
+    reduceMotion: Boolean,
 ): State<LiquidGlassPerformanceState?> {
     return produceState(null, liquidIntensity, maximumQuality, reduceMotion) {
         val calibrated = LiquidGlassIosDeviceCalibration.load()
         fun publishState() {
             val process = NSProcessInfo.processInfo
-            value = liquidGlassPerformanceState(
-                device = calibrated.device,
-                qualityTier = calibrated.calibration.qualityTier,
-                liquidIntensity = liquidIntensity,
-                maximumQuality = maximumQuality,
-                reduceMotion = reduceMotion,
-                calibration = calibrated.calibration,
-                thermalStatus = when (process.thermalState) {
-                    NSProcessInfoThermalStateNominal -> LiquidGlassThermalStatus.NONE
-                    NSProcessInfoThermalStateFair -> LiquidGlassThermalStatus.LIGHT
-                    NSProcessInfoThermalStateSerious -> LiquidGlassThermalStatus.SEVERE
-                    NSProcessInfoThermalStateCritical -> LiquidGlassThermalStatus.CRITICAL
-                    else -> LiquidGlassThermalStatus.NONE
-                },
-                isPowerSaveMode = process.lowPowerModeEnabled
-            )
+            value =
+                liquidGlassPerformanceState(
+                    device = calibrated.device,
+                    qualityTier = calibrated.calibration.qualityTier,
+                    liquidIntensity = liquidIntensity,
+                    maximumQuality = maximumQuality,
+                    reduceMotion = reduceMotion,
+                    calibration = calibrated.calibration,
+                    thermalStatus =
+                        when (process.thermalState) {
+                            NSProcessInfoThermalStateNominal -> LiquidGlassThermalStatus.NONE
+                            NSProcessInfoThermalStateFair -> LiquidGlassThermalStatus.LIGHT
+                            NSProcessInfoThermalStateSerious -> LiquidGlassThermalStatus.SEVERE
+                            NSProcessInfoThermalStateCritical -> LiquidGlassThermalStatus.CRITICAL
+                            else -> LiquidGlassThermalStatus.NONE
+                        },
+                    isPowerSaveMode = process.lowPowerModeEnabled,
+                )
         }
         val notifications = NSNotificationCenter.defaultCenter
-        val observers = listOfNotNull(
-            NSProcessInfoThermalStateDidChangeNotification,
-            NSProcessInfoPowerStateDidChangeNotification,
-            UIApplicationDidBecomeActiveNotification
-        ).map { name ->
-            notifications.addObserverForName(name, null, NSOperationQueue.mainQueue) { publishState() }
-        }
+        val observers =
+            listOfNotNull(
+                    NSProcessInfoThermalStateDidChangeNotification,
+                    NSProcessInfoPowerStateDidChangeNotification,
+                    UIApplicationDidBecomeActiveNotification,
+                )
+                .map { name ->
+                    notifications.addObserverForName(name, null, NSOperationQueue.mainQueue) {
+                        publishState()
+                    }
+                }
         publishState()
         awaitDispose { observers.forEach { notifications.removeObserver(it) } }
     }

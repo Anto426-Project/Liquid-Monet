@@ -5,7 +5,7 @@ internal fun liquidGlassPerformanceState(
     device: LiquidGlassDeviceProfile,
     qualityTier: LiquidGlassQualityTier,
     liquidIntensity: Float,
-    maximumQuality: LiquidGlassQualityTier,
+    maximumQuality: LiquidGlassQualityTier?,
     reduceMotion: Boolean,
     calibration: LiquidGlassCalibration? = null,
     thermalStatus: LiquidGlassThermalStatus = LiquidGlassThermalStatus.UNKNOWN,
@@ -13,7 +13,11 @@ internal fun liquidGlassPerformanceState(
     isMemoryPressureHigh: Boolean = false,
     availableMemoryBytes: Long = 0L,
 ): LiquidGlassPerformanceState {
-    val scales = scalesFor(maximumQuality)
+    // Hardware selects the material; measured GPU cost independently selects texture resolution.
+    val opticalTier =
+        maximumQuality
+            ?: maxOf(LiquidGlassCalibrationPolicy.startupTier(device), LiquidGlassQualityTier.HIGH)
+    val scales = scalesFor(opticalTier)
     val intensity = normalizeLiquidGlassIntensity(liquidIntensity)
     return LiquidGlassPerformanceState(
         device = device,
@@ -29,7 +33,7 @@ internal fun liquidGlassPerformanceState(
         chromaticAberrationScale =
             if (device.supportsRuntimeShader) scales.chromaticAberration * intensity else 0f,
         calibration = calibration,
-        opticalQualityTier = maximumQuality,
+        opticalQualityTier = opticalTier,
         renderResolutionScale = qualityTier.renderResolutionScale,
     )
 }

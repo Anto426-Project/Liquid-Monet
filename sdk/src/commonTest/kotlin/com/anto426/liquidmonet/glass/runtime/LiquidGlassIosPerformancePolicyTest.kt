@@ -8,6 +8,38 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class LiquidGlassIosPerformancePolicyTest {
+    @Test
+    fun automaticOpticsKeepUltraOnTopHardwareEvenWhenGpuSamplingIsReduced() {
+        for (budget in LiquidGlassQualityTier.entries) {
+            val automatic = liquidGlassPerformanceState(modernDevice, budget, 1f, null, false)
+            assertEquals(LiquidGlassQualityTier.ULTRA, automatic.opticalQualityTier)
+            assertEquals(budget.renderResolutionScale, automatic.renderResolutionScale)
+            assertTrue(
+                automatic.effectPolicy(LiquidGlassRole.Navigation, interactive = true).refraction
+            )
+            val explicit =
+                liquidGlassPerformanceState(
+                    modernDevice,
+                    budget,
+                    1f,
+                    LiquidGlassQualityTier.BALANCED,
+                    false,
+                )
+            assertEquals(LiquidGlassQualityTier.BALANCED, explicit.opticalQualityTier)
+            assertEquals(budget, explicit.qualityTier)
+            val limited =
+                liquidGlassPerformanceState(
+                    modernDevice.copy(totalMemoryBytes = 2L * GiB),
+                    budget,
+                    1f,
+                    null,
+                    false,
+                )
+            assertEquals(LiquidGlassQualityTier.HIGH, limited.opticalQualityTier)
+            assertEquals(budget.renderResolutionScale, limited.renderResolutionScale)
+        }
+    }
+
     private val GiB = 1024L * 1024L * 1024L
     private val modernDevice =
         LiquidGlassDeviceProfile(
@@ -56,7 +88,7 @@ class LiquidGlassIosPerformancePolicyTest {
     @Test
     fun actualAppleCpuModelAddsIndependentCeilingBeforeMeasurements() {
         assertEquals(
-            LiquidGlassQualityTier.BALANCED,
+            LiquidGlassQualityTier.HIGH,
             tier(
                 modernDevice.copy(
                     processorFamily = LiquidGlassProcessorFamilies.identify("Apple A10X GPU")
@@ -64,7 +96,7 @@ class LiquidGlassIosPerformancePolicyTest {
             ),
         )
         assertEquals(
-            LiquidGlassQualityTier.HIGH,
+            LiquidGlassQualityTier.ULTRA,
             tier(
                 modernDevice.copy(
                     processorFamily = LiquidGlassProcessorFamilies.identify("Apple A14 GPU")
@@ -80,7 +112,7 @@ class LiquidGlassIosPerformancePolicyTest {
             LiquidGlassQualityTier.MINIMAL,
             minOf(
                 tier(modern),
-                LiquidGlassCalibrationPolicy.measuredCpuCeiling(9_000_000, 500_000),
+                LiquidGlassCalibrationPolicy.measuredCpuCeiling(17_000_000, 500_000),
             ),
         )
     }
@@ -89,29 +121,34 @@ class LiquidGlassIosPerformancePolicyTest {
     fun memoryStillBoundsSamplingOnOlderHardware() {
         assertEquals(
             LiquidGlassQualityTier.MINIMAL,
-            tier(modernDevice.copy(totalMemoryBytes = GiB)),
+            tier(modernDevice.copy(totalMemoryBytes = GiB / 2)),
         )
         assertEquals(
             LiquidGlassQualityTier.BALANCED,
-            tier(modernDevice.copy(totalMemoryBytes = 3L * GiB)),
+            tier(modernDevice.copy(totalMemoryBytes = GiB)),
         )
         assertEquals(
             LiquidGlassQualityTier.HIGH,
-            tier(modernDevice.copy(totalMemoryBytes = 4L * GiB)),
+            tier(modernDevice.copy(totalMemoryBytes = 2L * GiB)),
         )
+        for (ram in listOf(3L, 4L, 6L, 8L)) {
+            assertEquals(
+                LiquidGlassQualityTier.ULTRA,
+                tier(modernDevice.copy(totalMemoryBytes = ram * GiB)),
+            )
+        }
         assertEquals(
-            LiquidGlassQualityTier.HIGH,
-            tier(modernDevice.copy(totalMemoryBytes = 6L * GiB)),
+            LiquidGlassQualityTier.BALANCED,
+            tier(modernDevice.copy(isLowRamDevice = true)),
         )
-        assertEquals(LiquidGlassQualityTier.MINIMAL, tier(modernDevice.copy(isLowRamDevice = true)))
     }
 
     @Test
     fun abundantMemoryCannotOverrideCpuOrGpuLimits() {
-        assertEquals(LiquidGlassQualityTier.BALANCED, tier(modernDevice.copy(cpuCoreCount = 2)))
-        assertEquals(LiquidGlassQualityTier.HIGH, tier(modernDevice.copy(cpuCoreCount = 4)))
-        assertEquals(LiquidGlassQualityTier.HIGH, tier(family = 4))
-        assertEquals(LiquidGlassQualityTier.HIGH, tier(family = 6))
+        assertEquals(LiquidGlassQualityTier.HIGH, tier(modernDevice.copy(cpuCoreCount = 2)))
+        assertEquals(LiquidGlassQualityTier.ULTRA, tier(modernDevice.copy(cpuCoreCount = 4)))
+        assertEquals(LiquidGlassQualityTier.ULTRA, tier(family = 4))
+        assertEquals(LiquidGlassQualityTier.ULTRA, tier(family = 6))
         assertEquals(LiquidGlassQualityTier.BALANCED, tier(family = 0))
     }
 
@@ -160,9 +197,9 @@ class LiquidGlassIosPerformancePolicyTest {
 
     @Test
     fun constrainedIosHardwareKeepsRequestedMaterialAtLowerResolution() {
-        val state = state(device = modernDevice.copy(totalMemoryBytes = 3L * GiB))
-        assertEquals(LiquidGlassQualityTier.BALANCED, state.qualityTier)
-        assertEquals(0.67f, state.renderResolutionScale)
+        val state = state(device = modernDevice.copy(totalMemoryBytes = 2L * GiB))
+        assertEquals(LiquidGlassQualityTier.HIGH, state.qualityTier)
+        assertEquals(0.85f, state.renderResolutionScale)
         assertEquals(LiquidGlassQualityTier.HIGH, state.opticalQualityTier)
         assertTrue(state.effectPolicy(LiquidGlassRole.Surface).refraction)
     }
