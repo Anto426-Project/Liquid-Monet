@@ -9,6 +9,8 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.tasks.bundling.Zip
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
@@ -131,7 +133,30 @@ extensions.configure<KotlinMultiplatformAndroidComponentsExtension>("androidComp
     }
 }
 
+val sdkLicenseArchive = tasks.register<Zip>("sdkLicenseArchive") {
+    archiveBaseName.set(project.name)
+    archiveClassifier.set("licenses")
+    destinationDirectory.set(layout.buildDirectory.dir("distributions"))
+    from(rootProject.file("LICENSE"))
+    from(rootProject.file("NOTICE"))
+    from(rootProject.file("licenses")) {
+        into("licenses")
+    }
+}
+
 publishing {
+    publications.withType<MavenPublication>().configureEach {
+        pom {
+            licenses {
+                license {
+                    name.set("Apache License, Version 2.0")
+                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    distribution.set("repo")
+                }
+            }
+        }
+        artifact(sdkLicenseArchive)
+    }
     repositories {
         maven {
             name = "GitHubPackages"

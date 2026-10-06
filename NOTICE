@@ -1,0 +1,16 @@
+Liquid Monet SDK
+Copyright 2026 Anto426
+https://github.com/Anto426-Project/Liquid-Monet
+
+Licensed under the Apache License, Version 2.0.
+See LICENSE for the full license text.
+
+Third-party dependencies retain their respective licenses and copyright notices.
+
+This SDK includes modified backdrop, shape and interaction implementations
+from Kyant0/AndroidLiquidGlass, licensed under Apache-2.0.
+Copyright 2025 Kyant
+Upstream: https://github.com/Kyant0/AndroidLiquidGlass
+The original license and attribution are preserved in
+licenses/AndroidLiquidGlass-Apache-2.0.txt and in the source headers.
+Adaptations for Liquid Monet are described in docs/KYANT_REFERENCE_RESTORATION.md.
