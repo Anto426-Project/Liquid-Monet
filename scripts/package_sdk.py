@@ -38,28 +38,15 @@ if not a.desktop_only:
 # Only this version belongs in the archive, even when staging contains older local builds.
 publication_dirs = [root, *(base / f'{artifact}-{suffix}' / a.version
                            for suffix, _ in targets)]
-source_root = Path(__file__).resolve().parents[1]
-license_paths = [source_root / 'LICENSE', source_root / 'NOTICE']
-for path in license_paths:
-    if not path.is_file() or not path.stat().st_size:
-        raise SystemExit(f'Missing SDK license document: {path}')
-license_directory = source_root / 'licenses'
-if license_directory.is_dir():
-    license_paths.extend(sorted(path for path in license_directory.rglob('*') if path.is_file()))
-license_files = {str(path.relative_to(source_root)): hashlib.sha256(path.read_bytes()).hexdigest()
-                 for path in license_paths}
 files = {str(f.relative_to(a.repository)): hashlib.sha256(f.read_bytes()).hexdigest()
          for directory in publication_dirs for f in directory.rglob('*') if f.is_file()}
 info = dict(coordinate=a.coordinate, version=a.version, sourceRepository=a.source_repository,
             sourceSha=a.source_sha, files=files, targets=[suffix for suffix, _ in targets],
-            license='Apache-2.0', licenseFiles=license_files,
             sourceTreeSha256=hashlib.sha256(subprocess.check_output(
                 ['git', 'archive', '--format=tar', a.source_sha], cwd=Path(__file__).resolve().parents[1])).hexdigest())
 archive = a.repository.with_suffix('.zip')
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as out:
     out.writestr('sdk-info.json', json.dumps(info, indent=2))
-    for path in license_paths:
-        out.write(path, str(path.relative_to(source_root)))
     for name in sorted(files):
         out.write(a.repository / name, 'maven/' + name)
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
