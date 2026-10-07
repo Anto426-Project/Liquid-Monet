@@ -45,6 +45,24 @@ enum class LiquidSwitcherTransition {
 
     /** Elastic liquid morph for content at the same hierarchy level. */
     LiquidMorph,
+
+    /** Immediate replacement, including layout size, with no decorative motion. */
+    None,
+
+    /** Simultaneous opacity blend for peer screens without a spatial relationship. */
+    Crossfade,
+
+    /** Fades out the old screen before fading in the new one. */
+    FadeThrough,
+
+    /** Full-width page slide; forward/backward motion follows the layout direction. */
+    SlideHorizontal,
+
+    /** Full-height page slide; forward enters from below, backward from above. */
+    SlideVertical,
+
+    /** Directional scale and fade for moving into or out of a hierarchy. */
+    SharedAxisDepth,
 }
 
 /**
@@ -74,6 +92,7 @@ fun <T> LiquidAnimatedSwitcher(
     val density = LocalDensity.current
     val hapticFeedback = LocalHapticFeedback.current
     val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
+    val motionEnabled = LiquidAnimatedSwitcherMotion.motionEnabled(performance, transition)
     val scope = rememberCoroutineScope()
     val forwardAction by rememberUpdatedState(onSwipeForward)
     val backwardAction by rememberUpdatedState(onSwipeBackward)
@@ -86,13 +105,18 @@ fun <T> LiquidAnimatedSwitcher(
     val settleDrag: () -> Unit = {
         settleJob?.cancel()
         rawDragOffsetPx = 0f
-        val start = dragOffsetPx
-        settleJob = scope.launch {
-            LiquidFloatMotion(start).animateTo(
-                targetValue = 0f,
-                animationSpec = LiquidAnimatedSwitcherMotion.returnSpring(performance),
-            ) {
-                dragOffsetPx = value
+        if (!motionEnabled) {
+            dragOffsetPx = 0f
+            settleJob = null
+        } else {
+            val start = dragOffsetPx
+            settleJob = scope.launch {
+                LiquidFloatMotion(start).animateTo(
+                    targetValue = 0f,
+                    animationSpec = LiquidAnimatedSwitcherMotion.returnSpring(performance),
+                ) {
+                    dragOffsetPx = value
+                }
             }
         }
     }
@@ -119,7 +143,7 @@ fun <T> LiquidAnimatedSwitcher(
                         }
                     }
                 }
-                .pointerInput(thresholdPx, isLtr) {
+                .pointerInput(thresholdPx, isLtr, performance, motionEnabled) {
                     detectHorizontalDragGestures(
                         onDragStart = {
                             settleJob?.cancel()
@@ -147,7 +171,7 @@ fun <T> LiquidAnimatedSwitcher(
                             change.consume()
                             rawDragOffsetPx += dragAmount
                             dragOffsetPx =
-                                thresholdPx *
+                                if (!motionEnabled) 0f else thresholdPx *
                                     1.65f *
                                     kotlin.math.tanh(rawDragOffsetPx / (thresholdPx * 1.65f))
                         },
@@ -162,14 +186,16 @@ fun <T> LiquidAnimatedSwitcher(
         modifier =
             modifier.then(touchModifier).graphicsLayer {
                 val axisSize = size.width.coerceAtLeast(1f)
-                val deformation = (abs(dragOffsetPx) / axisSize).coerceIn(0f, 0.22f)
+                val drag = if (motionEnabled) dragOffsetPx else 0f
+                val backProgress = if (motionEnabled) predictiveBack.progress else 0f
+                val deformation = (abs(drag) / axisSize).coerceIn(0f, 0.22f)
                 transformOrigin = TransformOrigin.Center
                 translationX =
-                    dragOffsetPx * 0.42f +
-                        axisSize * 0.16f * predictiveBack.progress * predictiveBack.edgeDirection
-                scaleX = (1f + deformation * 0.28f) * (1f - predictiveBack.progress * 0.025f)
-                scaleY = (1f - deformation * 0.16f) * (1f - predictiveBack.progress * 0.025f)
-                alpha = 1f - predictiveBack.progress * 0.08f
+                    drag * 0.42f +
+                        axisSize * 0.16f * backProgress * predictiveBack.edgeDirection
+                scaleX = (1f + deformation * 0.28f) * (1f - backProgress * 0.025f)
+                scaleY = (1f - deformation * 0.16f) * (1f - backProgress * 0.025f)
+                alpha = 1f - backProgress * 0.08f
                 clip = false
             },
         transitionSpec =
@@ -177,6 +203,7 @@ fun <T> LiquidAnimatedSwitcher(
                 performance,
                 transition = transition,
                 isForward = isForward,
+                isLtr = isLtr,
             ),
         contentAlignment = contentAlignment,
         label = label,

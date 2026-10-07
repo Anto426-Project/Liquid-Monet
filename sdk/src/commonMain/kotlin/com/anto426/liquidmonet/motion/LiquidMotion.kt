@@ -199,6 +199,22 @@ object LiquidMotion {
         }
     }
 
+    /** Adaptive tween with a delay; reduced motion removes both duration and delay. */
+    fun <T> tween(
+        performance: LiquidGlassPerformanceState,
+        durationMillis: Int = StandardDurationMillis,
+        delayMillis: Int,
+        easing: Easing = FastOutSlowInEasing,
+    ): FiniteAnimationSpec<T> {
+        val duration = durationMillis(performance, durationMillis)
+        val delay = durationMillis(performance, delayMillis)
+        return if (duration == 0 && delay == 0) {
+            snap()
+        } else {
+            composeTween(durationMillis = duration, delayMillis = delay, easing = easing)
+        }
+    }
+
     // =========================================================================
     // Centralized Compose Transition Presets (Enter / Exit)
     // =========================================================================

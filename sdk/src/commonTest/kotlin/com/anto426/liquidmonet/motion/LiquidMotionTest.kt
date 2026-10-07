@@ -2,6 +2,7 @@ package com.anto426.liquidmonet.motion
 
 import androidx.compose.animation.core.SnapSpec
 import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.TweenSpec
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
 import kotlin.test.*
 import kotlinx.coroutines.test.runTest
@@ -21,6 +22,20 @@ class LiquidMotionTest {
         val reduced = LiquidGlassPerformanceState.Fallback.copy(motionScale = 0f)
         assertIs<SnapSpec<Float>>(LiquidMotion.spring<Float>(reduced))
         assertIs<SnapSpec<Float>>(LiquidMotion.tween<Float>(reduced))
+        assertIs<SnapSpec<Float>>(LiquidMotion.tween<Float>(reduced, 320, delayMillis = 500))
+    }
+
+    @Test
+    fun delayedMotionScalesDurationAndDelayTogether() {
+        val performance = LiquidGlassPerformanceState.Fallback.copy(motionScale = 0.5f)
+        val spec = assertIs<TweenSpec<Float>>(LiquidMotion.tween<Float>(performance, 320, delayMillis = 120))
+        assertEquals(160, spec.durationMillis)
+        assertEquals(60, spec.delay)
+        val bounded = assertIs<TweenSpec<Float>>(
+            LiquidMotion.tween<Float>(performance, Int.MAX_VALUE, delayMillis = Int.MAX_VALUE)
+        )
+        assertEquals(5_000, bounded.durationMillis)
+        assertEquals(5_000, bounded.delay)
     }
 
     @Test

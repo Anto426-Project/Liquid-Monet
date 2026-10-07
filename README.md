@@ -22,6 +22,7 @@ SDK 2.0 groups each component with its state and motion: see [API migration](doc
   - `LiquidLoading`, `LiquidLinearProgressIndicator` & `LiquidCircularProgressIndicator`
   - `LiquidMediaController`, `LiquidControlCenterTile`, `LiquidChip` & `LiquidShimmerBox`
   - `LiquidAnimatedSwitcher`, `LiquidChipSelectionGroup` & `LiquidLazyFooter`
+  - Nine screen-transition presets and five entrance styles via `LiquidScreenEntrance` / `LiquidSectionEntrance`
   - one `LiquidTextField` API with `LiquidTextFieldType` for text, email, phone, number, password and text area
 
 ---
@@ -80,6 +81,24 @@ LiquidAnimatedSwitcher(
     Page(currentPage)
 }
 ```
+
+### Screen and section entrances
+
+```kotlin
+LiquidScreenEntrance(
+    animation = LiquidScreenEntranceAnimation.FadeUp,
+    delayMillis = 90,
+) {
+    ScreenSection()
+}
+```
+
+Select `Crossfade`, `FadeThrough`, `SlideHorizontal`, `SlideVertical`, `SharedAxisDepth` or
+`None` on `LiquidAnimatedSwitcher`, alongside its existing three presets. Entrances support
+`None`, `Fade`, `FadeUp`, `FadeDown` and `Scale`, with optional delays for staggered sections.
+Use `LiquidSectionEntrance` for scrollable sections that should keep their space and child state
+while waiting to reach the viewport. See [screen motion](docs/SCREEN_MOTION.md) for imports,
+direction, replay, viewport bounds and reduced-motion behavior.
 
 ---
 

@@ -59,7 +59,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.graphics)
     implementation(libs.androidx.compose.preview)
-    implementation(libs.androidx.material3)
+    // Resolve Material3 from the same publication as the SDK, preventing Android ABI drift.
+    implementation(libs.compose.material3.multiplatform)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.errorprone.annotations)
 }

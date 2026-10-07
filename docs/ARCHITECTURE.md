@@ -125,6 +125,14 @@ construct springs, tweens or infinite loops. Shared bindings are in `LiquidAnima
 popup transitions in `LiquidPopupMotion`, and press transforms in the internal motion owner.
 Specifications and transition lambdas are remembered with their actual inputs.
 
+Screen changes remain owned by `LiquidAnimatedSwitcher`, with nine selectable presets and
+layout-aware horizontal direction. `LiquidScreenEntrance` owns first-composition and visibility
+entrances for screens/sections. `LiquidSectionEntrance` keeps layout and child state while
+waiting for a visible viewport, and reads progress in its drawing layer. Delayed specifications
+scale through `LiquidMotion`. These components do not create a scene or glass recording.
+Reduced motion also disables size interpolation
+and decorative gesture transforms. See [screen motion](SCREEN_MOTION.md).
+
 State commands validate calendar coordinates before updating them. Clock values wrap into
 valid ranges. Toast commands are serialized in the supplied lifecycle scope, suppress duplicate
 content, bound the queue to 32 pending items and clamp duration to 900–30000 ms. Consumer
