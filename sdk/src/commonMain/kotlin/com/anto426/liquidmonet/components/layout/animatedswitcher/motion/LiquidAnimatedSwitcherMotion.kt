@@ -22,17 +22,19 @@ internal object LiquidAnimatedSwitcherMotion {
         transition: LiquidSwitcherTransition,
         isForward: ((T, T) -> Boolean)?,
         isLtr: Boolean,
+        transitionFor: ((T, T) -> LiquidSwitcherTransition)? = null,
     ): AnimatedContentTransitionScope<T>.() -> ContentTransform =
-        remember(performance, transition, isForward, isLtr) {
+        remember(performance, transition, isForward, isLtr, transitionFor) {
             {
-                if (!motionEnabled(performance, transition)) {
+                val selectedTransition = transitionFor?.invoke(initialState, targetState) ?: transition
+                if (!motionEnabled(performance, selectedTransition)) {
                     (EnterTransition.None togetherWith ExitTransition.None).using(null)
                 } else {
                     val forward =
                         isForward?.invoke(initialState, targetState)
                             ?: inferForwardMotion(initialState, targetState)
                     val horizontalDirection = if (forward == isLtr) 1 else -1
-                    val transform = when (transition) {
+                    val transform = when (selectedTransition) {
                         LiquidSwitcherTransition.DirectionalHorizontal -> {
                             val enter =
                                 slideInHorizontally(

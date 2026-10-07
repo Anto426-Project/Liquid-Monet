@@ -84,6 +84,17 @@ overlay hosts in the existing `LiquidGlassScene`, outside the changing content.
 
 ## Sections revealed by scrolling
 
+Existing navigation hosts can use `rememberLiquidContentTransition<T>()` directly as their
+transition spec. It shares the switcher's presets, RTL and adaptive motion without nesting an
+extra content host. A `transitionFor(initial, target)` callback selects route policy, including
+`None` across authentication boundaries; separate forward/pop callbacks determine direction.
+
+`LiquidExpandableContent(visible)` owns vertical expand/collapse and fade for optional controls,
+and disposes hidden content after exit. `rememberLiquidAmbientPhase()` supplies a drawing-only
+0..1 reversing phase for custom artwork, stopping its clock when inactive, reduced motion or
+device/thermal/power policy disables animated backgrounds. Finite values and colors use
+`animateLiquidFloatAsState` / `animateLiquidColorAsState` with `LiquidMotion` presets.
+
 `LiquidSectionEntrance` reserves the section's space and keeps child state while waiting for it
 to reach the viewport. It uses the same five entrance styles. Scroll back to a revealed section
 without repeating the entrance; change `replayKey` to replay without resetting its controls.

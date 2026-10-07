@@ -28,6 +28,9 @@ import kotlin.math.roundToInt
  * performance-scaled animations, and standard Compose transitions into a single source of truth.
  */
 object LiquidMotion {
+    /** Short entrance cascade; later sections never accumulate a long waiting time. */
+    fun sectionDelayMillis(order: Int): Int = order.coerceIn(0, 3) * 60
+
 
     // =========================================================================
     // Standard Durations (milliseconds)

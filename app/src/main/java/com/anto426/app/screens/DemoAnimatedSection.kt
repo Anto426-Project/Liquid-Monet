@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.layout.screenentrance.LiquidScreenEntranceAnimation
 import com.anto426.liquidmonet.components.layout.sectionentrance.LiquidSectionEntrance
+import com.anto426.liquidmonet.motion.LiquidMotion
 
 internal data class DemoSectionMotion(
     val animation: LiquidScreenEntranceAnimation = LiquidScreenEntranceAnimation.FadeUp,
@@ -37,7 +38,7 @@ internal fun DemoAnimatedSection(
     LiquidSectionEntrance(
         modifier = modifier.fillMaxWidth(),
         animation = motion.animation,
-        delayMillis = order.coerceIn(0, 3) * 60,
+        delayMillis = LiquidMotion.sectionDelayMillis(order),
         replayKey = motion.replay,
         viewportBoundsInWindow = LocalDemoSectionViewport.current,
     ) {
