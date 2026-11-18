@@ -251,6 +251,13 @@ class LiquidAdaptiveComponentsTest {
         }
         compose.onNodeWithText("Notizie").assertIsDisplayed()
         compose.onNodeWithText("99+").assertIsDisplayed()
+        for (label in listOf("Home", "Didattica", "Servizi", "Notizie")) {
+            val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+            compose.onNodeWithText(label).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
+            assertTrue("$label must not be ellipsized: " + layouts.joinToString { "size=${it.size}, lines=${it.lineCount}, constraints=${it.layoutInput.constraints}" }, layouts.none { layout ->
+                (0 until layout.lineCount).any { layout.isLineEllipsized(it) }
+            })
+        }
         capture("navigation-large-text-dark")
     }
 }
