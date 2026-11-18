@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
@@ -90,12 +91,12 @@ class LiquidAdaptiveComponentsTest {
             )
         }
         compose.onNodeWithText("Andamento").assertIsSelected()
-        compose.onNodeWithText("Proiezioni").performScrollTo().performClick().assertIsSelected()
+        compose.onNodeWithText("Proiezioni").performClick().assertIsSelected()
         val panel = compose.onNodeWithTag("tabs").fetchSemanticsNode().boundsInRoot
         for (label in listOf("Andamento", "Simula", "Obiettivo", "Proiezioni")) {
-            compose.onNodeWithText(label).performScrollTo()
+            compose.onNodeWithText(label).assertIsDisplayed()
             val bounds = compose.onNodeWithText(label).fetchSemanticsNode().boundsInRoot
-            assertTrue("$label must fit inside tabs", bounds.top >= panel.top && bounds.bottom <= panel.bottom)
+            assertTrue("$label must fit inside tabs", bounds.top >= panel.top && bounds.bottom <= panel.bottom && bounds.left >= panel.left && bounds.right <= panel.right)
             val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
             compose.onNodeWithText(label).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
             assertTrue("$label must remain readable without ellipsis", layouts.isNotEmpty() && layouts.none { layout ->
@@ -259,5 +260,81 @@ class LiquidAdaptiveComponentsTest {
             })
         }
         capture("navigation-large-text-dark")
+    }
+
+    @Test fun tabsKeepTheirSurfaceInsideTheViewportDuringPress() {
+        content {
+            Box(Modifier.size(360.dp, 200.dp).background(Color.Magenta).testTag("viewport")) {
+                LiquidTabBar(
+                    listOf("Andamento", "Simula", "Obiettivo", "Proiezioni").map { LiquidNavigationItem(it) },
+                    0, {}, Modifier.offset(20.dp, 20.dp).width(320.dp).testTag("tabs"),
+                )
+            }
+        }
+        compose.onNodeWithTag("tabs").assertWidthIsEqualTo(320.dp)
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithText("Proiezioni").performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(160)
+        val bitmap = compose.onNodeWithTag("viewport").captureToImage()
+        val pixels = bitmap.toPixelMap()
+        // Sample the outside margins while the lens is expanded, not just layout bounds.
+        for (x in listOf(bitmap.width / 72, bitmap.width * 71 / 72)) {
+            for (y in 0 until bitmap.height) {
+                assertTrue("Tab surface painted beyond its viewport at $x,$y", pixels[x, y] == Color.Magenta)
+            }
+        }
+        compose.onNodeWithText("Proiezioni").performTouchInput { up() }
+        compose.mainClock.advanceTimeBy(1200)
+        capture("tabs-bounded-during-press")
+    }
+
+    @Test fun cardFollowsItsOwnedDragAndReturnsOnCancellation() {
+        content(fontScale = 1f) {
+            LiquidCard(
+                contentPadding = PaddingValues(24.dp),
+                modifier = Modifier.size(280.dp, 160.dp).testTag("card"),
+                contentAlignment = androidx.compose.ui.Alignment.Center,
+                onClick = {},
+            ) { androidx.compose.material3.Text("Contenuto", Modifier.testTag("anchor")) }
+        }
+        val anchor = compose.onNodeWithTag("anchor", useUnmergedTree = true)
+        val initial = anchor.fetchSemanticsNode().boundsInRoot.center
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag("card").performTouchInput { down(androidx.compose.ui.geometry.Offset(center.x, height * .8f)) }
+        compose.mainClock.advanceTimeBy(160)
+        val held = anchor.fetchSemanticsNode().boundsInRoot.center
+        compose.onNodeWithTag("card").performTouchInput { moveBy(androidx.compose.ui.geometry.Offset(80f, 0f), 100) }
+        compose.mainClock.advanceTimeBy(80)
+        val dragged = anchor.fetchSemanticsNode().boundsInRoot.center
+        assertTrue("Card must follow its own drag: $held -> $dragged", dragged.x > held.x + 1f)
+        compose.onNodeWithTag("card").performTouchInput { cancel() }
+        compose.mainClock.advanceTimeBy(1600)
+        val returned = anchor.fetchSemanticsNode().boundsInRoot.center
+        assertTrue("Card must settle back after cancellation", (returned - initial).getDistance() < 1f)
+    }
+
+    @Test fun nestedButtonKeepsElasticDragWithoutDraggingTheCard() {
+        content(fontScale = 1f) {
+            LiquidCard(contentPadding = PaddingValues(24.dp), modifier = Modifier.width(300.dp), onClick = {}) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    androidx.compose.material3.Text("Contenitore", Modifier.testTag("anchor"))
+                    LiquidButton({}, text = "Pulsante", modifier = Modifier.testTag("button"))
+                }
+            }
+        }
+        val anchor = compose.onNodeWithTag("anchor", useUnmergedTree = true)
+        val label = compose.onNodeWithText("Pulsante", useUnmergedTree = true)
+        val parentBefore = anchor.fetchSemanticsNode().boundsInRoot
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag("button").performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(160)
+        val held = label.fetchSemanticsNode().boundsInRoot.center
+        compose.onNodeWithTag("button").performTouchInput { moveBy(androidx.compose.ui.geometry.Offset(80f, 0f), 100) }
+        compose.mainClock.advanceTimeBy(80)
+        val dragged = label.fetchSemanticsNode().boundsInRoot.center
+        assertTrue("Button must keep its elastic drag: $held -> $dragged", dragged.x > held.x + 1f)
+        assertTrue("Child drag must not move its parent", parentBefore == anchor.fetchSemanticsNode().boundsInRoot)
+        compose.onNodeWithTag("button").performTouchInput { cancel() }
+        compose.mainClock.advanceTimeBy(1600)
     }
 }

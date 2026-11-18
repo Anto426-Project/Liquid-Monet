@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.fastRoundToInt
@@ -67,6 +68,7 @@ internal fun LiquidGlassBottomTabs(
     backdrop: Backdrop,
     tabsCount: Int,
     modifier: Modifier = Modifier,
+    minimumContentHeight: Dp = 0.dp,
     content: @Composable RowScope.() -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -92,7 +94,7 @@ internal fun LiquidGlassBottomTabs(
         val density = LocalDensity.current
         // Keep the panel, color mask and moving lens at exactly the same content height.
         // Text remains scaled by the OS; the container grows instead of clipping it.
-        val contentHeight = 56.dp * density.fontScale.coerceAtLeast(1f)
+        val contentHeight = maxOf(56.dp * density.fontScale.coerceAtLeast(1f), minimumContentHeight)
         val safeTabsCount = tabsCount.coerceAtLeast(1)
         val maxIndex = safeTabsCount - 1
         val tabWidth =

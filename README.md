@@ -85,11 +85,15 @@ Nested Liquid controls own their click, press animation and enabled state indepe
 the card's optical backdrop. An optional card `onClick` handles the remaining card area; pressing
 a child does not animate or click its parent. Set the card's `enabled = false` to disable only
 that outer action. `clipContent` defaults to false to preserve child elastic motion.
+Clickable cards and buttons keep their elastic pointer tracking; releasing or cancelling a drag
+returns the control to its original position without moving the surrounding container.
 
 Text-bearing controls grow with system font scale. Tabs preserve selection semantics, OTP cells
 wrap into balanced rows on narrow containers, and dialogs scroll long content while keeping
 their actions visible. Android native kernels are linked for 16 KB pages on every supported ABI;
 SDK packaging rejects incompatible ELF LOAD segments or RELRO boundaries.
+The segmented tab bar keeps its complete surface inside the available width, including while
+pressed. Labels wrap within their own segments and the bar grows vertically to fit them.
 
 ### Floating navigation bar
 

@@ -15,6 +15,9 @@ import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.util.fastCoerceIn
 import com.anto426.liquidmonet.components.internal.motion.LiquidPressMotion
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
@@ -131,6 +134,22 @@ half4 main(float2 coord) {
     internal fun move(position: Offset) = motion.move(position)
 
     internal fun release() = motion.release()
+
+    /** Track an owned press without starting a second press for a nested child's gesture. */
+    internal val pointerTrackingModifier: Modifier =
+        Modifier.pointerInput(animationScope) {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                while (true) {
+                    // Observe before clickable consumes its own pointer events. Ownership and
+                    // release/cancellation remain exclusively with the clickable's interactions.
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                    if (!change.pressed) break
+                    move(change.position)
+                }
+            }
+        }
 
     internal val gestureModifier: Modifier =
         Modifier.pointerInput(animationScope) {

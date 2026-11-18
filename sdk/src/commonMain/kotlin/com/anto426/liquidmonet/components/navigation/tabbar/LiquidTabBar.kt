@@ -1,8 +1,6 @@
 package com.anto426.liquidmonet.components.navigation.tabbar
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -16,11 +14,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
@@ -55,56 +54,59 @@ fun LiquidTabBar(
     val contentColor = LiquidGlassTheme.colors.content
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
 
-    val scroll = rememberScrollState()
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    BoxWithConstraints(modifier) {
+    BoxWithConstraints(modifier.clipToBounds()) {
         val fontSize = if (items.size <= 3) 14.sp else 12.sp
         val labelStyle = MaterialTheme.typography.labelLarge.copy(
             fontSize = fontSize, lineHeight = (fontSize.value * 1.25f).sp,
             fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp,
         )
-        val slotWidth = items.maxOf { item ->
-            val labelWidth = with(density) { textMeasurer.measure(item.label, labelStyle).size.width.toDp() }
-            val badgeWidth = item.badge?.let { with(density) { textMeasurer.measure(it, labelStyle).size.width.toDp() } + 16.dp } ?: 0.dp
-            labelWidth + badgeWidth + (if (item.icon != null) 26.dp else 0.dp) + 20.dp
-        }.coerceAtLeast(64.dp)
-        val availableWidth = if (constraints.hasBoundedWidth) maxWidth else slotWidth * items.size + 8.dp
-        val rowWidth = maxOf(availableWidth, slotWidth * items.size + 8.dp)
-        LaunchedEffect(normalizedSelectedIndex, rowWidth, availableWidth) {
-            val slot = with(density) { ((rowWidth - 8.dp) / items.size).toPx() }
-            val viewport = with(density) { availableWidth.toPx() }
-            val start = normalizedSelectedIndex * slot
-            val end = start + slot
-            val target = when {
-                start < scroll.value -> start.toInt()
-                end > scroll.value + viewport -> (end - viewport + with(density) { 8.dp.toPx() }).toInt()
-                else -> scroll.value
-            }
-            scroll.scrollTo(target.coerceAtLeast(0))
-        }
-        Box(Modifier.width(availableWidth).horizontalScroll(scroll)) {
-            LiquidGlassBottomTabs(
-                selectedTabIndex = { normalizedSelectedIndex },
-                onTabSelected = onTabSelected,
-                tabsCount = items.size,
-                modifier = Modifier.width(rowWidth),
-                backdrop = effectiveBackdrop,
-            ) {
-                items.forEachIndexed { index, item ->
-                    LiquidGlassBottomTab(
-                        onClick = {
-                            if (index != normalizedSelectedIndex) onTabSelected(index)
-                        },
-                        selected = index == normalizedSelectedIndex,
-                    ) {
-                        AdaptiveTabItem(
-                            item = item,
-                            tabsCount = items.size,
-                            contentColor = contentColor,
-                            textStyle = labelStyle,
-                        )
-                    }
+        val badgeStyle = MaterialTheme.typography.labelSmall.copy(
+            fontSize = 12.sp, lineHeight = 15.sp,
+            fontWeight = FontWeight.Bold, letterSpacing = 0.sp,
+        )
+        // The optical surface always fits its viewport. Labels wrap inside equal-width slots;
+        // the panel may grow vertically, but never becomes a wider, horizontally scrolled pill.
+        val availableWidth = if (constraints.hasBoundedWidth) maxWidth else 64.dp * items.size + 8.dp
+        val slotContentWidth = ((availableWidth - 8.dp) / items.size - 12.dp).coerceAtLeast(1.dp)
+        val contentHeight = items.maxOf { item ->
+            val vertical = item.icon != null && slotContentWidth < (112 * density.fontScale).dp
+            val badge = item.badge?.takeIf(String::isNotEmpty)
+            val badgeSize = badge?.let { textMeasurer.measure(it, badgeStyle, maxLines = 1).size }
+            val badgeWidth = if (badgeSize != null) {
+                with(density) { badgeSize.width.toDp() } + (if (items.size <= 3) 12.dp else 8.dp) + (if (vertical) 4.dp else 6.dp)
+            } else 0.dp
+            val iconWidth = if (item.icon != null && !vertical) 26.dp else 0.dp
+            val labelWidth = (slotContentWidth - badgeWidth - iconWidth).coerceAtLeast(1.dp)
+            val labelSize = textMeasurer.measure(
+                item.label, labelStyle, maxLines = 3, overflow = TextOverflow.Ellipsis,
+                constraints = Constraints(maxWidth = with(density) { labelWidth.roundToPx() }.coerceAtLeast(1)),
+            ).size
+            val labelHeight = with(density) { labelSize.height.toDp() }
+            val badgeHeight = if (badgeSize != null) with(density) { badgeSize.height.toDp() } + (if (items.size <= 3) 4.dp else 2.dp) else 0.dp
+            val rowHeight = maxOf(labelHeight, badgeHeight)
+            if (vertical) rowHeight + 22.dp else maxOf(rowHeight, if (item.icon != null) 20.dp else 0.dp)
+        } + 8.dp
+        LiquidGlassBottomTabs(
+            selectedTabIndex = { normalizedSelectedIndex },
+            onTabSelected = onTabSelected,
+            tabsCount = items.size,
+            modifier = Modifier.width(availableWidth),
+            minimumContentHeight = contentHeight,
+            backdrop = effectiveBackdrop,
+        ) {
+            items.forEachIndexed { index, item ->
+                LiquidGlassBottomTab(
+                    onClick = {
+                        if (index != normalizedSelectedIndex) onTabSelected(index)
+                    },
+                    selected = index == normalizedSelectedIndex,
+                ) {
+                    AdaptiveTabItem(
+                        item = item, tabsCount = items.size, contentColor = contentColor,
+                        textStyle = labelStyle, badgeStyle = badgeStyle,
+                    )
                 }
             }
         }
@@ -121,6 +123,7 @@ private fun AdaptiveTabItem(
     tabsCount: Int,
     contentColor: Color,
     textStyle: TextStyle,
+    badgeStyle: TextStyle,
 ) {
     val count = tabsCount.coerceAtLeast(1)
     val icon = item.icon
@@ -133,7 +136,7 @@ private fun AdaptiveTabItem(
                 text = item.label,
                 color = contentColor,
                 style = textStyle,
-                maxLines = 2,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
             )
@@ -150,7 +153,7 @@ private fun AdaptiveTabItem(
                     horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
                 ) {
                     Box(Modifier.weight(1f, fill = false)) { label() }
-                    if (badge != null) CompactBadge(badge, contentColor, count)
+                    if (badge != null) CompactBadge(badge, contentColor, count, badgeStyle)
                 }
             }
         } else {
@@ -161,7 +164,7 @@ private fun AdaptiveTabItem(
             ) {
                 if (icon != null) Icon(icon, null, Modifier.size(20.dp), tint = contentColor)
                 Box(Modifier.weight(1f, fill = false)) { label() }
-                if (badge != null) CompactBadge(badge, contentColor, count)
+                if (badge != null) CompactBadge(badge, contentColor, count, badgeStyle)
             }
         }
     }
@@ -173,11 +176,11 @@ private fun CompactBadge(
     badge: String,
     contentColor: Color,
     count: Int,
+    textStyle: TextStyle,
 ) {
     val glassColors = LiquidGlassTheme.colors
     val hPad = if (count <= 3) 6.dp else 4.dp
     val vPad = if (count <= 3) 2.dp else 1.dp
-    val fSize = 12.sp
 
     Box(
         modifier =
@@ -189,7 +192,7 @@ private fun CompactBadge(
         Text(
             text = badge,
             color = contentColor,
-            fontSize = fSize,
+            style = textStyle,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             softWrap = false,

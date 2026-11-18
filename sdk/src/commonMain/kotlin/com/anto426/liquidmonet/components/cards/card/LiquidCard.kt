@@ -152,6 +152,7 @@ private fun LiquidCardContainer(
                 .then(
                     if (isInteractive) {
                         interactiveHighlight.modifier(clipShape = shape)
+                            .then(interactiveHighlight.pointerTrackingModifier)
                     } else Modifier
                 )
                 .then(
