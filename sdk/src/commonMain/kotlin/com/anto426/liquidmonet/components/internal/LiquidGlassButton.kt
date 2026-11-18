@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -85,7 +85,7 @@ internal fun LiquidGlassButton(
                 onClick = onClick,
             )
             .let { if (border != null) it.border(border, shape) else it }
-            .height(height)
+            .heightIn(min = height.coerceAtLeast(48.dp))
             .padding(contentPadding)
             .graphicsLayer { alpha = animatedAlpha }
 

@@ -2,7 +2,7 @@ package com.anto426.liquidmonet.components.internal
 
 import com.anto426.liquidmonet.glass.liquidInteractiveZIndex
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -27,6 +27,7 @@ internal val LocalLiquidBottomTabInteractive =
 @Composable
 internal fun RowScope.LiquidGlassBottomTab(
     onClick: () -> Unit,
+    selected: Boolean = false,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -46,7 +47,8 @@ internal fun RowScope.LiquidGlassBottomTab(
             .clip(Capsule())
             .then(
                 if (interactive) {
-                    Modifier.clickable(
+                    Modifier.selectable(
+                        selected = selected,
                         interactionSource = null,
                         indication = null,
                         role = Role.Tab,

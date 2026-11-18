@@ -62,5 +62,7 @@ dependencies {
     // Resolve Material3 from the same publication as the SDK, preventing Android ABI drift.
     implementation(libs.compose.material3.multiplatform)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    // Compose's transitive Espresso 3.5 still reflects into InputManager on modern Android.
+    androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.errorprone.annotations)
 }

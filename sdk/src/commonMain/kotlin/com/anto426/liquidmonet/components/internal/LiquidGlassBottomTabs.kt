@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.util.lerp
@@ -90,6 +91,9 @@ internal fun LiquidGlassBottomTabs(
         contentAlignment = Alignment.CenterStart,
     ) {
         val density = LocalDensity.current
+        // Keep the panel, color mask and moving lens at exactly the same content height.
+        // Text remains scaled by the OS; the container grows instead of clipping it.
+        val contentHeight = (with(density) { 36.sp.toDp() } + 24.dp).coerceAtLeast(56.dp)
         val safeTabsCount = tabsCount.coerceAtLeast(1)
         val maxIndex = safeTabsCount - 1
         val tabWidth =
@@ -224,7 +228,7 @@ internal fun LiquidGlassBottomTabs(
                         },
                     )
                     .then(interactiveHighlight.modifier(clipShape = Capsule()))
-                    .height(64.dp)
+                    .height(contentHeight + 8.dp)
                     .fillMaxWidth()
                     .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -262,7 +266,7 @@ internal fun LiquidGlassBottomTabs(
                             onDrawSurface = { drawRect(containerColor) },
                         )
                         .then(interactiveHighlight.modifier(clipShape = Capsule()))
-                        .height(56.dp)
+                        .height(contentHeight)
                         .fillMaxWidth()
                         .padding(horizontal = 4.dp)
                         .graphicsLayer(colorFilter = ColorFilter.tint(accentColor)),
@@ -311,7 +315,7 @@ internal fun LiquidGlassBottomTabs(
                             drawRect(Color.Black.copy(alpha = 0.03f * progress))
                         },
                     )
-                    .height(56.dp)
+                    .height(contentHeight)
                     .fillMaxWidth(1f / safeTabsCount)
         )
     }

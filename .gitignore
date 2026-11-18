@@ -18,6 +18,7 @@ build/
 _reference/
 
 # Gradle files
+__pycache__/
 .gradle/
 .kotlin/
 buildOutputCleanup/

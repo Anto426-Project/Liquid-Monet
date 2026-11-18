@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import zipfile
 import subprocess
+from android_page_sizes import validate_archive
 
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--repository', type=Path, required=True)
@@ -33,6 +34,7 @@ with zipfile.ZipFile(required[1]) as aar:
         native_lib = f'jni/{abi}/libliquidwave.so'
         if native_lib not in aar.namelist() or aar.getinfo(native_lib).file_size < 1000:
             raise SystemExit(f'Published Android native kernel is missing: {native_lib}')
+validate_archive(required[1])
 # Only this version belongs in the archive, even when staging contains older local builds.
 publication_dirs = [root, *(base / f'{artifact}-{suffix}' / a.version
                            for suffix, _ in targets)]

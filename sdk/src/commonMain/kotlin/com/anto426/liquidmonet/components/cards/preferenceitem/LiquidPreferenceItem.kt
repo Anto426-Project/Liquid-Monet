@@ -151,7 +151,7 @@ fun LiquidPreferenceItem(
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = title,
+                    contentDescription = null,
                     tint = colorScheme.primary,
                     modifier = Modifier.size(20.dp),
                 )

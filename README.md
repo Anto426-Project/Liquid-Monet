@@ -54,6 +54,43 @@ LiquidMonetTheme(
 Components inside a `LiquidGlassScene` resolve its backdrop automatically. The explicit
 `backdropState` parameter remains useful for standalone surfaces and advanced layer composition.
 
+### Custom cards with independent actions
+
+The original `contentPadding = 16.dp` API remains available. Use `PaddingValues` for independent
+edges and the configurable container API. `modifier` sizes the complete card; `contentModifier`
+customizes its inner box. Cards can wrap content (`fillWidth = false`), draw a border, change
+content alignment and optionally clip their children to the chosen shape.
+
+```kotlin
+LiquidCard(
+    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+    modifier = Modifier.widthIn(max = 560.dp),
+    shape = RoundedCornerShape(20.dp),
+    colors = LiquidCardDefaults.colors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    ),
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    contentAlignment = Alignment.TopStart,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Gestisci il tuo percorso")
+        LiquidButton(onClick = onOpenCareer, text = "Carriera")
+        LiquidButton(onClick = onOpenSimulator, text = "Simulatore")
+    }
+}
+```
+
+Nested Liquid controls own their click, press animation and enabled state independently and reuse
+the card's optical backdrop. An optional card `onClick` handles the remaining card area; pressing
+a child does not animate or click its parent. Set the card's `enabled = false` to disable only
+that outer action. `clipContent` defaults to false to preserve child elastic motion.
+
+Text-bearing controls grow with system font scale. Tabs preserve selection semantics, OTP cells
+wrap into balanced rows on narrow containers, and dialogs scroll long content while keeping
+their actions visible. Android native kernels are linked for 16 KB pages on every supported ABI;
+SDK packaging rejects incompatible ELF LOAD segments or RELRO boundaries.
+
 ### Floating navigation bar
 
 ```kotlin
@@ -129,13 +166,13 @@ Questo repository compila e pubblica lo SDK autonomamente; UniApp non include i 
 La toolchain usa il Gradle Wrapper del repository e richiede JDK 21, Kotlin 2.4.21 e AGP 9.5.1 (Android API 37).
 Compose Multiplatform 1.12.2, Compose Android 1.12.1 e Material3 Multiplatform 1.12.0-alpha03
 sono allineati al catalogo di UniApp; la versione Android di Material3 è 1.5.0-rc01.
-La versione Maven della pubblicazione è `1.0.<github.run_number>`, oppure il valore esplicito
+La versione Maven della pubblicazione è `2.0.<github.run_number>`, oppure il valore esplicito
 passato con `-PsdkVersion=<versione>`. Una Release già pubblicata non viene sovrascritta.
 
 Verifica locale e pubblicazione nel solo repository Maven di staging:
 
 ```sh
-./gradlew -PsdkVersion=1.0.0-local :sdk:testAndroidHostTest :sdk:publishAllPublicationsToStagingRepository
+./gradlew -PsdkVersion=2.0.0-local :sdk:testAndroidHostTest :sdk:publishAllPublicationsToStagingRepository
 ```
 
 Il pacchetto contiene Android AAR, metadati Maven/KMP e KLIB per iOS arm64 e simulator arm64.

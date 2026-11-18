@@ -26,8 +26,9 @@ abstract class BuildLiquidWaveAndroid : DefaultTask() {
         val sdk = androidSdkDirectory.get().asFile
         val ndk = sdk.resolve("ndk/$ndkVersion")
         check(ndk.isDirectory) { "Android NDK $ndkVersion is required to build Liquid Wave" }
+        val executableSuffix = if (System.getProperty("os.name").startsWith("Windows")) ".exe" else ""
         val toolchain = ndk.resolve("toolchains/llvm/prebuilt").listFiles()
-            ?.firstOrNull { it.resolve("bin/aarch64-linux-android24-clang").exists() }
+            ?.firstOrNull { it.resolve("bin/clang$executableSuffix").isFile }
             ?: error("Android NDK clang toolchain is unavailable")
         val root = project.rootProject.projectDir
         val source = root.resolve("native/src/liquid_wave.c")
@@ -35,24 +36,26 @@ abstract class BuildLiquidWaveAndroid : DefaultTask() {
         val jniSource = root.resolve("native/src/liquid_wave_jni.c")
         val headers = root.resolve("native/include")
         val targets = mapOf(
-            "arm64-v8a" to "aarch64-linux-android24-clang",
-            "armeabi-v7a" to "armv7a-linux-androideabi24-clang",
-            "x86_64" to "x86_64-linux-android24-clang"
+            "arm64-v8a" to "aarch64-linux-android24",
+            "armeabi-v7a" to "armv7a-linux-androideabi24",
+            "x86_64" to "x86_64-linux-android24"
         )
-        for ((abi, compilerName) in targets) {
+        for ((abi, target) in targets) {
             val directory = outputDirectory.get().asFile.resolve(abi).apply { mkdirs() }
             val output = directory.resolve("libliquidwave.so")
             val command = listOf(
-                toolchain.resolve("bin/$compilerName").absolutePath,
+                toolchain.resolve("bin/clang$executableSuffix").absolutePath, "--target=$target",
                 "-std=c11", "-O3", "-Wall", "-Wextra", "-Werror", "-fPIC", "-shared",
                 "-I${headers.absolutePath}", source.absolutePath, springSource.absolutePath, jniSource.absolutePath,
+                // NDK r26 needs both flags: LOAD segments and the RELRO boundary must support 16 KB.
+                "-Wl,-z,max-page-size=16384", "-Wl,-z,common-page-size=16384",
                 "-Wl,-soname,libliquidwave.so", "-lm", "-o", output.absolutePath
             )
             check(ProcessBuilder(command).inheritIO().start().waitFor() == 0) {
                 "Native Liquid Wave build failed for $abi"
             }
             check(ProcessBuilder(
-                toolchain.resolve("bin/llvm-strip").absolutePath,
+                toolchain.resolve("bin/llvm-strip$executableSuffix").absolutePath,
                 "--strip-unneeded", output.absolutePath
             ).inheritIO().start().waitFor() == 0) {
                 "Native Liquid Wave strip failed for $abi"

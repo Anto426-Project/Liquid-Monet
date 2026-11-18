@@ -1,8 +1,13 @@
 package com.anto426.liquidmonet.components.cards.card
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
@@ -13,6 +18,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -20,7 +27,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
-import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
+import com.anto426.liquidmonet.components.cards.card.motion.rememberLiquidCardInteractionSource
 import com.anto426.liquidmonet.components.internal.motion.liquidControlLayerBlock
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
@@ -51,15 +58,90 @@ fun LiquidCard(
     content: @Composable BoxScope.() -> Unit,
 ) {
     LiquidInputNormalization.nonNegative(contentPadding, "LiquidCard contentPadding")
-    val isInteractive = onClick != null
+    LiquidCardContainer(
+        contentPadding = PaddingValues(contentPadding),
+        contentAlignment = Alignment.Center,
+        contentBoxAlignment = Alignment.TopStart,
+        modifier = modifier,
+        backdropState = backdropState,
+        shape = shape,
+        colors = colors,
+        onClick = onClick,
+        content = content,
+    )
+}
+
+/**
+ * Configurable card container. [contentPadding] accepts independent, RTL-aware edges.
+ *
+ * [modifier] controls the complete card; [contentModifier] controls only its content box.
+ * Set [fillWidth] to false for a card that wraps its content, or provide a width through [modifier].
+ * [clipContent] clips children to [shape] when requested; by default child motion may extend outside.
+ * [enabled] disables the card's own click response without disabling controls inside it.
+ * The Dp-padding overload retains the original API and defaults for existing consumers.
+ */
+@Composable
+fun LiquidCard(
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    backdropState: Backdrop = emptyBackdrop(),
+    shape: Shape = RoundedRectangle(24.dp),
+    colors: LiquidCardColors = LiquidCardDefaults.colors(),
+    onClick: (() -> Unit)? = null,
+    border: BorderStroke? = null,
+    contentAlignment: Alignment = Alignment.TopStart,
+    fillWidth: Boolean = true,
+    contentModifier: Modifier = Modifier,
+    clipContent: Boolean = false,
+    enabled: Boolean = true,
+    propagateMinConstraints: Boolean = false,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    LiquidCardContainer(
+        contentPadding = contentPadding, modifier = modifier, backdropState = backdropState,
+        shape = shape, colors = colors, onClick = onClick, border = border,
+        contentAlignment = contentAlignment, contentBoxAlignment = contentAlignment,
+        fillWidth = fillWidth, contentModifier = contentModifier, clipContent = clipContent,
+        enabled = enabled, propagateMinConstraints = propagateMinConstraints, content = content,
+    )
+}
+
+@Composable
+private fun LiquidCardContainer(
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    backdropState: Backdrop = emptyBackdrop(),
+    shape: Shape = RoundedRectangle(24.dp),
+    colors: LiquidCardColors = LiquidCardDefaults.colors(),
+    onClick: (() -> Unit)? = null,
+    border: BorderStroke? = null,
+    contentAlignment: Alignment = Alignment.TopStart,
+    contentBoxAlignment: Alignment = contentAlignment,
+    fillWidth: Boolean = true,
+    contentModifier: Modifier = Modifier,
+    clipContent: Boolean = false,
+    enabled: Boolean = true,
+    propagateMinConstraints: Boolean = false,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val layoutDirection = LocalLayoutDirection.current
+    listOf(
+        contentPadding.calculateStartPadding(layoutDirection),
+        contentPadding.calculateEndPadding(layoutDirection),
+        contentPadding.calculateTopPadding(),
+        contentPadding.calculateBottomPadding(),
+    ).forEach { LiquidInputNormalization.nonNegative(it, "LiquidCard contentPadding") }
+    val isInteractive = onClick != null && enabled
     val interactiveHighlight = rememberLiquidControlHighlight()
+    val interactionSource = rememberLiquidCardInteractionSource(isInteractive, interactiveHighlight)
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
     val cardLayerBlock = liquidControlLayerBlock(isInteractive, interactiveHighlight)
 
     Box(
         modifier =
             modifier
-                .fillMaxWidth()
+                .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
+                .then(if (clipContent) Modifier.clip(shape) else Modifier)
                 .then(
                     if (isInteractive && cardLayerBlock != null) {
                         Modifier.graphicsLayer(cardLayerBlock)
@@ -69,24 +151,22 @@ fun LiquidCard(
                 )
                 .then(
                     if (isInteractive) {
-                        Modifier.liquidControlPressFeedback(
-                            enabled = true,
-                            interactiveHighlight = interactiveHighlight,
-                            shape = shape,
-                            drawHighlightOverlay = true,
-                        )
+                        interactiveHighlight.modifier(clipShape = shape)
                     } else Modifier
                 )
                 .then(
                     if (onClick != null) {
                         Modifier.clickable(
-                            interactionSource = null,
+                            enabled = enabled,
+                            interactionSource = interactionSource,
                             indication = null,
                             role = Role.Button,
                             onClick = onClick,
                         )
                     } else Modifier
-                )
+                ),
+        contentAlignment = contentAlignment,
+        propagateMinConstraints = propagateMinConstraints,
     ) {
         // Optical glass surface
         Box(
@@ -99,9 +179,15 @@ fun LiquidCard(
                         role = LiquidGlassRole.Surface,
                         containerColor = colors.containerColor,
                     )
+                    .then(if (border != null) Modifier.border(border, shape) else Modifier)
         )
 
-        Box(modifier = Modifier.align(Alignment.Center).fillMaxWidth().padding(contentPadding)) {
+        Box(
+            modifier = Modifier.then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
+                .padding(contentPadding).then(contentModifier),
+            contentAlignment = contentBoxAlignment,
+            propagateMinConstraints = propagateMinConstraints,
+        ) {
             CompositionLocalProvider(
                 LocalContentColor provides colors.contentColor,
                 LocalLiquidGlassContentBackdrop provides effectiveBackdrop,

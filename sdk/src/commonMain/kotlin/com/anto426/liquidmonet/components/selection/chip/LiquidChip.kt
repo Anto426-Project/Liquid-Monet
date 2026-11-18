@@ -5,7 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
@@ -104,7 +104,7 @@ fun LiquidChip(
     Row(
         modifier =
             modifier
-                .height(38.dp)
+                .heightIn(min = 48.dp)
                 .liquidControlLayer(enabled, interactiveHighlight)
                 .liquidControlPressFeedback(
                     enabled = enabled,
@@ -129,6 +129,8 @@ fun LiquidChip(
                     onClick = onClick,
                 )
                 .padding(
+                    top = 8.dp,
+                    bottom = 8.dp,
                     start = if (leadingIcon != null) 12.dp else 14.dp,
                     end =
                         if (onCloseClick != null || trailingIcon != null || badge != null) 8.dp

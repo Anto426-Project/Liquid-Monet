@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.buttons.button.motion.LiquidButtonMotion
@@ -65,7 +66,7 @@ fun LiquidButton(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     content: @Composable RowScope.() -> Unit = {
-        if (text != null) Text(text)
+        if (text != null) Text(text, Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)
     },
 ) {
     val isInteractive = enabled && !isLoading

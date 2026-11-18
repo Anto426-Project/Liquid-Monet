@@ -1,21 +1,30 @@
 package com.anto426.liquidmonet.components.navigation.tabbar
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,24 +55,57 @@ fun LiquidTabBar(
     val contentColor = LiquidGlassTheme.colors.content
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
 
-    LiquidGlassBottomTabs(
-        selectedTabIndex = { normalizedSelectedIndex },
-        onTabSelected = onTabSelected,
-        tabsCount = items.size,
-        modifier = modifier,
-        backdrop = effectiveBackdrop,
-    ) {
-        items.forEachIndexed { index, item ->
-            LiquidGlassBottomTab(
-                onClick = {
-                    if (index != normalizedSelectedIndex) onTabSelected(index)
-                }
+    val scroll = rememberScrollState()
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    BoxWithConstraints(modifier) {
+        val fontSize = if (items.size <= 3) 14.sp else 12.sp
+        val labelStyle = MaterialTheme.typography.labelLarge.copy(
+            fontSize = fontSize, lineHeight = (fontSize.value * 1.25f).sp,
+            fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp,
+        )
+        val slotWidth = items.maxOf { item ->
+            val labelWidth = with(density) { textMeasurer.measure(item.label, labelStyle).size.width.toDp() }
+            val badgeWidth = item.badge?.let { with(density) { textMeasurer.measure(it, labelStyle).size.width.toDp() } + 16.dp } ?: 0.dp
+            labelWidth + badgeWidth + (if (item.icon != null) 26.dp else 0.dp) + 20.dp
+        }.coerceAtLeast(64.dp)
+        val availableWidth = if (constraints.hasBoundedWidth) maxWidth else slotWidth * items.size + 8.dp
+        val rowWidth = maxOf(availableWidth, slotWidth * items.size + 8.dp)
+        LaunchedEffect(normalizedSelectedIndex, rowWidth, availableWidth) {
+            val slot = with(density) { ((rowWidth - 8.dp) / items.size).toPx() }
+            val viewport = with(density) { availableWidth.toPx() }
+            val start = normalizedSelectedIndex * slot
+            val end = start + slot
+            val target = when {
+                start < scroll.value -> start.toInt()
+                end > scroll.value + viewport -> (end - viewport + with(density) { 8.dp.toPx() }).toInt()
+                else -> scroll.value
+            }
+            scroll.scrollTo(target.coerceAtLeast(0))
+        }
+        Box(Modifier.width(availableWidth).horizontalScroll(scroll)) {
+            LiquidGlassBottomTabs(
+                selectedTabIndex = { normalizedSelectedIndex },
+                onTabSelected = onTabSelected,
+                tabsCount = items.size,
+                modifier = Modifier.width(rowWidth),
+                backdrop = effectiveBackdrop,
             ) {
-                AdaptiveTabItem(
-                    item = item,
-                    tabsCount = items.size,
-                    contentColor = contentColor,
-                )
+                items.forEachIndexed { index, item ->
+                    LiquidGlassBottomTab(
+                        onClick = {
+                            if (index != normalizedSelectedIndex) onTabSelected(index)
+                        },
+                        selected = index == normalizedSelectedIndex,
+                    ) {
+                        AdaptiveTabItem(
+                            item = item,
+                            tabsCount = items.size,
+                            contentColor = contentColor,
+                            textStyle = labelStyle,
+                        )
+                    }
+                }
             }
         }
     }
@@ -78,105 +120,48 @@ private fun AdaptiveTabItem(
     item: LiquidNavigationItem,
     tabsCount: Int,
     contentColor: Color,
+    textStyle: TextStyle,
 ) {
     val count = tabsCount.coerceAtLeast(1)
     val icon = item.icon
     val badge = item.badge?.takeIf(String::isNotEmpty)
-    val hasIcon = icon != null
-    val hasBadge = badge != null
-    val isLongText = item.label.length > 7
-
-    val fontSize =
-        when {
-            count <= 2 -> 14.5.sp
-            count == 3 -> 13.5.sp
-            count == 4 -> if (hasIcon || isLongText) 12.sp else 13.sp
-            else -> if (hasIcon) 11.sp else 12.sp
-        }
-
-    val iconSize =
-        when {
-            count <= 2 -> 18.dp
-            count == 3 -> 17.dp
-            count == 4 -> 15.dp
-            else -> 14.dp
-        }
-
-    val spacing =
-        when {
-            count <= 2 -> 7.dp
-            count == 3 -> 5.dp
-            count == 4 -> 4.dp
-            else -> 3.dp
-        }
-
-    val horizontalPadding =
-        when {
-            count <= 2 -> 8.dp
-            count == 3 -> 6.dp
-            count == 4 -> 4.dp
-            else -> 2.dp
-        }
-
-    val useVerticalLayout = count >= 4 && hasIcon && isLongText
-
-    if (useVerticalLayout) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = horizontalPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = item.label,
-                tint = contentColor,
-                modifier = Modifier.size(iconSize),
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
-            ) {
-                Text(
-                    text = item.label,
-                    color = contentColor,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = fontSize,
-                    maxLines = 1,
-                    softWrap = false,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                )
-                if (hasBadge) {
-                    CompactBadge(badge = badge, contentColor = contentColor, count = count)
-                }
-            }
-        }
-    } else {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = horizontalPadding),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(spacing, Alignment.CenterHorizontally),
-        ) {
-            if (hasIcon) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = item.label,
-                    tint = contentColor,
-                    modifier = Modifier.size(iconSize),
-                )
-            }
+    val fontScale = LocalDensity.current.fontScale
+    BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 6.dp)) {
+        val vertical = icon != null && maxWidth < (112 * fontScale).dp
+        val label: @Composable () -> Unit = {
             Text(
                 text = item.label,
                 color = contentColor,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = fontSize,
-                maxLines = 1,
-                softWrap = false,
+                style = textStyle,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
             )
-            if (hasBadge) {
-                CompactBadge(badge = badge, contentColor = contentColor, count = count)
+        }
+        if (vertical) {
+            Column(
+                Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(20.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                ) {
+                    Box(Modifier.weight(1f, fill = false)) { label() }
+                    if (badge != null) CompactBadge(badge, contentColor, count)
+                }
+            }
+        } else {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+            ) {
+                if (icon != null) Icon(icon, null, Modifier.size(20.dp), tint = contentColor)
+                Box(Modifier.weight(1f, fill = false)) { label() }
+                if (badge != null) CompactBadge(badge, contentColor, count)
             }
         }
     }
@@ -192,7 +177,7 @@ private fun CompactBadge(
     val glassColors = LiquidGlassTheme.colors
     val hPad = if (count <= 3) 6.dp else 4.dp
     val vPad = if (count <= 3) 2.dp else 1.dp
-    val fSize = if (count <= 3) 10.sp else 9.sp
+    val fSize = 12.sp
 
     Box(
         modifier =

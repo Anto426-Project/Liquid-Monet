@@ -74,7 +74,8 @@ fun LiquidNavigationBar(
                 LiquidGlassBottomTab(
                     onClick = {
                         if (index != normalizedSelectedIndex) onItemSelected(index)
-                    }
+                    },
+                    selected = index == normalizedSelectedIndex,
                 ) {
                     AdaptiveNavItem(
                         item = item,
@@ -139,9 +140,9 @@ private fun AdaptiveNavItem(
     val fontSize =
         when {
             !hasIcon -> if (count <= 3) 13.5.sp else 12.sp
-            count <= 3 -> 11.5.sp
-            count == 4 -> 11.sp
-            else -> 10.sp
+            count <= 3 -> 12.sp
+            count == 4 -> 12.sp
+            else -> 12.sp
         }
 
     val spacing =
@@ -167,7 +168,7 @@ private fun AdaptiveNavItem(
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = item.label,
+                    contentDescription = null,
                     modifier = Modifier.size(iconSize),
                     tint = contentColor,
                 )
@@ -184,7 +185,8 @@ private fun AdaptiveNavItem(
                         Text(
                             text = badge,
                             color = contentColor,
-                            fontSize = 8.5.sp,
+                            fontSize = 12.sp,
+                            lineHeight = 15.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             softWrap = false,
@@ -199,9 +201,9 @@ private fun AdaptiveNavItem(
                 text = item.label,
                 color = contentColor,
                 fontSize = fontSize,
+                lineHeight = (fontSize.value * 1.25f).sp,
                 fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                softWrap = false,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
             )

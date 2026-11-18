@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -99,7 +99,7 @@ fun LiquidSearchBar(
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
 
     Row(
-        modifier = modifier.fillMaxWidth().height(54.dp),
+        modifier = modifier.fillMaxWidth().heightIn(min = 54.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BasicTextField(
@@ -107,7 +107,7 @@ fun LiquidSearchBar(
             onValueChange = onQueryChange,
             modifier =
                 Modifier.weight(1f)
-                    .height(54.dp)
+                    .heightIn(min = 54.dp)
                     .graphicsLayer {
                         scaleX = mainBodySquashX
                         scaleY = mainBodyStretchY
@@ -137,7 +137,7 @@ fun LiquidSearchBar(
             interactionSource = interactionSource,
             decorationBox = { innerTextField ->
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start,
                 ) {

@@ -4,7 +4,10 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -25,6 +28,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
@@ -186,114 +190,125 @@ fun LiquidOtpInput(
         cursorBrush = SolidColor(Color.Transparent),
         enabled = enabled,
         decorationBox = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(spacing, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                for (i in 0 until length) {
-                    val currentOtp = textFieldValue.text
-                    val rawChar = currentOtp.getOrNull(i)?.toString() ?: ""
-                    val displayChar = if (obscureText && rawChar.isNotEmpty()) "•" else rawChar
-                    val isCurrent =
-                        isFocused &&
-                            (currentOtp.length == i ||
-                                (i == length - 1 && currentOtp.length == length))
-                    val isFilled = i < currentOtp.length
+            BoxWithConstraints {
+                val density = LocalDensity.current
+                val effectiveCellWidth = maxOf(cellWidth, with(density) { 24.sp.toDp() } + 16.dp)
+                val effectiveCellHeight = maxOf(cellHeight, with(density) { 32.sp.toDp() } + 24.dp)
+                val capacity = if (constraints.hasBoundedWidth) {
+                    ((maxWidth + spacing) / (effectiveCellWidth + spacing)).toInt().coerceAtLeast(1)
+                } else length
+                val rows = (length + capacity - 1) / capacity
+                val columns = (length + rows - 1) / rows
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(spacing, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(spacing),
+                    maxItemsInEachRow = columns,
+                ) {
+                    for (i in 0 until length) {
+                        val currentOtp = textFieldValue.text
+                        val rawChar = currentOtp.getOrNull(i)?.toString() ?: ""
+                        val displayChar = if (obscureText && rawChar.isNotEmpty()) "•" else rawChar
+                        val isCurrent =
+                            isFocused &&
+                                (currentOtp.length == i ||
+                                    (i == length - 1 && currentOtp.length == length))
+                        val isFilled = i < currentOtp.length
 
-                    val borderColor by
-                        LiquidOtpInputMotion.animateColorPrimary(
-                            targetValue =
-                                when {
-                                    isCurrent -> colorScheme.primary
-                                    isFilled ->
-                                        colorScheme.primary.copy(
-                                            alpha = glassColors.focusIndicator.alpha * 0.72f
-                                        )
-                                    else -> glassColors.outline
-                                },
-                            performance = performance,
-                            label = "otpBorder_$i",
-                        )
-
-                    val targetContainerColor =
-                        when {
-                            isCurrent -> glassColors.accentContainer
-                            isFilled ->
-                                colorScheme.primary.copy(alpha = glassColors.neutralContainer.alpha)
-                            else -> Color.Transparent
-                        }
-                    val containerColor by
-                        LiquidOtpInputMotion.animateColorSecondary(
-                            targetValue = targetContainerColor,
-                            performance = performance,
-                            label = "otpContainer_$i",
-                        )
-                    val cellScale by
-                        LiquidOtpInputMotion.animateFloat(
-                            targetValue =
-                                when {
-                                    isCurrent -> 1.06f
-                                    isFilled -> 1f
-                                    else -> 0.94f
-                                },
-                            performance = performance,
-                            label = "otpCellScale_$i",
-                        )
-                    val cellLift by
-                        LiquidOtpInputMotion.animateDpPrimary(
-                            targetValue = if (isCurrent) (-2).dp else 0.dp,
-                            performance = performance,
-                            label = "otpCellLift_$i",
-                        )
-                    val borderWidth by
-                        LiquidOtpInputMotion.animateDpSecondary(
-                            targetValue = if (isCurrent) 2.dp else 1.dp,
-                            performance = performance,
-                            label = "otpBorderWidth_$i",
-                        )
-
-                    Box(
-                        modifier =
-                            Modifier.size(width = cellWidth, height = cellHeight)
-                                .graphicsLayer {
-                                    scaleX = cellScale
-                                    scaleY = cellScale
-                                    translationY = cellLift.toPx()
-                                }
-                                .liquidGlass(
-                                    backdrop = effectiveBackdrop,
-                                    shape = cellShape,
-                                    role = LiquidGlassRole.Control,
-                                    containerColor = containerColor,
-                                )
-                                .border(
-                                    width = borderWidth,
-                                    color = borderColor,
-                                    shape = cellShape,
-                                ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        AnimatedContent(
-                            targetState = displayChar,
-                            transitionSpec = LiquidOtpInputMotion.contentTransition(performance),
-                            contentAlignment = Alignment.Center,
-                            label = "otpDigit_$i",
-                        ) { digit ->
-                            Text(
-                                text = digit,
-                                style =
-                                    TextStyle(
-                                        color =
-                                            if (isFilled) {
-                                                colorScheme.primary
-                                            } else {
-                                                colorScheme.onSurface
-                                            },
-                                        fontSize = 22.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center,
-                                    ),
+                        val borderColor by
+                            LiquidOtpInputMotion.animateColorPrimary(
+                                targetValue =
+                                    when {
+                                        isCurrent -> colorScheme.primary
+                                        isFilled ->
+                                            colorScheme.primary.copy(
+                                                alpha = glassColors.focusIndicator.alpha * 0.72f
+                                            )
+                                        else -> glassColors.outline
+                                    },
+                                performance = performance,
+                                label = "otpBorder_$i",
                             )
+
+                        val targetContainerColor =
+                            when {
+                                isCurrent -> glassColors.accentContainer
+                                isFilled ->
+                                    colorScheme.primary.copy(alpha = glassColors.neutralContainer.alpha)
+                                else -> Color.Transparent
+                            }
+                        val containerColor by
+                            LiquidOtpInputMotion.animateColorSecondary(
+                                targetValue = targetContainerColor,
+                                performance = performance,
+                                label = "otpContainer_$i",
+                            )
+                        val cellScale by
+                            LiquidOtpInputMotion.animateFloat(
+                                targetValue =
+                                    when {
+                                        isCurrent -> 1.06f
+                                        isFilled -> 1f
+                                        else -> 0.94f
+                                    },
+                                performance = performance,
+                                label = "otpCellScale_$i",
+                            )
+                        val cellLift by
+                            LiquidOtpInputMotion.animateDpPrimary(
+                                targetValue = if (isCurrent) (-2).dp else 0.dp,
+                                performance = performance,
+                                label = "otpCellLift_$i",
+                            )
+                        val borderWidth by
+                            LiquidOtpInputMotion.animateDpSecondary(
+                                targetValue = if (isCurrent) 2.dp else 1.dp,
+                                performance = performance,
+                                label = "otpBorderWidth_$i",
+                            )
+
+                        Box(
+                            modifier =
+                                Modifier.width(effectiveCellWidth).heightIn(min = effectiveCellHeight)
+                                    .graphicsLayer {
+                                        scaleX = cellScale
+                                        scaleY = cellScale
+                                        translationY = cellLift.toPx()
+                                    }
+                                    .liquidGlass(
+                                        backdrop = effectiveBackdrop,
+                                        shape = cellShape,
+                                        role = LiquidGlassRole.Control,
+                                        containerColor = containerColor,
+                                    )
+                                    .border(
+                                        width = borderWidth,
+                                        color = borderColor,
+                                        shape = cellShape,
+                                    ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            AnimatedContent(
+                                targetState = displayChar,
+                                transitionSpec = LiquidOtpInputMotion.contentTransition(performance),
+                                contentAlignment = Alignment.Center,
+                                label = "otpDigit_$i",
+                            ) { digit ->
+                                Text(
+                                    text = digit,
+                                    style =
+                                        TextStyle(
+                                            color =
+                                                if (isFilled) {
+                                                    colorScheme.primary
+                                                } else {
+                                                    colorScheme.onSurface
+                                                },
+                                            fontSize = 22.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                        ),
+                                )
+                            }
                         }
                     }
                 }

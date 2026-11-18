@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -28,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
@@ -80,7 +84,6 @@ fun LiquidDialog(
                             lineHeight = 22.sp,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         ),
-                    maxLines = 6,
                 )
             }
     val hostedContent: @Composable () -> Unit = {
@@ -226,7 +229,7 @@ private fun LiquidDialogPanel(
         modifier =
             modifier
                 .padding(horizontal = 20.dp, vertical = 24.dp)
-                .widthIn(min = 280.dp, max = 360.dp)
+                .widthIn(max = 560.dp)
                 .fillMaxWidth()
                 .liquidGlass(
                     backdrop = backdrop,
@@ -257,24 +260,30 @@ private fun LiquidDialogPanel(
 
             // Centered Body Content
             Box(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+                modifier = Modifier.weight(1f, fill = false).fillMaxWidth()
+                    .verticalScroll(rememberScrollState()).padding(bottom = 20.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 content()
             }
 
-            // Action Buttons Row
             if (dismissButton != null || confirmButton != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (dismissButton != null) {
-                        Box(modifier = Modifier.weight(1f)) { dismissButton() }
-                    }
-                    if (confirmButton != null) {
-                        Box(modifier = Modifier.weight(1f)) { confirmButton() }
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    val stackActions = maxWidth < 300.dp || LocalDensity.current.fontScale > 1.3f
+                    if (stackActions) {
+                        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            if (dismissButton != null) Box(Modifier.fillMaxWidth(), propagateMinConstraints = true) { dismissButton() }
+                            if (confirmButton != null) Box(Modifier.fillMaxWidth(), propagateMinConstraints = true) { confirmButton() }
+                        }
+                    } else {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (dismissButton != null) Box(Modifier.weight(1f), propagateMinConstraints = true) { dismissButton() }
+                            if (confirmButton != null) Box(Modifier.weight(1f), propagateMinConstraints = true) { confirmButton() }
+                        }
                     }
                 }
             }

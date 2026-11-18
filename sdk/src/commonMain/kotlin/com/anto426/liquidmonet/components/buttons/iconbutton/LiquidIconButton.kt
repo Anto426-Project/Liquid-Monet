@@ -3,6 +3,7 @@ package com.anto426.liquidmonet.components.buttons.iconbutton
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -84,6 +85,7 @@ fun LiquidIconButton(
     Box(
         modifier =
             modifier
+                .minimumInteractiveComponentSize()
                 .size(size)
                 .liquidControlInteractive(
                     enabled = enabled,
