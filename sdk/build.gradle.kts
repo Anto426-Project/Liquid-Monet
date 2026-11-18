@@ -186,10 +186,6 @@ kotlin {
         }
     }
 
-    jvm("desktop") {
-        compilerOptions { jvmTarget.set(JvmTarget.JVM_21) }
-    }
-
     android {
         namespace = "com.anto426.liquidmonet.sdk"
         compileSdk = libs.versions.compileSdk.get().toInt()

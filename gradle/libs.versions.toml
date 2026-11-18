@@ -1,21 +1,21 @@
 [versions]
-agp = "9.4.1"
-kotlin = "2.4.20"
+agp = "9.5.1"
+kotlin = "2.4.21"
 compileSdk = "37"
 targetSdk = "37"
 minSdk = "24"
 coreKtx = "1.19.1"
 compose = "1.12.1"
-# Must match the Android artifact selected by material3Multiplatform below.
-material3 = "1.5.0-alpha22"
+# Android Material3 version aligned with the UniApp catalog.
+material3 = "1.5.0-rc01"
 lifecycle = "2.11.0"
 activityCompose = "1.13.0"
-composeMultiplatform = "1.12.1"
+composeMultiplatform = "1.12.2"
 material3Multiplatform = "1.12.0-alpha03"
 datetime = "0.8.0"
 coroutines = "1.11.0"
 navigationEvent = "1.1.0"
-errorProneAnnotations = "2.47.0"
+errorProneAnnotations = "2.50.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

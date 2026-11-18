@@ -126,7 +126,9 @@ Run `python scripts/check_sdk_structure.py` to check the complete source layout.
 ## Build indipendente e consumo dei binari
 
 Questo repository compila e pubblica lo SDK autonomamente; UniApp non include i suoi sorgenti.
-La toolchain richiede JDK 21, Gradle 9.7.1, Kotlin 2.4.20 e AGP 9.4.0 (Android API 37).
+La toolchain usa il Gradle Wrapper del repository e richiede JDK 21, Kotlin 2.4.21 e AGP 9.5.1 (Android API 37).
+Compose Multiplatform 1.12.2, Compose Android 1.12.1 e Material3 Multiplatform 1.12.0-alpha03
+sono allineati al catalogo di UniApp; la versione Android di Material3 è 1.5.0-rc01.
 La versione Maven della pubblicazione è `1.0.<github.run_number>`, oppure il valore esplicito
 passato con `-PsdkVersion=<versione>`. Una Release già pubblicata non viene sovrascritta.
 

@@ -1,7 +1,7 @@
 # Screen motion
 
 Screen transitions and content entrances are shared Compose APIs in `commonMain`, available to
-Android, iOS and desktop consumers. They use `LiquidMotion` and the current
+Android and iOS consumers. They use `LiquidMotion` and the current
 `LocalLiquidGlassPerformance` profile. The existing switcher API and its default `LiquidMorph`
 preset remain unchanged.
 
@@ -137,5 +137,5 @@ recreating child state, immediate reduced motion, and reveal after viewport boun
 
 The underlying content/visibility transitions follow the
 [Compose animation APIs](https://developer.android.com/develop/ui/compose/animation/composables-modifiers).
-Android interaction tests and shared/desktop compilation do not establish native iOS behavior
+Android interaction tests and shared compilation do not establish native iOS behavior
 or frame-time performance on every device.

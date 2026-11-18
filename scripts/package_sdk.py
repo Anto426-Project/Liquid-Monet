@@ -13,28 +13,26 @@ p.add_argument('--coordinate', required=True)
 p.add_argument('--version', required=True)
 p.add_argument('--source-repository', required=True)
 p.add_argument('--source-sha', required=True)
-p.add_argument('--desktop-only', action='store_true', help='Package only JVM desktop and KMP metadata')
 a = p.parse_args()
 group, artifact = a.coordinate.split(':')
 base = a.repository / group.replace('.', '/')
 root = base / artifact / a.version
 required = [root / f'{artifact}-{a.version}.module']
-targets = [('desktop', 'jar')] if a.desktop_only else [('android', 'aar'), ('iosarm64', 'klib'), ('iossimulatorarm64', 'klib'), ('desktop', 'jar')]
+targets = [('android', 'aar'), ('iosarm64', 'klib'), ('iossimulatorarm64', 'klib')]
 for suffix, extension in targets:
     target = f'{artifact}-{suffix}'
     required.append(base / target / a.version / f'{target}-{a.version}.{extension}')
 for path in required:
     if not path.is_file() or not path.stat().st_size:
         raise SystemExit(f'Missing published target: {path}')
-if not a.desktop_only:
-    # An AAR stripped of its public API is not a reusable library.
-    with zipfile.ZipFile(required[1]) as aar:
-        if len(aar.read('classes.jar')) < 1000:
-            raise SystemExit('Published Android classes are missing or unexpectedly empty')
-        for abi in ('arm64-v8a', 'armeabi-v7a', 'x86_64'):
-            native_lib = f'jni/{abi}/libliquidwave.so'
-            if native_lib not in aar.namelist() or aar.getinfo(native_lib).file_size < 1000:
-                raise SystemExit(f'Published Android native kernel is missing: {native_lib}')
+# An AAR stripped of its public API is not a reusable library.
+with zipfile.ZipFile(required[1]) as aar:
+    if len(aar.read('classes.jar')) < 1000:
+        raise SystemExit('Published Android classes are missing or unexpectedly empty')
+    for abi in ('arm64-v8a', 'armeabi-v7a', 'x86_64'):
+        native_lib = f'jni/{abi}/libliquidwave.so'
+        if native_lib not in aar.namelist() or aar.getinfo(native_lib).file_size < 1000:
+            raise SystemExit(f'Published Android native kernel is missing: {native_lib}')
 # Only this version belongs in the archive, even when staging contains older local builds.
 publication_dirs = [root, *(base / f'{artifact}-{suffix}' / a.version
                            for suffix, _ in targets)]
