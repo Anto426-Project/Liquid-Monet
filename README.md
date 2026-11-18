@@ -95,6 +95,59 @@ SDK packaging rejects incompatible ELF LOAD segments or RELRO boundaries.
 The segmented tab bar keeps its complete surface inside the available width, including while
 pressed. Labels wrap within their own segments and the bar grows vertically to fit them.
 
+### Custom avatars, badges, buttons and icon containers
+
+Pass a `shape` to the extended `LiquidAvatar` and `LiquidBadge` overloads. Existing calls keep
+their original defaults. Avatar configuration includes foreground/background colors, optional
+border, padding, initials typography, icon size and a separate presence shape, color, size,
+position and content slot. A clickable presence control keeps its own action and animation.
+
+```kotlin
+LiquidAvatar(
+    shape = RoundedCornerShape(16.dp),
+    initials = "AB",
+    size = 64.dp,
+    containerColor = MaterialTheme.colorScheme.primaryContainer,
+    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    border = null,
+    presence = LiquidAvatarPresence.Online,
+    presenceShape = RoundedCornerShape(4.dp),
+    presenceSize = 16.dp,
+    initialsTextStyle = MaterialTheme.typography.titleLarge,
+)
+LiquidBadge(
+    shape = RoundedCornerShape(6.dp),
+    text = "Nuovo",
+    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+    textStyle = MaterialTheme.typography.labelMedium,
+)
+Icon(
+    imageVector = LiquidIcons.Star,
+    contentDescription = "Preferito",
+    modifier = Modifier.liquidIconContainer(
+        contentPadding = PaddingValues(8.dp),
+        containerSize = 44.dp,
+        shape = RoundedCornerShape(10.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ),
+)
+LiquidButton(
+    onClick = onConfirm,
+    text = "Conferma",
+    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+    minimumHeight = 64.dp,
+    shape = RoundedCornerShape(16.dp),
+    containerColor = MaterialTheme.colorScheme.primary,
+    contentColor = MaterialTheme.colorScheme.onPrimary,
+    textStyle = MaterialTheme.typography.titleSmall,
+    border = null,
+)
+```
+
+For a flush group of clickable rows, use `contentPadding = PaddingValues(0.dp)` and
+`clipContent = true` on the outer card. `LiquidPreferenceItem` or transparent nested cards share
+its optical surface and animate their own presses; the outer shape contains their feedback.
+
 ### Floating navigation bar
 
 ```kotlin

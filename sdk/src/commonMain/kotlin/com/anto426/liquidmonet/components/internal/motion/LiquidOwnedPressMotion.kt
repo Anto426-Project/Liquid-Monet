@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.cards.card.motion
+package com.anto426.liquidmonet.components.internal.motion
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -7,9 +7,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import com.anto426.liquidmonet.components.internal.InteractiveHighlight
 
-/** Animate only presses owned by the card's clickable, never a nested control's gestures. */
+/** Animate only presses owned by the control's clickable, never a nested control's gestures. */
 @Composable
-internal fun rememberLiquidCardInteractionSource(
+internal fun rememberLiquidOwnedPressInteractionSource(
     enabled: Boolean,
     highlight: InteractiveHighlight,
 ): MutableInteractionSource {

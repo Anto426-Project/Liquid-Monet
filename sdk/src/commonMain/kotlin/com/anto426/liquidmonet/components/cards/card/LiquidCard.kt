@@ -27,7 +27,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
-import com.anto426.liquidmonet.components.cards.card.motion.rememberLiquidCardInteractionSource
+import com.anto426.liquidmonet.components.internal.motion.rememberLiquidOwnedPressInteractionSource
 import com.anto426.liquidmonet.components.internal.motion.liquidControlLayerBlock
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
@@ -133,7 +133,7 @@ private fun LiquidCardContainer(
     ).forEach { LiquidInputNormalization.nonNegative(it, "LiquidCard contentPadding") }
     val isInteractive = onClick != null && enabled
     val interactiveHighlight = rememberLiquidControlHighlight()
-    val interactionSource = rememberLiquidCardInteractionSource(isInteractive, interactiveHighlight)
+    val interactionSource = rememberLiquidOwnedPressInteractionSource(isInteractive, interactiveHighlight)
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
     val cardLayerBlock = liquidControlLayerBlock(isInteractive, interactiveHighlight)
 

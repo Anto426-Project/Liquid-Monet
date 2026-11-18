@@ -1,5 +1,15 @@
 package com.anto426.liquidmonet.components.display.avatar
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.DpOffset
+import com.anto426.liquidmonet.components.internal.motion.rememberLiquidOwnedPressInteractionSource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -49,7 +59,7 @@ enum class LiquidAvatarPresence {
     Offline,
 }
 
-/** LiquidAvatar - Optical Liquid Glass Avatar Component with Tactile Bounce Dynamics. */
+/** Optical avatar; the original overload retains its circular defaults and binary API. */
 @Composable
 fun LiquidAvatar(
     modifier: Modifier = Modifier,
@@ -63,98 +73,97 @@ fun LiquidAvatar(
     backdropState: Backdrop = emptyBackdrop(),
     content: (@Composable BoxScope.() -> Unit)? = null,
 ) {
+    LiquidAvatar(
+        shape = CircleShape, modifier = modifier, initials = initials, icon = icon,
+        presence = presence, size = size, containerColor = containerColor,
+        onClick = onClick, enabled = enabled, backdropState = backdropState, content = content,
+    )
+}
+
+/**
+ * Custom avatar body, typography, image/content slot and independent presence indicator.
+ * Pass [shape] to select this overload. Set either border to null to remove its outline.
+ * Presence content can contain its own click action without activating the avatar action.
+ */
+@Composable
+fun LiquidAvatar(
+    shape: Shape,
+    modifier: Modifier = Modifier,
+    initials: String? = null,
+    icon: ImageVector? = if (initials == null) LiquidIcons.AccountCircle else null,
+    presence: LiquidAvatarPresence = LiquidAvatarPresence.None,
+    size: Dp = 44.dp,
+    containerColor: Color? = null,
+    onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
+    backdropState: Backdrop = emptyBackdrop(),
+    contentColor: Color = Color.Unspecified,
+    border: BorderStroke? = BorderStroke(1.dp, LiquidGlassTheme.colors.outline),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    initialsTextStyle: TextStyle = TextStyle.Default,
+    iconSize: Dp = size * 0.55f,
+    presenceColor: Color = Color.Unspecified,
+    presenceSize: Dp = (size.value * 0.30f).coerceAtLeast(10f).dp,
+    presenceShape: Shape = CircleShape,
+    presenceBorder: BorderStroke? = BorderStroke(2.dp, MaterialTheme.colorScheme.surface),
+    presenceAlignment: Alignment = Alignment.BottomEnd,
+    presenceOffset: DpOffset = DpOffset(1.dp, 1.dp),
+    presenceContent: (@Composable BoxScope.() -> Unit)? = null,
+    content: (@Composable BoxScope.() -> Unit)? = null,
+) {
     LiquidInputNormalization.positive(size, "LiquidAvatar size")
+    LiquidInputNormalization.positive(iconSize, "LiquidAvatar iconSize")
+    LiquidInputNormalization.positive(presenceSize, "LiquidAvatar presenceSize")
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
-
-    val interactiveHighlight = rememberLiquidControlHighlight()
+    val highlight = rememberLiquidControlHighlight()
+    val interactive = enabled && onClick != null
+    val interactionSource = rememberLiquidOwnedPressInteractionSource(interactive, highlight)
     val colorScheme = MaterialTheme.colorScheme
-    val glassColors = LiquidGlassTheme.colors
-    val resolvedContainerColor = containerColor ?: glassColors.accentContainer
-    val avatarContentColor =
-        LiquidGlassDefaults.contentColorFor(
-            resolvedContainerColor,
-            colorScheme,
-        )
-    val presenceColor =
-        when (presence) {
-            LiquidAvatarPresence.Online -> glassColors.success
-            LiquidAvatarPresence.Away -> glassColors.warning
-            LiquidAvatarPresence.Busy -> glassColors.error
-            LiquidAvatarPresence.Offline -> glassColors.secondaryContent
-            LiquidAvatarPresence.None -> Color.Transparent
-        }
-
+    val colors = LiquidGlassTheme.colors
+    val fill = containerColor ?: colors.accentContainer
+    val foreground = if (contentColor.isSpecified) contentColor else LiquidGlassDefaults.contentColorFor(fill, colorScheme)
+    val statusColor = if (presenceColor.isSpecified) presenceColor else when (presence) {
+        LiquidAvatarPresence.Online -> colors.success
+        LiquidAvatarPresence.Away -> colors.warning
+        LiquidAvatarPresence.Busy -> colors.error
+        LiquidAvatarPresence.Offline -> colors.secondaryContent
+        LiquidAvatarPresence.None -> Color.Transparent
+    }
     Box(
-        modifier =
-            modifier
-                .size(size)
-                .liquidControlLayer(enabled, interactiveHighlight)
-                .liquidControlPressFeedback(
-                    enabled = enabled,
-                    interactiveHighlight = interactiveHighlight,
-                    shape = CircleShape,
-                    drawHighlightOverlay = true,
-                )
-                .then(
-                    if (onClick != null) {
-                        Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            enabled = enabled,
-                            role = Role.Button,
-                            onClick = onClick,
-                        )
-                    } else Modifier
-                ),
+        modifier = modifier.size(size)
+            .liquidControlLayer(interactive, highlight)
+            .then(if (interactive) highlight.modifier(clipShape = shape).then(highlight.pointerTrackingModifier) else Modifier)
+            .then(if (onClick != null) Modifier.clickable(
+                interactionSource = interactionSource, indication = null,
+                enabled = enabled, role = Role.Button, onClick = onClick,
+            ) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
-        // Glass Avatar Body
         Box(
-            modifier =
-                Modifier.fillMaxSize()
-                    .border(1.dp, glassColors.outline, CircleShape)
-                    .liquidGlass(
-                        backdrop = effectiveBackdrop,
-                        shape = Capsule(),
-                        role = LiquidGlassRole.Control,
-                        containerColor = resolvedContainerColor,
-                    ),
+            Modifier.fillMaxSize()
+                .liquidGlass(backdrop = effectiveBackdrop, shape = shape, role = LiquidGlassRole.Control, containerColor = fill)
+                .then(if (border != null) Modifier.border(border, shape) else Modifier)
+                .padding(contentPadding),
             contentAlignment = Alignment.Center,
         ) {
-            if (content != null) {
-                content()
-            } else if (initials != null) {
-                Text(
-                    text = initials.take(2).uppercase(),
-                    style =
-                        MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = (size.value * 0.38f).sp,
-                        ),
-                    color = avatarContentColor,
+            CompositionLocalProvider(LocalContentColor provides foreground) {
+                if (content != null) content()
+                else if (initials != null) Text(
+                    initials.take(2).uppercase(), color = foreground,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold, fontSize = (size.value * 0.38f).sp,
+                    ).merge(initialsTextStyle),
                 )
-            } else if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = avatarContentColor,
-                    modifier = Modifier.size(size * 0.55f),
-                )
+                else if (icon != null) Icon(icon, null, Modifier.size(iconSize), tint = foreground)
             }
         }
-
-        // Presence Indicator Dot floating in the bottom corner unclipped
-        if (presence != LiquidAvatarPresence.None) {
-            val badgeSize = (size.value * 0.30f).coerceAtLeast(10f).dp
+        if (presence != LiquidAvatarPresence.None || presenceContent != null) {
             Box(
-                modifier =
-                    Modifier.size(badgeSize)
-                        .align(Alignment.BottomEnd)
-                        .offset(x = 1.dp, y = 1.dp)
-                        .clip(CircleShape)
-                        .background(presenceColor)
-                        .border(2.dp, colorScheme.surface, CircleShape)
-            )
+                Modifier.size(presenceSize).align(presenceAlignment)
+                    .offset(presenceOffset.x, presenceOffset.y).clip(presenceShape).background(statusColor)
+                    .then(if (presenceBorder != null) Modifier.border(presenceBorder, presenceShape) else Modifier),
+                contentAlignment = Alignment.Center,
+            ) { presenceContent?.invoke(this) }
         }
     }
 }

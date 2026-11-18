@@ -1,5 +1,8 @@
 package com.anto426.liquidmonet.components.display.badge
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.defaultMinSize
@@ -12,6 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,7 +30,7 @@ import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
 
-/** LiquidBadge - Translucent Liquid Glass Badge Indicator. */
+/** Translucent badge; this overload preserves the original pill/dot defaults. */
 @Composable
 fun LiquidBadge(
     modifier: Modifier = Modifier,
@@ -35,55 +40,47 @@ fun LiquidBadge(
     contentColor: Color? = null,
     backdropState: Backdrop = emptyBackdrop(),
 ) {
-    count?.let { LiquidInputNormalization.nonNegative(it, "LiquidBadge count") }
-    val defaultFill = MaterialTheme.colorScheme.error
-    val effectiveContainerColor = containerColor ?: defaultFill
-    val effectiveContentColor =
-        contentColor
-            ?: LiquidGlassDefaults.contentColorFor(
-                effectiveContainerColor,
-                MaterialTheme.colorScheme,
-            )
-    val shape = Capsule()
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    LiquidBadge(
+        shape = Capsule(), modifier = modifier, count = count, text = text,
+        containerColor = containerColor, contentColor = contentColor, backdropState = backdropState,
+    )
+}
 
-    if (text == null) {
-        // Dot Badge
-        Box(
-            modifier =
-                modifier
-                    .size(8.dp)
-                    .liquidGlass(
-                        backdrop = effectiveBackdrop,
-                        shape = shape,
-                        role = LiquidGlassRole.Control,
-                        containerColor = effectiveContainerColor,
-                    )
-        )
-    } else {
-        // Pill Badge with text / count
-        Box(
-            modifier =
-                modifier
-                    .defaultMinSize(minWidth = 18.dp, minHeight = 18.dp)
-                    .liquidGlass(
-                        backdrop = effectiveBackdrop,
-                        shape = shape,
-                        role = LiquidGlassRole.Control,
-                        containerColor = effectiveContainerColor,
-                    )
-                    .padding(horizontal = 5.dp, vertical = 1.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            BasicText(
-                text = text,
-                style =
-                    TextStyle(
-                        color = effectiveContentColor,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
-            )
+/** Custom badge shape, typography, independent padding and optional icon/content slot. */
+@Composable
+fun LiquidBadge(
+    shape: Shape,
+    modifier: Modifier = Modifier,
+    count: Int? = null,
+    text: String? = if (count != null) (if (count > 99) "99+" else count.toString()) else null,
+    containerColor: Color? = null,
+    contentColor: Color? = null,
+    backdropState: Backdrop = emptyBackdrop(),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 5.dp, vertical = 1.dp),
+    minimumSize: Dp = 18.dp,
+    dotSize: Dp = 8.dp,
+    border: BorderStroke? = null,
+    textStyle: TextStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+    contentAlignment: Alignment = Alignment.Center,
+    content: (@Composable BoxScope.() -> Unit)? = null,
+) {
+    count?.let { LiquidInputNormalization.nonNegative(it, "LiquidBadge count") }
+    LiquidInputNormalization.nonNegative(minimumSize, "LiquidBadge minimumSize")
+    LiquidInputNormalization.positive(dotSize, "LiquidBadge dotSize")
+    val fill = containerColor ?: MaterialTheme.colorScheme.error
+    val foreground = contentColor ?: LiquidGlassDefaults.contentColorFor(fill, MaterialTheme.colorScheme)
+    val backdrop = resolveLiquidGlassBackdrop(backdropState)
+    val isDot = text == null && content == null
+    Box(
+        modifier.then(if (isDot) Modifier.size(dotSize) else Modifier.defaultMinSize(minimumSize, minimumSize))
+            .liquidGlass(backdrop = backdrop, shape = shape, role = LiquidGlassRole.Control, containerColor = fill)
+            .then(if (border != null) Modifier.border(border, shape) else Modifier)
+            .then(if (isDot) Modifier else Modifier.padding(contentPadding)),
+        contentAlignment = contentAlignment,
+    ) {
+        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides foreground) {
+            if (content != null) content()
+            else if (text != null) BasicText(text, style = textStyle.copy(color = foreground))
         }
     }
 }

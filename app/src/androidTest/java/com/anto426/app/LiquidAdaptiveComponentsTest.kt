@@ -14,6 +14,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.graphics.Color
@@ -34,6 +35,11 @@ import com.anto426.liquidmonet.components.navigation.tabbar.LiquidTabBar
 import com.anto426.liquidmonet.components.selection.chip.LiquidChip
 import com.anto426.liquidmonet.glass.LiquidGlassScene
 import com.anto426.liquidmonet.icons.LiquidIcons
+import com.anto426.liquidmonet.components.display.avatar.LiquidAvatar
+import com.anto426.liquidmonet.components.display.avatar.LiquidAvatarPresence
+import com.anto426.liquidmonet.components.display.badge.LiquidBadge
+import com.anto426.liquidmonet.components.display.iconcontainer.liquidIconContainer
+import androidx.compose.foundation.clickable
 import java.io.File
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -52,6 +58,10 @@ class LiquidAdaptiveComponentsTest {
                     }
                 }
             }
+        }
+        // Activity recreation can finish attaching its first Compose root after setContent.
+        compose.waitUntil(5_000) {
+            runCatching { compose.onAllNodes(isRoot()).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
         }
     }
 
@@ -336,5 +346,117 @@ class LiquidAdaptiveComponentsTest {
         assertTrue("Child drag must not move its parent", parentBefore == anchor.fetchSemanticsNode().boundsInRoot)
         compose.onNodeWithTag("button").performTouchInput { cancel() }
         compose.mainClock.advanceTimeBy(1600)
+    }
+
+    @Test fun avatarSupportsCustomGeometryColorsContentAndIndependentPresence() {
+        var avatarClicks = 0
+        var presenceClicks = 0
+        var inherited = Color.Unspecified
+        content(fontScale = 1f) {
+            LiquidAvatar(
+                shape = RoundedCornerShape(12.dp), size = 80.dp,
+                modifier = Modifier.testTag("avatar"), initials = "AB",
+                contentColor = Color.Blue, border = null, contentPadding = PaddingValues(8.dp),
+                onClick = { avatarClicks++ }, presence = LiquidAvatarPresence.Online,
+                presenceSize = 24.dp, presenceShape = RoundedCornerShape(4.dp),
+                presenceAlignment = androidx.compose.ui.Alignment.TopEnd,
+                presenceOffset = androidx.compose.ui.unit.DpOffset.Zero,
+                presenceColor = Color.Green, presenceBorder = null,
+                presenceContent = { Box(Modifier.fillMaxSize().testTag("presence").clickable { presenceClicks++ }) },
+            ) {
+                inherited = LocalContentColor.current
+                Box(Modifier.fillMaxSize().testTag("avatar-content"))
+            }
+        }
+        compose.onNodeWithTag("avatar-content", useUnmergedTree = true).assertWidthIsEqualTo(64.dp).assertHeightIsEqualTo(64.dp)
+        compose.onNodeWithTag("presence").assertWidthIsEqualTo(24.dp).assertHeightIsEqualTo(24.dp).performTouchInput { click() }
+        compose.runOnIdle { assertTrue(presenceClicks == 1 && avatarClicks == 0 && inherited == Color.Blue) }
+        compose.onNodeWithTag("avatar").performTouchInput { click(androidx.compose.ui.geometry.Offset(width * .25f, height * .75f)) }
+        compose.runOnIdle { assertTrue(avatarClicks == 1) }
+        capture("custom-avatar-and-presence")
+    }
+
+    @Test fun badgeSupportsCustomShapePaddingTypographyAndDotSize() {
+        content(fontScale = 1f) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                LiquidBadge(
+                    shape = RoundedCornerShape(4.dp), text = "Nuovo", modifier = Modifier.testTag("badge"),
+                    minimumSize = 32.dp, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 16.sp),
+                )
+                LiquidBadge(shape = RoundedCornerShape(2.dp), text = null, dotSize = 12.dp, modifier = Modifier.testTag("dot"))
+            }
+        }
+        compose.onNodeWithTag("badge").assertHeightIsAtLeast(32.dp).assertWidthIsAtLeast(48.dp)
+        compose.onNodeWithTag("dot").assertWidthIsEqualTo(12.dp).assertHeightIsEqualTo(12.dp)
+    }
+
+    @Test fun iconContainerSupportsIndependentContentPadding() {
+        content(fontScale = 1f) {
+            Box(Modifier.liquidIconContainer(
+                contentPadding = PaddingValues(start = 4.dp, top = 8.dp, end = 12.dp, bottom = 8.dp),
+                containerSize = 48.dp, shape = RoundedCornerShape(4.dp), border = BorderStroke(1.dp, Color.Blue),
+            )) { Box(Modifier.fillMaxSize().testTag("icon-content")) }
+        }
+        compose.onNodeWithTag("icon-content").assertWidthIsEqualTo(32.dp).assertHeightIsEqualTo(32.dp)
+    }
+
+    @Test fun groupedControlsKeepPressFeedbackInsideTheirSharedShape() {
+        var firstClicks = 0
+        content(fontScale = 1f) {
+            Box(Modifier.size(320.dp, 180.dp).background(Color.Magenta).testTag("viewport")) {
+                LiquidCard(
+                    contentPadding = PaddingValues(0.dp), clipContent = true,
+                    modifier = Modifier.offset(20.dp, 20.dp).width(280.dp), shape = RoundedCornerShape(24.dp),
+                ) {
+                    Column {
+                        LiquidCard(
+                            modifier = Modifier.height(64.dp).testTag("first-row"),
+                            shape = androidx.compose.ui.graphics.RectangleShape, contentPadding = 0.dp,
+                            colors = LiquidCardDefaults.colors(containerColor = Color.Transparent), onClick = { firstClicks++ },
+                        ) { androidx.compose.material3.Text("Primo controllo") }
+                        LiquidCard(
+                            modifier = Modifier.height(64.dp), contentPadding = 0.dp,
+                            colors = LiquidCardDefaults.colors(containerColor = Color.Transparent), onClick = {},
+                        ) { androidx.compose.material3.Text("Secondo controllo", Modifier.testTag("second-row")) }
+                    }
+                }
+            }
+        }
+        val sibling = compose.onNodeWithTag("second-row", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag("first-row").performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(160)
+        val bitmap = compose.onNodeWithTag("viewport").captureToImage()
+        val pixels = bitmap.toPixelMap()
+        val corner = bitmap.width * 21 / 320
+        assertTrue("Press feedback leaked through the rounded group corner", pixels[corner, corner] == Color.Magenta)
+        assertTrue("Sibling control must remain stable", sibling == compose.onNodeWithTag("second-row", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot)
+        compose.onNodeWithTag("first-row").performTouchInput { up() }
+        compose.mainClock.advanceTimeBy(1200)
+        compose.runOnIdle { assertTrue(firstClicks == 1) }
+        capture("grouped-controls-clean-press")
+    }
+
+    @Test fun buttonSupportsCustomPaddingHeightColorsAndTypography() {
+        var clicks = 0
+        var inherited = Color.Unspecified
+        content(fontScale = 1f) {
+            LiquidButton(
+                onClick = { clicks++ }, contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+                minimumHeight = 72.dp, containerColor = Color.Blue, contentColor = Color.Yellow,
+                shape = RoundedCornerShape(8.dp), border = null,
+                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 20.sp),
+                modifier = Modifier.testTag("custom-button"),
+            ) {
+                inherited = LocalContentColor.current
+                androidx.compose.material3.Text("Personalizzato")
+            }
+        }
+        compose.onNodeWithTag("custom-button").assertHeightIsEqualTo(72.dp).performTouchInput { click() }
+        val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        compose.onNodeWithText("Personalizzato").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        compose.runOnIdle { assertTrue(clicks == 1 && inherited == Color.Yellow && layouts.single().layoutInput.style.fontSize == 20.sp) }
+        capture("custom-button")
     }
 }

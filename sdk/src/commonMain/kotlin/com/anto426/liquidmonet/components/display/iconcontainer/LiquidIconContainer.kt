@@ -1,6 +1,9 @@
 package com.anto426.liquidmonet.components.display.iconcontainer
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
@@ -30,16 +33,25 @@ fun Modifier.liquidIconContainer(
     require(containerSize > 0.dp) { "Liquid icon containerSize must be positive." }
     require(iconSize > 0.dp) { "Liquid icon iconSize must be positive." }
 
-    val resolvedContainerColor =
-        if (containerColor.isSpecified) {
-            containerColor
-        } else {
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-        }
-    val contentPadding = ((containerSize - iconSize) / 2f).coerceAtLeast(0.dp)
+    val padding = ((containerSize - iconSize) / 2f).coerceAtLeast(0.dp)
+    return liquidIconContainer(
+        contentPadding = PaddingValues(padding), containerSize = containerSize,
+        containerColor = containerColor, shape = shape,
+    )
+}
 
-    return this.size(containerSize)
-        .clip(shape)
-        .background(resolvedContainerColor)
+/** Configurable container geometry, independent padding and optional outline for any Icon. */
+@Composable
+fun Modifier.liquidIconContainer(
+    contentPadding: PaddingValues,
+    containerSize: Dp = 40.dp,
+    containerColor: Color = Color.Unspecified,
+    shape: Shape = RoundedRectangle(12.dp),
+    border: BorderStroke? = null,
+): Modifier {
+    require(containerSize > 0.dp) { "Liquid icon containerSize must be positive." }
+    val fill = if (containerColor.isSpecified) containerColor else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+    return this.size(containerSize).clip(shape).background(fill)
+        .then(if (border != null) Modifier.border(border, shape) else Modifier)
         .padding(contentPadding)
 }
