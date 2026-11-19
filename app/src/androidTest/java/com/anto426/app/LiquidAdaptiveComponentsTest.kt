@@ -35,6 +35,7 @@ import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigat
 import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigationBar
 import com.anto426.liquidmonet.components.navigation.tabbar.LiquidTabBar
 import com.anto426.liquidmonet.components.selection.chip.LiquidChip
+import com.anto426.liquidmonet.components.selection.switch.LiquidSwitch
 import com.anto426.liquidmonet.glass.LiquidGlassScene
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.components.display.avatar.LiquidAvatar
@@ -436,12 +437,17 @@ class LiquidAdaptiveComponentsTest {
         var rowClicks = 0
         var trailingClicks = 0
         content(fontScale = 1f) {
+            var checked by remember { mutableStateOf(false) }
             LiquidPreferenceGroup(modifier = Modifier.width(320.dp)) {
                 LiquidPreferenceItem(
                     title = "Impostazione",
                     onClick = { rowClicks++ },
                     trailingContent = {
-                        LiquidButton({ trailingClicks++ }, text = "Azione", modifier = Modifier.testTag("action"))
+                        LiquidSwitch(
+                            checked = checked,
+                            onCheckedChange = { checked = it; trailingClicks++ },
+                            modifier = Modifier.testTag("action"),
+                        )
                     },
                 )
                 LiquidPreferenceItem(title = "Altra impostazione", onClick = {})
@@ -459,6 +465,8 @@ class LiquidAdaptiveComponentsTest {
         assertTrue("The trailing action must not animate its row", before == row.fetchSemanticsNode().boundsInRoot)
         action.performTouchInput { up() }
         compose.mainClock.advanceTimeBy(1200)
+        action.assertIsOn()
+        compose.runOnIdle { assertTrue(rowClicks == 0 && trailingClicks == 1) }
         row.performTouchInput { down(center) }
         compose.mainClock.advanceTimeBy(160)
         assertTrue("The row must animate its own press", before != row.fetchSemanticsNode().boundsInRoot)

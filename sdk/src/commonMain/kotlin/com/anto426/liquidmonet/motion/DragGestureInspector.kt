@@ -16,12 +16,14 @@ internal suspend fun PointerInputScope.inspectDragGestures(
     onDragStart: (down: PointerInputChange) -> Unit = {},
     onDragEnd: (change: PointerInputChange) -> Unit = {},
     onDragCancel: () -> Unit = {},
+    consumeTap: Boolean = false,
     onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit
 ) {
     awaitEachGesture {
         val initialDown = awaitFirstDown(false, PointerEventPass.Initial)
 
-        val down = awaitFirstDown(false)
+        val down = awaitFirstDown(requireUnconsumed = consumeTap)
+        if (consumeTap) down.consume()
         val drag = initialDown
 
         onDragStart(down)
@@ -34,6 +36,7 @@ internal suspend fun PointerInputScope.inspectDragGestures(
         if (upEvent == null) {
             onDragCancel()
         } else {
+            if (consumeTap) upEvent.consume()
             onDragEnd(upEvent)
         }
     }

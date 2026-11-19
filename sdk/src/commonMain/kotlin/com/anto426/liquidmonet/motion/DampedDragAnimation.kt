@@ -189,8 +189,11 @@ internal class DampedDragAnimation(
             }
     }
 
-    val modifier: Modifier =
-        Modifier.pointerInput(Unit) {
+    val modifier: Modifier = dragModifier()
+
+    /** Capture the tap for controls that also handle clicks through their drag gesture. */
+    fun dragModifier(consumeTap: Boolean = false): Modifier =
+        Modifier.pointerInput(consumeTap) {
             inspectDragGestures(
                 onDragStart = { down ->
                     startDrag(down.position)
@@ -201,6 +204,7 @@ internal class DampedDragAnimation(
                 onDragCancel = {
                     stopDrag(cancelled = true)
                 },
+                consumeTap = consumeTap,
             ) { change, dragAmount ->
                 dragBy(size, dragAmount)
             }

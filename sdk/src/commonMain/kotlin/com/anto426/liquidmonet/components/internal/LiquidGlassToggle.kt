@@ -152,7 +152,7 @@ internal fun LiquidGlassToggle(
                     enabled
                 }
             }
-            .then(if (enabled) dampedDragAnimation.modifier else Modifier),
+            .then(if (enabled) dampedDragAnimation.dragModifier(consumeTap = true) else Modifier),
         contentAlignment = Alignment.CenterStart
     ) {
         Box(
