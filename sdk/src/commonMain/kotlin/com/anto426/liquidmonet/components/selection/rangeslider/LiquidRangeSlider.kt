@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RangeSlider as MaterialRangeSlider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.lerp
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
+import com.anto426.liquidmonet.components.internal.LiquidRangeSliderInput
 import com.anto426.liquidmonet.components.selection.slider.requireLiquidSliderRange
 import com.anto426.liquidmonet.components.selection.slider.snapLiquidSliderValue
 import com.anto426.liquidmonet.glass.LiquidGlassRole
@@ -272,7 +272,7 @@ private fun LiquidRangeSliderImpl(
             )
 
             // Native Material input and semantics stay on top of the custom optical renderer.
-            MaterialRangeSlider(
+            LiquidRangeSliderInput(
                 value = value,
                 onValueChange = { nextRange ->
                     val start = snapLiquidSliderValue(nextRange.start, valueRange, steps)
@@ -285,9 +285,6 @@ private fun LiquidRangeSliderImpl(
                 steps = steps,
                 startInteractionSource = startInteractionSource,
                 endInteractionSource = endInteractionSource,
-                startThumb = { Box(Modifier.size(48.dp)) },
-                endThumb = { Box(Modifier.size(48.dp)) },
-                track = { Box(Modifier.fillMaxWidth().height(1.dp)) },
             )
         }
     }

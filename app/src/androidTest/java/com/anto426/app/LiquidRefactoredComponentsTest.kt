@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
@@ -26,8 +27,11 @@ import com.anto426.liquidmonet.components.layout.lazy.LiquidLazyColumn
 import com.anto426.liquidmonet.components.navigation.pagination.*
 import com.anto426.liquidmonet.components.pickers.datepicker.LiquidDatePicker
 import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerState
+import com.anto426.liquidmonet.components.selection.rangeslider.LiquidRangeSlider
+import com.anto426.liquidmonet.components.selection.slider.LiquidSlider
 import com.anto426.liquidmonet.glass.LiquidGlassScene
 import com.anto426.liquidmonet.icons.LiquidIcons
+import com.anto426.liquidmonet.theme.LiquidMonetTheme
 import java.io.File
 import kotlin.math.abs
 import kotlinx.datetime.LocalDate
@@ -37,6 +41,49 @@ import org.junit.Test
 
 class LiquidRefactoredComponentsTest {
     @get:Rule val compose = createAndroidComposeRule<LiquidTestActivity>()
+
+    @Test
+    fun slidersKeepSemanticsAndFollowExternalValuesInsideExpressiveTheme() {
+        val value = mutableFloatStateOf(0.25f)
+        val range = mutableStateOf(0.25f..0.5f)
+        compose.setContent {
+            LiquidMonetTheme(useMonetEngine = false, reduceMotion = true) {
+                LiquidGlassScene {
+                    Column {
+                        LiquidSlider(
+                            value = value.floatValue,
+                            onValueChange = { value.floatValue = it },
+                            modifier = Modifier.testTag("single"),
+                            steps = 3,
+                        )
+                        LiquidRangeSlider(
+                            value = range.value,
+                            onValueChange = { range.value = it },
+                            modifier = Modifier.testTag("range"),
+                            steps = 3,
+                        )
+                    }
+                }
+            }
+        }
+        val adjustable = SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress)
+        val single = adjustable and hasAnyAncestor(hasTestTag("single"))
+        val rangeThumbs = adjustable and hasAnyAncestor(hasTestTag("range"))
+        compose.waitUntil(timeoutMillis = 10_000) {
+            compose.onAllNodes(single, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(single, useUnmergedTree = true).performSemanticsAction(SemanticsActions.SetProgress) {
+            assertTrue(it(0.75f))
+        }
+        compose.runOnIdle {
+            assertEquals(0.75f, value.floatValue)
+            range.value = 0.75f..1f
+        }
+        val thumbValues = compose.onAllNodes(rangeThumbs, useUnmergedTree = true).fetchSemanticsNodes()
+            .map { it.config[SemanticsProperties.ProgressBarRangeInfo].current }
+            .sorted()
+        assertEquals(listOf(0.75f, 1f), thumbValues)
+    }
 
     @Test
     fun controlCenterSharesEnabledStateAndCurrentCallbacks() {

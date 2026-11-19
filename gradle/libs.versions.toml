@@ -7,7 +7,7 @@ minSdk = "24"
 coreKtx = "1.19.1"
 compose = "1.12.1"
 # Android Material3 version aligned with the UniApp catalog.
-material3 = "1.5.0-rc01"
+material3 = "1.5.0"
 lifecycle = "2.11.0"
 activityCompose = "1.13.0"
 composeMultiplatform = "1.12.2"

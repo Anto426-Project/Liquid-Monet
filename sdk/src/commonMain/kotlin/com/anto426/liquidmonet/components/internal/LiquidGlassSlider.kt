@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider as MaterialSlider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -215,7 +214,7 @@ internal fun LiquidGlassSlider(
 
             // Material's input/semantics layer provides a reliable 48dp tap and drag target.
             // The custom liquid renderer above remains purely visual and cannot steal gestures.
-            MaterialSlider(
+            LiquidSliderInput(
                 value = value.coerceIn(valueRange),
                 onValueChange = { nextValue ->
                     currentOnValueChange(snapLiquidSliderValue(nextValue, valueRange, steps))
@@ -225,8 +224,6 @@ internal fun LiquidGlassSlider(
                 valueRange = valueRange,
                 steps = steps,
                 interactionSource = inputInteractionSource,
-                thumb = { Box(Modifier.size(48.dp)) },
-                track = { Box(Modifier.fillMaxWidth().height(1.dp)) },
             )
         }
     }
