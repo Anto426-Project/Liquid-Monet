@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.Role
+import com.anto426.liquidmonet.components.internal.motion.LiquidCardMotion
 import com.anto426.liquidmonet.components.internal.motion.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 
@@ -24,6 +25,25 @@ fun Modifier.liquidClickable(
     clipContent: Boolean = false,
     interactionSource: MutableInteractionSource? = null,
     onClick: (() -> Unit)?,
+): Modifier = liquidClickable(
+    shape = shape,
+    enabled = enabled,
+    role = role,
+    clipContent = clipContent,
+    interactionSource = interactionSource,
+    cardMotion = null,
+    onClick = onClick,
+)
+
+@Composable
+internal fun Modifier.liquidClickable(
+    shape: Shape,
+    enabled: Boolean,
+    role: Role = Role.Button,
+    clipContent: Boolean,
+    interactionSource: MutableInteractionSource? = null,
+    cardMotion: LiquidCardMotion?,
+    onClick: (() -> Unit)?,
 ): Modifier {
     val contentClip = if (clipContent) Modifier.clip(shape) else Modifier
     if (onClick == null) return then(contentClip)
@@ -37,8 +57,8 @@ fun Modifier.liquidClickable(
             role = role,
             onClick = onClick,
         )
-        .then(if (enabled) highlight.ownedGestureModifier else Modifier)
-        .liquidControlLayer(enabled, highlight)
+        .then(if (enabled) highlight.ownedGestureModifier(animateQuickTap = cardMotion != null) else Modifier)
+        .liquidControlLayer(enabled, highlight, cardMotion)
         .then(contentClip)
         .then(if (enabled) highlight.modifier(clipShape = shape) else Modifier)
 }

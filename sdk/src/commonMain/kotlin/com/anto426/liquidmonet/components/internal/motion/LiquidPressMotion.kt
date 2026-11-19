@@ -7,11 +7,13 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Offset
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /** Owns press, pointer tracking and cancellation; the highlight renderer reads its values. */
@@ -59,13 +61,17 @@ internal class LiquidPressMotion(
         if (pressed) pointerPosition = position
     }
 
-    internal fun release() {
+    internal fun release(finishTap: Boolean = false) {
         if (!pressed) return
-        pressJob?.cancel()
         releaseJob?.cancel()
         val releasePosition = pointerPosition
         releaseJob =
             animationScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                // A down and up in the same frame still get a visible press on a card.
+                if (finishTap && motionEnabled && pressProgressAnimation.value < 0.4f) {
+                    snapshotFlow { pressProgressAnimation.value }.first { it >= 0.4f }
+                }
+                pressJob?.cancel()
                 positionAnimation.snapTo(releasePosition)
                 pressed = false
                 launch {

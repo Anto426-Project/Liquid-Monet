@@ -8,6 +8,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -370,7 +371,7 @@ class LiquidAdaptiveComponentsTest {
         content(fontScale = 1f) {
             LiquidCard(
                 contentPadding = PaddingValues(24.dp),
-                modifier = Modifier.size(280.dp, 160.dp).testTag("card"),
+                modifier = Modifier.size(340.dp, 220.dp).testTag("card"),
                 clipContent = true,
                 contentAlignment = androidx.compose.ui.Alignment.Center,
                 onClick = {},
@@ -385,11 +386,86 @@ class LiquidAdaptiveComponentsTest {
         compose.onNodeWithTag("card").performTouchInput { moveBy(androidx.compose.ui.geometry.Offset(80f, 0f), 100) }
         compose.mainClock.advanceTimeBy(80)
         val dragged = anchor.fetchSemanticsNode().boundsInRoot.center
-        assertTrue("Card must follow its own drag: $held -> $dragged", dragged.x > held.x + 1f)
+        assertTrue("A large card must visibly follow its own drag: $held -> $dragged", dragged.x > held.x + 5f)
         compose.onNodeWithTag("card").performTouchInput { cancel() }
         compose.mainClock.advanceTimeBy(1600)
         val returned = anchor.fetchSemanticsNode().boundsInRoot.center
         assertTrue("Card must settle back after cancellation", (returned - initial).getDistance() < 1f)
+    }
+
+    @Test fun nestedCardDragsInsideTheRoundedParentWithoutMovingIt() {
+        content(fontScale = 1f) {
+            Box(Modifier.fillMaxWidth().height(250.dp).background(Color.White).testTag("viewport")) {
+                LiquidCard(
+                    modifier = Modifier.offset(32.dp, 32.dp).size(256.dp, 180.dp).testTag("parent"),
+                    contentPadding = PaddingValues(0.dp),
+                    onClick = {},
+                ) {
+                    LiquidCard(
+                        contentPadding = PaddingValues(0.dp),
+                        modifier = Modifier.fillMaxWidth().height(100.dp).testTag("child"),
+                        clipContent = true,
+                        onClick = {},
+                    ) {
+                        Box(Modifier.fillMaxSize().background(Color.Red))
+                    }
+                }
+            }
+        }
+        val viewport = compose.onNodeWithTag("viewport")
+        val origin = viewport.fetchSemanticsNode().boundsInRoot.topLeft
+        val parent = compose.onNodeWithTag("parent", useUnmergedTree = true)
+        val child = compose.onNodeWithTag("child", useUnmergedTree = true)
+        val parentBounds = parent.fetchSemanticsNode().boundsInRoot
+        val childBounds = child.fetchSemanticsNode().boundsInRoot
+        val x = (parentBounds.right - origin.x).toInt()
+        val y = (childBounds.center.y - origin.y).toInt()
+        val resting = viewport.captureToImage().toPixelMap()
+        compose.mainClock.autoAdvance = false
+        child.performTouchInput {
+            down(center)
+            moveBy(Offset(width * 0.68f, 0f), 170)
+        }
+        compose.mainClock.advanceTimeBy(180)
+        val dragged = viewport.captureToImage().toPixelMap()
+        capture("nested-card-near-border")
+        val justOutside = x + 4
+        assertTrue("A nested card must leave pixels outside the parent's border unchanged",
+            resting[justOutside, y] == dragged[justOutside, y],
+        )
+        assertTrue("The dragged card should recede on the opposite side of the gesture",
+            resting[(parentBounds.left - origin.x).toInt() + 2, y] !=
+                dragged[(parentBounds.left - origin.x).toInt() + 2, y],
+        )
+        assertTrue(parentBounds == parent.fetchSemanticsNode().boundsInRoot)
+        child.performTouchInput { up() }
+        compose.mainClock.advanceTimeBy(1200)
+    }
+
+    @Test fun largeCardShowsPressFeedbackEvenOnAQuickTap() {
+        var clicks = 0
+        content(fontScale = 1f) {
+            LiquidCard(
+                modifier = Modifier.offset(18.dp, 24.dp).size(340.dp, 220.dp).testTag("card"),
+                contentPadding = PaddingValues(16.dp),
+                onClick = { clicks++ },
+            ) {
+                Box(Modifier.fillMaxSize().background(Color.Cyan).testTag("body"))
+            }
+        }
+        val card = compose.onNodeWithTag("card", useUnmergedTree = true)
+        val body = compose.onNodeWithTag("body", useUnmergedTree = true)
+        val widthAtRest = body.fetchSemanticsNode().boundsInRoot.width
+        compose.mainClock.autoAdvance = false
+        card.performTouchInput { click() }
+        compose.mainClock.advanceTimeBy(64)
+        capture("large-card-quick-tap")
+        assertTrue("A quick tap must still draw a visible press frame",
+            body.fetchSemanticsNode().boundsInRoot.width < widthAtRest - 2f,
+        )
+        compose.mainClock.advanceTimeBy(1200)
+        assertTrue(body.fetchSemanticsNode().boundsInRoot.width == widthAtRest)
+        compose.runOnIdle { assertTrue(clicks == 1) }
     }
 
     @Test fun cardReactsToTheInitialTouchInsideAScrollingList() {

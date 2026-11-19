@@ -136,13 +136,14 @@ half4 main(float2 coord) {
     internal fun release() = motion.release()
 
     /** Observe the owned press between clickable and the moving graphics layer. */
-    internal val ownedGestureModifier: Modifier =
-        Modifier.pointerInput(animationScope) {
+    internal fun ownedGestureModifier(animateQuickTap: Boolean = false): Modifier =
+        Modifier.pointerInput(animationScope, animateQuickTap) {
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
                 if (down.isConsumed) return@awaitEachGesture
                 val touchSlop = viewConfiguration.touchSlop
                 var dragged = false
+                var tapped = false
                 press(down.position)
                 try {
                     while (true) {
@@ -153,6 +154,7 @@ half4 main(float2 coord) {
                         if (!change.pressed) {
                             // Suppress the click even when the elastic drag ends inside the button.
                             if (dragged) change.consume()
+                            else tapped = true
                             break
                         }
                         // A scrollable ancestor can claim this move later in the Main pass.
@@ -161,7 +163,7 @@ half4 main(float2 coord) {
                         move(change.position)
                     }
                 } finally {
-                    release()
+                    motion.release(finishTap = animateQuickTap && tapped)
                 }
             }
         }

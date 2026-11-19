@@ -84,7 +84,8 @@ LiquidCard(
 Nested Liquid controls own their click, press animation and enabled state independently and reuse
 the card's optical backdrop. An optional card `onClick` handles the remaining card area; pressing
 a child does not animate or click its parent. Set the card's `enabled = false` to disable only
-that outer action. `clipContent` defaults to false to preserve child elastic motion.
+that outer action. `clipContent` keeps children inside the card shape by default.
+Nested cards ease toward the edges of their own space as you drag them.
 Clickable cards and buttons keep their elastic pointer tracking; releasing or cancelling a drag
 returns the control to its original position without moving the surrounding container.
 

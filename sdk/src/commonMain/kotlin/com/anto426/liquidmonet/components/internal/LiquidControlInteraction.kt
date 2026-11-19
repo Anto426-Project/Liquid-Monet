@@ -68,7 +68,7 @@ internal fun Modifier.liquidControlInteractive(
                     indication = null,
                     onClick = { currentOnClick.value() },
                 )
-                .then(if (enabled) interactiveHighlight.ownedGestureModifier else Modifier)
+                .then(if (enabled) interactiveHighlight.ownedGestureModifier() else Modifier)
                 .then(if (layer != null) Modifier.graphicsLayer(layer) else Modifier)
                 .then(if (enabled) interactiveHighlight.modifier(clipShape = shape) else Modifier)
         }
