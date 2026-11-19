@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
+import com.anto426.liquidmonet.components.internal.LiquidCardPressOwner
 import com.anto426.liquidmonet.components.internal.motion.LiquidCardMotion
 import com.anto426.liquidmonet.components.interaction.liquidClickable
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
@@ -39,12 +40,13 @@ import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.RoundedRectangle
 
 private val LocalLiquidCardClipsContent = staticCompositionLocalOf { false }
+private val LocalLiquidCardPressOwner = staticCompositionLocalOf<LiquidCardPressOwner?> { null }
 
 /**
  * LiquidCard - Liquid Glass Card with Snell optical refraction.
  *
- * Interaction is inferred from [onClick]. Clickable cards receive the shared Liquid press response;
- * container cards remain stable so nested controls and gestures do not compete with their parent.
+ * Cards respond to touch and drag on their own surface. [onClick] adds a click action.
+ * Nested cards and other controls handle their own gestures independently.
  */
 @Composable
 fun LiquidCard(
@@ -76,7 +78,7 @@ fun LiquidCard(
  * [modifier] controls the complete card; [contentModifier] controls only its content box.
  * Set [fillWidth] to false for a card that wraps its content, or provide a width through [modifier].
  * [clipContent] keeps children inside [shape] by default. Set it to false to allow overflow.
- * [enabled] disables the card's own click response without disabling controls inside it.
+ * [enabled] disables the card's own touch response and click action. Nested controls stay enabled.
  * The Dp-padding overload uses the same clipping behavior.
  */
 @Composable
@@ -131,6 +133,7 @@ private fun LiquidCardContainer(
         contentPadding.calculateBottomPadding(),
     ).forEach { LiquidInputNormalization.nonNegative(it, "LiquidCard contentPadding") }
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val pressOwner = LocalLiquidCardPressOwner.current ?: remember { LiquidCardPressOwner() }
     val ancestorClipsContent = LocalLiquidCardClipsContent.current
     val cardMotion = if (ancestorClipsContent) {
         LiquidCardMotion.Contained
@@ -147,6 +150,7 @@ private fun LiquidCardContainer(
                     clipContent = false,
                     enabled = enabled,
                     cardMotion = cardMotion,
+                    cardPressOwner = pressOwner,
                     onClick = onClick,
                 ),
         propagateMinConstraints = true,
@@ -181,6 +185,7 @@ private fun LiquidCardContainer(
                     LocalLiquidGlassContentBackdrop provides effectiveBackdrop,
                     LocalLiquidGlassContainerMode provides LiquidGlassContainerMode.Shared,
                     LocalLiquidCardClipsContent provides (clipContent || ancestorClipsContent),
+                    LocalLiquidCardPressOwner provides pressOwner,
                 ) {
                     content()
                 }
