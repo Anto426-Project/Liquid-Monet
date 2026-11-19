@@ -45,6 +45,7 @@ private val LocalLiquidCardClipsContent = staticCompositionLocalOf { false }
  *
  * Interaction is inferred from [onClick]. Clickable cards receive the shared Liquid press response;
  * container cards remain stable so nested controls and gestures do not compete with their parent.
+ * In a scrolling layout, hold briefly before dragging the card vertically or diagonally.
  */
 @Composable
 fun LiquidCard(

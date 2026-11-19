@@ -25,7 +25,10 @@ import com.anto426.liquidmonet.motion.inspectDragGestures
 import com.kyant.backdrop.RuntimeShader
 import com.kyant.backdrop.asComposeShader
 import com.kyant.backdrop.isRuntimeShaderSupported
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
+
+private const val CardDragHoldMillis = 120L
 
 @androidx.compose.runtime.Stable
 internal class InteractiveHighlight(
@@ -136,34 +139,54 @@ half4 main(float2 coord) {
     internal fun release() = motion.release()
 
     /** Observe the owned press between clickable and the moving graphics layer. */
-    internal fun ownedGestureModifier(animateQuickTap: Boolean = false): Modifier =
-        Modifier.pointerInput(animationScope, animateQuickTap) {
+    internal fun ownedGestureModifier(isCard: Boolean = false): Modifier =
+        Modifier.pointerInput(animationScope, isCard) {
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
                 if (down.isConsumed) return@awaitEachGesture
                 val touchSlop = viewConfiguration.touchSlop
+                val canDragCard = isCard && motionEnabled
                 var dragged = false
                 var tapped = false
+                var heldBeforeMoving: Boolean? = null
+                var ownsDrag = false
                 press(down.position)
                 try {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Main)
                         val change = event.changes.firstOrNull { it.id == down.id } ?: break
                         if (change.isConsumed) break
-                        dragged = dragged || (change.position - down.position).getDistance() > touchSlop
+                        val offset = change.position - down.position
+                        val distance = offset.getDistance()
+                        dragged = dragged || distance > touchSlop
                         if (!change.pressed) {
                             // Suppress the click even when the elastic drag ends inside the button.
                             if (dragged) change.consume()
                             else tapped = true
                             break
                         }
-                        // A scrollable ancestor can claim this move later in the Main pass.
-                        awaitPointerEvent(PointerEventPass.Final)
-                        if (change.isConsumed) break
+                        // A short stationary press gives the card priority on either axis.
+                        // A drag already in progress must not become a hold just because time passed.
+                        if (canDragCard && heldBeforeMoving == null && distance > touchSlop / 2f) {
+                            heldBeforeMoving = change.uptimeMillis - down.uptimeMillis >= CardDragHoldMillis
+                        }
+                        if (heldBeforeMoving == true && dragged) ownsDrag = true
+
+                        if (ownsDrag && change.position != change.previousPosition) {
+                            change.consume()
+                        } else {
+                            // A scrollable ancestor can claim this move later in the Main pass.
+                            awaitPointerEvent(PointerEventPass.Final)
+                            if (change.isConsumed) break
+                            // An accepted horizontal drag can turn vertically without handing off.
+                            if (canDragCard && abs(offset.x) > touchSlop && abs(offset.x) > abs(offset.y)) {
+                                ownsDrag = true
+                            }
+                        }
                         move(change.position)
                     }
                 } finally {
-                    motion.release(finishTap = animateQuickTap && tapped)
+                    motion.release(finishTap = isCard && tapped)
                 }
             }
         }

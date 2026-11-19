@@ -70,7 +70,7 @@ internal fun Modifier.liquidClickable(
     }
     val highlight = rememberLiquidControlHighlight()
     return action
-        .then(if (enabled) highlight.ownedGestureModifier(animateQuickTap = cardMotion != null) else Modifier)
+        .then(if (enabled) highlight.ownedGestureModifier(isCard = cardMotion != null) else Modifier)
         .liquidControlLayer(enabled, highlight, cardMotion)
         .then(contentClip)
         .then(if (enabled) highlight.modifier(clipShape = shape) else Modifier)

@@ -569,6 +569,80 @@ class LiquidAdaptiveComponentsTest {
         }
     }
 
+    @Test fun heldCardDragsInEveryDirectionInsideAVerticalList() {
+        var clicks = 0
+        val listState = androidx.compose.foundation.lazy.LazyListState(firstVisibleItemIndex = 1)
+        content(fontScale = 1f) {
+            LazyColumn(Modifier.width(380.dp).height(650.dp), state = listState) {
+                item { Spacer(Modifier.height(180.dp)) }
+                item {
+                    LiquidCard(
+                        modifier = Modifier.fillMaxWidth().height(500.dp).testTag("card"),
+                        contentPadding = PaddingValues(0.dp),
+                        contentAlignment = androidx.compose.ui.Alignment.Center,
+                        onClick = { clicks++ },
+                    ) {
+                        Box(Modifier.size(70.dp).background(Color.Cyan).testTag("anchor"))
+                    }
+                }
+                item { Spacer(Modifier.height(500.dp)) }
+            }
+        }
+        val card = compose.onNodeWithTag("card")
+        val anchor = compose.onNodeWithTag("anchor", useUnmergedTree = true)
+        val rest = anchor.fetchSemanticsNode().boundsInRoot.center
+        val directions = listOf(
+            Offset(0f, -100f), Offset(0f, 100f), Offset(100f, 0f), Offset(-100f, 0f),
+            Offset(80f, -80f), Offset(-80f, -80f), Offset(80f, 80f), Offset(-80f, 80f),
+        )
+        compose.mainClock.autoAdvance = false
+        for (direction in directions) {
+            card.performTouchInput { down(center) }
+            compose.mainClock.advanceTimeBy(160)
+            card.performTouchInput {
+                advanceEventTime(160)
+                moveBy(direction, 30)
+            }
+            compose.mainClock.advanceTimeBy(80)
+            val displacement = anchor.fetchSemanticsNode().boundsInRoot.center - rest
+            if (direction == directions.first()) capture("large-card-drag-up")
+            if (direction == Offset(80f, 80f)) capture("large-card-drag-diagonal")
+            assertTrue("The card must follow $direction, moved $displacement",
+                (direction.x == 0f || displacement.x * direction.x > 800f) &&
+                    (direction.y == 0f || displacement.y * direction.y > 800f),
+            )
+            compose.runOnIdle {
+                assertTrue("Dragging a held card toward $direction must leave the list stationary",
+                    listState.firstVisibleItemIndex == 1 && listState.firstVisibleItemScrollOffset == 0,
+                )
+            }
+            card.performTouchInput { up() }
+            compose.mainClock.advanceTimeBy(1200)
+            assertTrue((anchor.fetchSemanticsNode().boundsInRoot.center - rest).getDistance() < 1f)
+        }
+        card.performTouchInput {
+            down(center)
+            moveBy(Offset(80f, 0f), 30)
+            moveBy(Offset(0f, -100f), 30)
+        }
+        compose.mainClock.advanceTimeBy(100)
+        val turned = anchor.fetchSemanticsNode().boundsInRoot.center - rest
+        assertTrue("An active horizontal drag can turn upward", turned.x > 8f && turned.y < -8f)
+        compose.runOnIdle {
+            assertTrue(listState.firstVisibleItemIndex == 1 && listState.firstVisibleItemScrollOffset == 0)
+        }
+        card.performTouchInput { up() }
+        compose.mainClock.advanceTimeBy(1200)
+        compose.mainClock.autoAdvance = true
+        card.performTouchInput { swipeUp(durationMillis = 180) }
+        compose.runOnIdle {
+            assertTrue("A swipe without first holding the card must scroll the list",
+                listState.firstVisibleItemIndex > 1 || listState.firstVisibleItemScrollOffset > 0,
+            )
+            assertTrue(clicks == 0)
+        }
+    }
+
     @Test fun nestedButtonKeepsElasticDragWithoutDraggingTheCard() {
         var cardClicks = 0
         var buttonClicks = 0
