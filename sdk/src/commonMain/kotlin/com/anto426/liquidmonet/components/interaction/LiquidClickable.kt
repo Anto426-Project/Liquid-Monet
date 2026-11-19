@@ -8,7 +8,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.Role
 import com.anto426.liquidmonet.components.internal.motion.liquidControlLayer
-import com.anto426.liquidmonet.components.internal.motion.rememberLiquidOwnedPressInteractionSource
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 
 /**
@@ -30,18 +29,15 @@ fun Modifier.liquidClickable(
     if (onClick == null) return then(contentClip)
 
     val highlight = rememberLiquidControlHighlight()
-    val source = rememberLiquidOwnedPressInteractionSource(enabled, highlight, interactionSource)
     return liquidControlLayer(enabled, highlight)
         .then(contentClip)
-        .then(
-            if (enabled) highlight.modifier(clipShape = shape).then(highlight.pointerTrackingModifier)
-            else Modifier,
-        )
+        .then(if (enabled) highlight.modifier(clipShape = shape) else Modifier)
         .clickable(
             enabled = enabled,
-            interactionSource = source,
+            interactionSource = interactionSource,
             indication = null,
             role = role,
             onClick = onClick,
         )
+        .then(if (enabled) highlight.ownedGestureModifier else Modifier)
 }

@@ -135,18 +135,25 @@ half4 main(float2 coord) {
 
     internal fun release() = motion.release()
 
-    /** Track an owned press without starting a second press for a nested child's gesture. */
-    internal val pointerTrackingModifier: Modifier =
+    /** Attach inside clickable so a descendant's consumed down is visible before the parent tap. */
+    internal val ownedGestureModifier: Modifier =
         Modifier.pointerInput(animationScope) {
             awaitEachGesture {
-                val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                while (true) {
-                    // Observe before clickable consumes its own pointer events. Ownership and
-                    // release/cancellation remain exclusively with the clickable's interactions.
-                    val event = awaitPointerEvent(PointerEventPass.Initial)
-                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                    if (!change.pressed) break
-                    move(change.position)
+                val down = awaitFirstDown(requireUnconsumed = false)
+                if (down.isConsumed) return@awaitEachGesture
+                press(down.position)
+                try {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Main)
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed || change.isConsumed) break
+                        // A scrollable ancestor can claim this move later in the Main pass.
+                        awaitPointerEvent(PointerEventPass.Final)
+                        if (change.isConsumed) break
+                        move(change.position)
+                    }
+                } finally {
+                    release()
                 }
             }
         }

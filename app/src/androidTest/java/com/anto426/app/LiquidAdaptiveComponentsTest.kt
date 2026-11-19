@@ -2,6 +2,7 @@ package com.anto426.app
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -378,6 +379,32 @@ class LiquidAdaptiveComponentsTest {
         compose.mainClock.advanceTimeBy(1600)
         val returned = anchor.fetchSemanticsNode().boundsInRoot.center
         assertTrue("Card must settle back after cancellation", (returned - initial).getDistance() < 1f)
+    }
+
+    @Test fun cardReactsToTheInitialTouchInsideAScrollingList() {
+        var clicks = 0
+        content(fontScale = 1f) {
+            LazyColumn(Modifier.size(320.dp, 240.dp), contentPadding = PaddingValues(16.dp)) {
+                item {
+                    LiquidCard(onClick = { clicks++ }, modifier = Modifier.testTag("card")) {
+                        Box(Modifier.size(64.dp).testTag("anchor"))
+                    }
+                }
+                item { Spacer(Modifier.height(400.dp)) }
+            }
+        }
+        val card = compose.onNodeWithTag("card")
+        val anchor = compose.onNodeWithTag("anchor", useUnmergedTree = true)
+        val restingWidth = anchor.fetchSemanticsNode().boundsInRoot.width
+        compose.mainClock.autoAdvance = false
+        card.performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(48)
+        assertTrue("Press feedback should start before the scrollable tap timeout",
+            anchor.fetchSemanticsNode().boundsInRoot.width < restingWidth,
+        )
+        card.performTouchInput { cancel() }
+        compose.mainClock.advanceTimeBy(1200)
+        compose.runOnIdle { assertTrue(clicks == 0) }
     }
 
     @Test fun nestedButtonKeepsElasticDragWithoutDraggingTheCard() {
