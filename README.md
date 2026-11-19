@@ -92,10 +92,10 @@ Text-bearing controls grow with system font scale. Tabs preserve selection seman
 wrap into balanced rows on narrow containers, and dialogs scroll long content while keeping
 their actions visible. Android native kernels are linked for 16 KB pages on every supported ABI;
 SDK packaging rejects incompatible ELF LOAD segments or RELRO boundaries.
-The segmented tab bar keeps its complete surface inside the available width, including while
-pressed. Labels stay on one line. On narrow screens the tab content scrolls inside the fixed capsule;
-the optical background remains within the available width. Navigation labels use a single line
-with ellipsis when necessary, while their full accessible labels remain available.
+The segmented tab bar shows all options in fixed slots within the available width.
+Dragging the glass indicator changes the selection. The glass can expand beyond its resting
+outline during a press. Tab and navigation labels use a single line with ellipsis when necessary,
+while their full accessible labels remain available.
 
 ### Custom avatars, badges, buttons and icon containers
 

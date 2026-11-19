@@ -29,9 +29,7 @@ fun Modifier.liquidClickable(
     if (onClick == null) return then(contentClip)
 
     val highlight = rememberLiquidControlHighlight()
-    return liquidControlLayer(enabled, highlight)
-        .then(contentClip)
-        .then(if (enabled) highlight.modifier(clipShape = shape) else Modifier)
+    return this
         .clickable(
             enabled = enabled,
             interactionSource = interactionSource,
@@ -40,4 +38,7 @@ fun Modifier.liquidClickable(
             onClick = onClick,
         )
         .then(if (enabled) highlight.ownedGestureModifier else Modifier)
+        .liquidControlLayer(enabled, highlight)
+        .then(contentClip)
+        .then(if (enabled) highlight.modifier(clipShape = shape) else Modifier)
 }

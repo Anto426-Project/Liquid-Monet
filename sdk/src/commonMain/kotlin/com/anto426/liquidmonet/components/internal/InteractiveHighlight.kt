@@ -135,18 +135,26 @@ half4 main(float2 coord) {
 
     internal fun release() = motion.release()
 
-    /** Attach inside clickable so a descendant's consumed down is visible before the parent tap. */
+    /** Observe the owned press between clickable and the moving graphics layer. */
     internal val ownedGestureModifier: Modifier =
         Modifier.pointerInput(animationScope) {
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
                 if (down.isConsumed) return@awaitEachGesture
+                val touchSlop = viewConfiguration.touchSlop
+                var dragged = false
                 press(down.position)
                 try {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Main)
                         val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                        if (!change.pressed || change.isConsumed) break
+                        if (change.isConsumed) break
+                        dragged = dragged || (change.position - down.position).getDistance() > touchSlop
+                        if (!change.pressed) {
+                            // Suppress the click even when the elastic drag ends inside the button.
+                            if (dragged) change.consume()
+                            break
+                        }
                         // A scrollable ancestor can claim this move later in the Main pass.
                         awaitPointerEvent(PointerEventPass.Final)
                         if (change.isConsumed) break

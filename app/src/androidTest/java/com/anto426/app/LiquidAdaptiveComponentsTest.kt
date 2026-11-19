@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.Density
@@ -96,26 +97,36 @@ class LiquidAdaptiveComponentsTest {
         capture("compact-large-text-light")
     }
 
-    @Test fun compactTabsExposeSelectionAndKeepLargeLabelsInsidePanel() {
+    @Test fun compactTabsKeepAllLargeLabelsOnOneLineWithoutScrolling() {
+        val labels = listOf("Andamento", "Simula", "Obiettivo", "Proiezioni")
         content(dark = true) {
             var selected by remember { mutableIntStateOf(0) }
             LiquidTabBar(
-                listOf("Andamento", "Simula", "Obiettivo", "Proiezioni").map { LiquidNavigationItem(it) },
+                labels.map { LiquidNavigationItem(it) },
                 selected, { selected = it }, Modifier.width(320.dp).testTag("tabs"),
             )
         }
         compose.onNodeWithText("Andamento").assertIsSelected()
-        compose.onNodeWithText("Proiezioni").performScrollTo().performClick().assertIsSelected()
+        compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange), useUnmergedTree = true)
+            .assertCountEquals(0)
         val panel = compose.onNodeWithTag("tabs").fetchSemanticsNode().boundsInRoot
-        for (label in listOf("Andamento", "Simula", "Obiettivo", "Proiezioni")) {
-            compose.onNodeWithText(label).performScrollTo().assertIsDisplayed()
-            val bounds = compose.onNodeWithText(label).fetchSemanticsNode().boundsInRoot
-            assertTrue("$label must fit inside tabs", bounds.top >= panel.top && bounds.bottom <= panel.bottom && bounds.left >= panel.left && bounds.right <= panel.right)
+        val boundsBefore = labels.map { label ->
+            val tab = compose.onNodeWithText(label).assertIsDisplayed()
+            val bounds = tab.fetchSemanticsNode().boundsInRoot
+            assertTrue("$label must fit inside tabs", panel.contains(bounds.topLeft) &&
+                bounds.right <= panel.right && bounds.bottom <= panel.bottom)
             val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
-            compose.onNodeWithText(label).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
-            assertTrue("$label must remain readable without ellipsis", layouts.isNotEmpty() && layouts.none { layout ->
-                layout.lineCount != 1 || layout.didOverflowHeight || (0 until layout.lineCount).any { layout.isLineEllipsized(it) }
+            tab.performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
+            assertTrue("$label must fit on a single line", layouts.isNotEmpty() && layouts.all { layout ->
+                layout.lineCount == 1 && layout.multiParagraph.height <= layout.size.height + 1f
             })
+            bounds
+        }
+        assertTrue(boundsBefore.zipWithNext().all { (left, right) -> left.right <= right.left })
+        compose.onNodeWithText("Proiezioni").performTouchInput { click() }.assertIsSelected()
+        labels.forEachIndexed { index, label ->
+            val bounds = compose.onNodeWithText(label).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+            assertTrue("$label must keep its slot after selection", bounds == boundsBefore[index])
         }
         capture("compact-tabs-large-text-dark")
     }
@@ -136,7 +147,7 @@ class LiquidAdaptiveComponentsTest {
         capture("compact-otp-large-text")
     }
 
-    @Test fun scrolledRtlTabsKeepTheLensDraggableAndSelectTheAdjacentTab() {
+    @Test fun rtlTabsKeepTheLensDraggableAndSelectTheAdjacentTab() {
         content(dark = true) {
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                 var selected by remember { mutableIntStateOf(3) }
@@ -383,8 +394,9 @@ class LiquidAdaptiveComponentsTest {
 
     @Test fun cardReactsToTheInitialTouchInsideAScrollingList() {
         var clicks = 0
+        val listState = androidx.compose.foundation.lazy.LazyListState()
         content(fontScale = 1f) {
-            LazyColumn(Modifier.size(320.dp, 240.dp), contentPadding = PaddingValues(16.dp)) {
+            LazyColumn(Modifier.size(320.dp, 240.dp), state = listState, contentPadding = PaddingValues(16.dp)) {
                 item {
                     LiquidCard(onClick = { clicks++ }, modifier = Modifier.testTag("card")) {
                         Box(Modifier.size(64.dp).testTag("anchor"))
@@ -402,17 +414,34 @@ class LiquidAdaptiveComponentsTest {
         assertTrue("Press feedback should start before the scrollable tap timeout",
             anchor.fetchSemanticsNode().boundsInRoot.width < restingWidth,
         )
-        card.performTouchInput { cancel() }
+        val held = anchor.fetchSemanticsNode().boundsInRoot.center
+        card.performTouchInput { moveBy(androidx.compose.ui.geometry.Offset(80f, 0f), 100) }
+        compose.mainClock.advanceTimeBy(80)
+        assertTrue("A horizontal drag must also move the card inside a list",
+            anchor.fetchSemanticsNode().boundsInRoot.center.x > held.x + 1f,
+        )
+        card.performTouchInput { up() }
         compose.mainClock.advanceTimeBy(1200)
-        compose.runOnIdle { assertTrue(clicks == 0) }
+        compose.runOnIdle {
+            assertTrue(clicks == 0)
+            assertTrue(listState.firstVisibleItemScrollOffset == 0)
+        }
+        compose.mainClock.autoAdvance = true
+        card.performTouchInput { swipeUp(endY = -100f) }
+        compose.runOnIdle {
+            assertTrue(listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0)
+            assertTrue(clicks == 0)
+        }
     }
 
     @Test fun nestedButtonKeepsElasticDragWithoutDraggingTheCard() {
+        var cardClicks = 0
+        var buttonClicks = 0
         content(fontScale = 1f) {
-            LiquidCard(contentPadding = PaddingValues(24.dp), modifier = Modifier.width(300.dp), onClick = {}) {
+            LiquidCard(contentPadding = PaddingValues(24.dp), modifier = Modifier.width(300.dp), onClick = { cardClicks++ }) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     androidx.compose.material3.Text("Contenitore", Modifier.testTag("anchor"))
-                    LiquidButton({}, text = "Pulsante", modifier = Modifier.testTag("button"))
+                    LiquidButton({ buttonClicks++ }, text = "Pulsante", modifier = Modifier.width(220.dp).testTag("button"))
                 }
             }
         }
@@ -428,8 +457,13 @@ class LiquidAdaptiveComponentsTest {
         val dragged = label.fetchSemanticsNode().boundsInRoot.center
         assertTrue("Button must keep its elastic drag: $held -> $dragged", dragged.x > held.x + 1f)
         assertTrue("Child drag must not move its parent", parentBefore == anchor.fetchSemanticsNode().boundsInRoot)
-        compose.onNodeWithTag("button").performTouchInput { cancel() }
+        compose.onNodeWithTag("button").performTouchInput { up() }
         compose.mainClock.advanceTimeBy(1600)
+        compose.runOnIdle {
+            assertTrue("Releasing a drag inside the button must not click either control", cardClicks == 0 && buttonClicks == 0)
+        }
+        compose.onNodeWithTag("button").performTouchInput { click(center) }
+        compose.runOnIdle { assertTrue(cardClicks == 0 && buttonClicks == 1) }
     }
 
     @Test fun avatarSupportsCustomGeometryColorsContentAndIndependentPresence() {

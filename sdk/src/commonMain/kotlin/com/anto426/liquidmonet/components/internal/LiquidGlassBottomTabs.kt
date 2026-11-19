@@ -1,8 +1,6 @@
 package com.anto426.liquidmonet.components.internal
 
 import androidx.compose.animation.core.EaseOut
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -32,7 +30,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -73,8 +70,6 @@ internal fun LiquidGlassBottomTabs(
     tabsCount: Int,
     modifier: Modifier = Modifier,
     minimumContentHeight: Dp = 0.dp,
-    tabContentWidth: Dp? = null,
-    tabScrollState: ScrollState? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -94,8 +89,7 @@ internal fun LiquidGlassBottomTabs(
     val tabsBackdrop = rememberLayerBackdrop()
 
     BoxWithConstraints(
-        // The scrolling strip clips its own labels. Keep the glass and its spring outside
-        // that clip so both rounded surfaces can draw their full shape during an animation.
+        // Leave room for both rounded surfaces to expand beyond the resting outline.
         modifier = modifier,
         contentAlignment = Alignment.CenterStart,
     ) {
@@ -103,19 +97,14 @@ internal fun LiquidGlassBottomTabs(
         // Keep the panel, color mask and moving lens at exactly the same content height.
         // Text remains scaled by the OS; the container grows instead of clipping it.
         val contentHeight = maxOf(56.dp * density.fontScale.coerceAtLeast(1f), minimumContentHeight)
-        val rowWidth = tabContentWidth?.coerceAtLeast(maxWidth) ?: maxWidth
         val safeTabsCount = tabsCount.coerceAtLeast(1)
         val maxIndex = safeTabsCount - 1
         val tabWidth =
             with(density) {
-                (rowWidth.toPx() - 8.dp.toPx()).coerceAtLeast(1f) / safeTabsCount
+                (maxWidth.toPx() - 8.dp.toPx()).coerceAtLeast(1f) / safeTabsCount
             }
 
         val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
-        val contentOffset: () -> Float = {
-            val scroll = tabScrollState?.value?.toFloat() ?: 0f
-            if (isLtr) -scroll else with(density) { maxWidth.toPx() - rowWidth.toPx() } + scroll
-        }
         val animationScope = rememberCoroutineScope()
         val panelDrag = remember(animationScope) { LiquidElasticDrag(animationScope, 1_000_000f) }
         val currentTabWidth by rememberUpdatedState(tabWidth)
@@ -188,10 +177,10 @@ internal fun LiquidGlassBottomTabs(
                     position = { size, _ ->
                         Offset(
                             x =
-                                if (isLtr)
-                                    (dampedDragAnimation.value + 0.5f) * tabWidth + panelOffset
+                                if (currentIsLtr)
+                                    (dampedDragAnimation.value + 0.5f) * currentTabWidth + panelOffset
                                 else
-                                    size.width - (dampedDragAnimation.value + 0.5f) * tabWidth +
+                                    size.width - (dampedDragAnimation.value + 0.5f) * currentTabWidth +
                                         panelOffset,
                             y = size.height / 2f,
                         )
@@ -237,16 +226,12 @@ internal fun LiquidGlassBottomTabs(
                     .height(contentHeight + 8.dp)
                     .fillMaxWidth(),
         )
-        val baseContent: @Composable () -> Unit = {
-            Row(
-                Modifier.width(rowWidth).height(contentHeight + 8.dp).padding(4.dp)
-                    .graphicsLayer { translationX = panelOffset },
-                verticalAlignment = Alignment.CenterVertically,
-                content = content,
-            )
-        }
-        if (tabScrollState == null) baseContent()
-        else Box(Modifier.width(maxWidth).horizontalScroll(tabScrollState)) { baseContent() }
+        Row(
+            Modifier.fillMaxWidth().height(contentHeight + 8.dp).padding(4.dp)
+                .graphicsLayer { translationX = panelOffset },
+            verticalAlignment = Alignment.CenterVertically,
+            content = content,
+        )
 
         // This off-screen render is the reference's color-mask pass for the moving droplet.
         // It is not interactive or exposed to accessibility.
@@ -264,45 +249,28 @@ internal fun LiquidGlassBottomTabs(
             // row and cuts short tap/release feedback during navigation.
             LocalLiquidBottomTabInteractive provides false,
         ) {
-            val maskContent: @Composable () -> Unit = {
-                Row(
-                    modifier =
-                        Modifier.clearAndSetSemantics {}
-                            .alpha(0f)
-                            .layerBackdrop(tabsBackdrop)
-                            .graphicsLayer { translationX = panelOffset }
-                            .liquidGlassDynamic(
-                                backdrop = effectiveBackdrop,
-                                shape = Capsule(),
-                                preset = LiquidGlassDynamicPresets.NavigationMask,
-                                performance = performance,
-                                effectProgress = { dampedDragAnimation.pressProgress },
-                                onDrawSurface = { drawRect(containerColor) },
-                            )
-                            .then(interactiveHighlight.modifier(clipShape = Capsule()))
-                            .height(contentHeight)
-                            .width(rowWidth)
-                            .padding(horizontal = 4.dp)
-                            .graphicsLayer(colorFilter = ColorFilter.tint(accentColor)),
-                    verticalAlignment = Alignment.CenterVertically,
-                    content = content,
-                )
-            }
-            if (tabScrollState == null) {
-                maskContent()
-            } else {
-                // Mirror the visible row's placement without a second scrollable input node:
-                // even a disabled, transparent scrollable can intercept the real tabs' taps.
-                Box(
-                    Modifier.clearAndSetSemantics {}.width(maxWidth).layout { measurable, viewport ->
-                        val width = rowWidth.roundToPx()
-                        val placeable = measurable.measure(viewport.copy(minWidth = width, maxWidth = width))
-                        layout(viewport.maxWidth, placeable.height) {
-                            placeable.place(contentOffset().fastRoundToInt(), 0)
-                        }
-                    },
-                ) { maskContent() }
-            }
+            Row(
+                modifier =
+                    Modifier.clearAndSetSemantics {}
+                        .alpha(0f)
+                        .layerBackdrop(tabsBackdrop)
+                        .graphicsLayer { translationX = panelOffset }
+                        .liquidGlassDynamic(
+                            backdrop = effectiveBackdrop,
+                            shape = Capsule(),
+                            preset = LiquidGlassDynamicPresets.NavigationMask,
+                            performance = performance,
+                            effectProgress = { dampedDragAnimation.pressProgress },
+                            onDrawSurface = { drawRect(containerColor) },
+                        )
+                        .then(interactiveHighlight.modifier(clipShape = Capsule()))
+                        .height(contentHeight)
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp)
+                        .graphicsLayer(colorFilter = ColorFilter.tint(accentColor)),
+                verticalAlignment = Alignment.CenterVertically,
+                content = content,
+            )
         }
 
         Box(
@@ -315,15 +283,10 @@ internal fun LiquidGlassBottomTabs(
                     .graphicsLayer {
                         translationX =
                             if (isLtr) {
-                                dampedDragAnimation.value * tabWidth + panelOffset + contentOffset()
+                                dampedDragAnimation.value * tabWidth + panelOffset
                             } else {
-                                (maxIndex - dampedDragAnimation.value) * tabWidth + panelOffset + contentOffset()
+                                (maxIndex - dampedDragAnimation.value) * tabWidth + panelOffset
                             }
-                        if (tabScrollState != null) {
-                            val slotLeft = translationX + 4.dp.toPx()
-                            val isScrolledOut = slotLeft + tabWidth <= 0f || slotLeft >= constraints.maxWidth
-                            alpha = if (isScrolledOut) 0f else 1f
-                        }
                     }
                     .then(interactiveHighlight.gestureModifier)
                     .then(dampedDragAnimation.modifier)
