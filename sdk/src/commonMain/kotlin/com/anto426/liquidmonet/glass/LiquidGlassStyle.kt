@@ -31,7 +31,7 @@ object LiquidGlassStyleManager {
         preset = LiquidGlassPresets.Subtle,
         lightSurfaceAlpha = 0.20f,
         darkSurfaceAlpha = 0.15f,
-        lightBrightness = 0.06f,
+        lightBrightness = 0.025f,
         saturation = 1.22f,
         highlightAlpha = 0.48f,
         shadowRadius = 10.dp,
@@ -44,7 +44,7 @@ object LiquidGlassStyleManager {
         preset = LiquidGlassPresets.Navigation,
         lightSurfaceAlpha = 0.20f,
         darkSurfaceAlpha = 0.16f,
-        lightBrightness = 0.10f,
+        lightBrightness = 0.035f,
         saturation = 1.35f,
         highlightAlpha = 0.58f,
         shadowRadius = 16.dp,
@@ -57,7 +57,7 @@ object LiquidGlassStyleManager {
         preset = LiquidGlassPresets.Navigation,
         lightSurfaceAlpha = 0.12f,
         darkSurfaceAlpha = 0.22f,
-        lightBrightness = 0.14f,
+        lightBrightness = 0.035f,
         saturation = 1.40f,
         highlightAlpha = 0.72f,
         shadowRadius = 28.dp,
@@ -73,7 +73,7 @@ object LiquidGlassStyleManager {
         preset = LiquidGlassPresets.Navigation,
         lightSurfaceAlpha = 0.20f,
         darkSurfaceAlpha = 0.16f,
-        lightBrightness = 0.12f,
+        lightBrightness = 0.035f,
         saturation = 1.45f,
         highlightAlpha = 0.65f,
         shadowRadius = 20.dp,
@@ -86,7 +86,7 @@ object LiquidGlassStyleManager {
         preset = LiquidGlassPresets.Navigation,
         lightSurfaceAlpha = 0.20f,
         darkSurfaceAlpha = 0.16f,
-        lightBrightness = 0.10f,
+        lightBrightness = 0.035f,
         saturation = 1.35f,
         highlightAlpha = 0.62f,
         shadowRadius = 18.dp,
@@ -99,7 +99,7 @@ object LiquidGlassStyleManager {
         preset = LiquidGlassPresets.Navigation,
         lightSurfaceAlpha = 0.20f,
         darkSurfaceAlpha = 0.16f,
-        lightBrightness = 0.08f,
+        lightBrightness = 0.025f,
         saturation = 1.30f,
         highlightAlpha = 0f,
         shadowRadius = 0.dp,
@@ -123,7 +123,10 @@ object LiquidGlassStyleManager {
         if (isLightSurface) Color(0xFFFAFAFA) else Color(0xFF121212)
 
     /** Default material body for a semantic role. */
-    fun surfaceColor(role: LiquidGlassRole, isLightSurface: Boolean): Color {
+    fun surfaceColor(role: LiquidGlassRole, isLightSurface: Boolean): Color =
+        surfaceColor(role, isLightSurface, neutralSurfaceColor(isLightSurface))
+
+    internal fun surfaceColor(role: LiquidGlassRole, isLightSurface: Boolean, themedSurface: Color): Color {
         val style = resolve(role)
         val alpha = if (isLightSurface) style.lightSurfaceAlpha else style.darkSurfaceAlpha
         return if (
@@ -132,7 +135,8 @@ object LiquidGlassStyleManager {
         ) {
             Color.Black.copy(alpha = alpha)
         } else {
-            neutralSurfaceColor(isLightSurface).copy(alpha = alpha)
+            val body = if (isLightSurface) themedSurface else neutralSurfaceColor(false)
+            body.copy(alpha = alpha)
         }
     }
 

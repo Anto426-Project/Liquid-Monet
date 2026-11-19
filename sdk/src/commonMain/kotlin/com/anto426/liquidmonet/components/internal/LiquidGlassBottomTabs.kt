@@ -79,7 +79,9 @@ internal fun LiquidGlassBottomTabs(
         LiquidGlassStyleManager.surfaceColor(
             role = LiquidGlassRole.Navigation,
             isLightSurface = isLightSurface,
+            themedSurface = colorScheme.surface,
         )
+    val lightTint = rememberUpdatedState(if (isLightSurface) accentColor else Color.Unspecified)
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val performance = LocalLiquidGlassPerformance.current
     val motionEnabled = performance.motionScale > 0f
@@ -174,6 +176,7 @@ internal fun LiquidGlassBottomTabs(
             remember(animationScope, dampedDragAnimation) {
                 InteractiveHighlight(
                     animationScope = animationScope,
+                    lightTint = { lightTint.value },
                     position = { size, _ ->
                         Offset(
                             x =

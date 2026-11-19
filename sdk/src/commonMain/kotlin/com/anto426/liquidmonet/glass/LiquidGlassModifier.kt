@@ -114,7 +114,8 @@ internal fun Modifier.liquidGlass(
                         (0.35f + 0.65f * liquidStrength)
             )
         }
-    val surfaceColor = containerColor ?: LiquidGlassStyleManager.surfaceColor(role, isLightSurface)
+    val surfaceColor = containerColor
+        ?: LiquidGlassStyleManager.surfaceColor(role, isLightSurface, colorScheme.surface)
 
     val effectPolicy =
         remember(surfacePerformance, role, interactive, isCardSurface) {

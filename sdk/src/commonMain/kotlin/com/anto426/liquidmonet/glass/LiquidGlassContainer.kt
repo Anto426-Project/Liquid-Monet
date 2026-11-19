@@ -87,14 +87,12 @@ internal val LocalLiquidGlassContainerMode =
 /** Visual defaults for a shared glass panel, aligned with Kyant's catalog containers. */
 object LiquidGlassContainerDefaults {
     /**
-     * Neutral 40% surface used by the original Kyant bottom-tabs container.
-     *
-     * The color stays neutral so Monet content and the sampled backdrop remain visible instead of
-     * turning every panel into an opaque Material surface.
+     * Translucent panel fill that carries the light theme hue and preserves the sampled backdrop.
      */
     @Composable
     fun containerColor(): Color {
-        val isLightSurface = MaterialTheme.colorScheme.surface.luminance() > 0.5f
-        return LiquidGlassStyleManager.neutralSurfaceColor(isLightSurface).copy(alpha = 0.40f)
+        val surface = MaterialTheme.colorScheme.surface
+        val body = if (surface.luminance() > 0.5f) surface else LiquidGlassStyleManager.neutralSurfaceColor(false)
+        return body.copy(alpha = 0.40f)
     }
 }

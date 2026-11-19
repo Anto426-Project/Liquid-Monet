@@ -2,6 +2,7 @@ package com.anto426.liquidmonet.components.internal
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -10,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.Role
 import com.anto426.liquidmonet.components.internal.motion.liquidControlLayerBlock
 import com.anto426.liquidmonet.glass.LiquidGlassRole
@@ -23,8 +25,14 @@ import com.kyant.backdrop.Backdrop
 internal fun rememberLiquidControlHighlight(): InteractiveHighlight {
     val animationScope = rememberCoroutineScope()
     val performance = rememberUpdatedState(LocalLiquidGlassPerformance.current)
+    val scheme = MaterialTheme.colorScheme
+    val lightTint = rememberUpdatedState(if (scheme.surface.luminance() > 0.5f) scheme.primary else Color.Unspecified)
     return remember(animationScope) {
-        InteractiveHighlight(animationScope = animationScope, performance = { performance.value })
+        InteractiveHighlight(
+            animationScope = animationScope,
+            performance = { performance.value },
+            lightTint = { lightTint.value },
+        )
     }
 }
 

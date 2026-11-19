@@ -12,6 +12,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.luminance
 import com.anto426.liquidmonet.glass.background.LiquidLinearGradient
 import com.anto426.liquidmonet.glass.background.LiquidRadialGradient
@@ -73,34 +74,32 @@ fun LiquidBackground(
         }
     val normalizedIntensity = if (intensity.isFinite()) intensity.coerceIn(0f, 1f) else 1f
     val drawDetailedBackground = performance.renderDetailedBackground
-    val drawBackgroundMotion = performance.animateBackground
+    val drawBackgroundMotion = normalizedIntensity > 0f && performance.animateBackground
 
-    // 1. Risoluzione dei colori: priorità allo schema Monet attivo (MaterialTheme.colorScheme),
-    // con supporto a override espliciti e fallback su monetSeed
     val colorScheme = MaterialTheme.colorScheme
 
     val rawPrimary =
         primaryOverride
-            ?: colorScheme.primary.takeIf { it != Color.Unspecified }
             ?: monetSeed?.let { if (isDark) it.darkPrimary else it.lightPrimary }
+            ?: colorScheme.primary.takeIf { it.isSpecified }
             ?: Color(0xFF0061A4)
 
     val rawSecondary =
         secondaryOverride
-            ?: colorScheme.secondary.takeIf { it != Color.Unspecified }
             ?: monetSeed?.let { if (isDark) it.darkSecondary else it.lightSecondary }
+            ?: colorScheme.secondary.takeIf { it.isSpecified }
             ?: Color(0xFF535F70)
 
     val rawTertiary =
         tertiaryOverride
-            ?: colorScheme.tertiary.takeIf { it != Color.Unspecified }
             ?: monetSeed?.let { if (isDark) it.darkTertiary else it.lightTertiary }
+            ?: colorScheme.tertiary.takeIf { it.isSpecified }
             ?: Color(0xFF6B5778)
 
     val rawAccent =
         accentOverride
-            ?: colorScheme.primaryContainer.takeIf { it != Color.Unspecified }
-            ?: monetSeed?.let { if (isDark) it.darkTertiary else it.lightTertiary }
+            ?: monetSeed?.let { blend(rawPrimary, rawTertiary, 0.45f) }
+            ?: colorScheme.primaryContainer.takeIf { it.isSpecified }
             ?: Color(0xFFD6BAE4)
 
     // 2. Transizione animata fluida tra cambi di colore/tema
@@ -185,544 +184,159 @@ fun LiquidBackground(
             remember { mutableFloatStateOf(0.5f) }
         }
 
-    // 4. Sfondo base armonizzato con la tavolozza Monet attiva:
-    // Nero OLED profondo con velatura organica del tema in Dark Mode
-    // Bianco perlato morbido armonizzato con i toni Monet in Light Mode
-    val themeBg =
-        colorScheme.background.takeIf { it != Color.Unspecified }
-            ?: if (isDark) Color(0xFF090A0F) else Color(0xFFFAFAFA)
-
-    val alphaMultiplier = if (isDark) normalizedIntensity else normalizedIntensity * 0.85f
+    val neutralCanvas = if (isDark) Color(0xFF0B0E17) else Color(0xFFF3F3F6)
+    val themeCanvas = colorScheme.background.takeIf { it.isSpecified } ?: neutralCanvas
+    val canvas = blend(neutralCanvas, themeCanvas, 0.48f)
+    val effectBlend = if (isDark) BlendMode.Screen else BlendMode.SrcOver
 
     Box(
-        modifier =
-            modifier.fillMaxSize().drawWithCache {
-                val primary = primaryState.value
-                val secondary = secondaryState.value
-                val tertiary = tertiaryState.value
-                val accent = accentState.value
-                val w = size.width
-                val h = size.height
-                val baseBackgroundBrush =
-                    Brush.verticalGradient(
-                        if (isDark) {
-                            listOf(
-                                Color(0xFF010206),
-                                blend(themeBg, primary, 0.05f),
-                                Color(0xFF020308),
-                            )
-                        } else {
-                            listOf(
-                                Color(0xFFFFFFFF),
-                                blend(themeBg, primary, 0.06f),
-                                blend(Color(0xFFF2F4F8), secondary, 0.05f),
-                            )
-                        }
-                    )
+        modifier.fillMaxSize().drawWithCache {
+            val primary = primaryState.value
+            val secondary = secondaryState.value
+            val tertiary = tertiaryState.value
+            val accent = accentState.value
+            val width = size.width
+            val height = size.height
+            val span = maxOf(width, height * 0.56f)
 
-                val auroraPrimary =
-                    LiquidRadialGradient(
-                        listOf(
-                            primary.copy(
-                                alpha =
-                                    if (isDark) 0.42f * alphaMultiplier else 0.24f * alphaMultiplier
-                            ),
-                            primary.copy(
-                                alpha =
-                                    if (isDark) 0.20f * alphaMultiplier else 0.10f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val auroraSecondary =
-                    LiquidRadialGradient(
-                        listOf(
-                            secondary.copy(
-                                alpha =
-                                    if (isDark) 0.38f * alphaMultiplier else 0.20f * alphaMultiplier
-                            ),
-                            secondary.copy(
-                                alpha =
-                                    if (isDark) 0.16f * alphaMultiplier else 0.08f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val auroraAccent =
-                    LiquidRadialGradient(
-                        listOf(
-                            accent.copy(
-                                alpha =
-                                    if (isDark) 0.32f * alphaMultiplier else 0.18f * alphaMultiplier
-                            ),
-                            tertiary.copy(
-                                alpha =
-                                    if (isDark) 0.15f * alphaMultiplier else 0.08f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val auroraComplement =
-                    LiquidRadialGradient(
-                        listOf(
-                            tertiary.copy(
-                                alpha =
-                                    if (isDark) 0.26f * alphaMultiplier else 0.14f * alphaMultiplier
-                            ),
-                            primary.copy(
-                                alpha =
-                                    if (isDark) 0.10f * alphaMultiplier else 0.05f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val meshTopLeft =
-                    LiquidRadialGradient(
-                        listOf(
-                            primary.copy(
-                                alpha =
-                                    if (isDark) 0.40f * alphaMultiplier else 0.24f * alphaMultiplier
-                            ),
-                            primary.copy(
-                                alpha =
-                                    if (isDark) 0.18f * alphaMultiplier else 0.09f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val meshTopRight =
-                    LiquidRadialGradient(
-                        listOf(
-                            secondary.copy(
-                                alpha =
-                                    if (isDark) 0.38f * alphaMultiplier else 0.22f * alphaMultiplier
-                            ),
-                            secondary.copy(
-                                alpha =
-                                    if (isDark) 0.16f * alphaMultiplier else 0.08f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val meshBottomLeft =
-                    LiquidRadialGradient(
-                        listOf(
-                            tertiary.copy(
-                                alpha =
-                                    if (isDark) 0.36f * alphaMultiplier else 0.20f * alphaMultiplier
-                            ),
-                            tertiary.copy(
-                                alpha =
-                                    if (isDark) 0.15f * alphaMultiplier else 0.07f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val meshBottomRight =
-                    LiquidRadialGradient(
-                        listOf(
-                            accent.copy(
-                                alpha =
-                                    if (isDark) 0.38f * alphaMultiplier else 0.22f * alphaMultiplier
-                            ),
-                            accent.copy(
-                                alpha =
-                                    if (isDark) 0.16f * alphaMultiplier else 0.08f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val meshCenter =
-                    LiquidRadialGradient(
-                        listOf(
-                            (if (isDark) Color.White else primary).copy(
-                                alpha =
-                                    if (isDark) 0.22f * alphaMultiplier else 0.14f * alphaMultiplier
-                            ),
-                            primary.copy(
-                                alpha =
-                                    if (isDark) 0.24f * alphaMultiplier else 0.14f * alphaMultiplier
-                            ),
-                            accent.copy(
-                                alpha =
-                                    if (isDark) 0.12f * alphaMultiplier else 0.06f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val orbitalOuter =
-                    LiquidRadialGradient(
-                        listOf(
-                            primary.copy(
-                                alpha =
-                                    if (isDark) 0.44f * alphaMultiplier else 0.26f * alphaMultiplier
-                            ),
-                            secondary.copy(
-                                alpha =
-                                    if (isDark) 0.24f * alphaMultiplier else 0.14f * alphaMultiplier
-                            ),
-                            accent.copy(
-                                alpha =
-                                    if (isDark) 0.10f * alphaMultiplier else 0.05f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val orbitalCore =
-                    LiquidRadialGradient(
-                        listOf(
-                            (if (isDark) Color.White else primary).copy(
-                                alpha =
-                                    if (isDark) 0.40f * alphaMultiplier else 0.22f * alphaMultiplier
-                            ),
-                            primary.copy(
-                                alpha =
-                                    if (isDark) 0.32f * alphaMultiplier else 0.18f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val orbitalTopHalo =
-                    LiquidRadialGradient(
-                        listOf(
-                            secondary.copy(
-                                alpha =
-                                    if (isDark) 0.32f * alphaMultiplier else 0.18f * alphaMultiplier
-                            ),
-                            tertiary.copy(
-                                alpha =
-                                    if (isDark) 0.14f * alphaMultiplier else 0.07f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val orbitalBottomHalo =
-                    LiquidRadialGradient(
-                        listOf(
-                            accent.copy(
-                                alpha =
-                                    if (isDark) 0.30f * alphaMultiplier else 0.16f * alphaMultiplier
-                            ),
-                            tertiary.copy(
-                                alpha =
-                                    if (isDark) 0.12f * alphaMultiplier else 0.06f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val beamTop =
-                    LiquidRadialGradient(
-                        listOf(
-                            (if (isDark) Color.White else primary).copy(
-                                alpha =
-                                    if (isDark) 0.50f * alphaMultiplier else 0.28f * alphaMultiplier
-                            ),
-                            primary.copy(
-                                alpha =
-                                    if (isDark) 0.38f * alphaMultiplier else 0.22f * alphaMultiplier
-                            ),
-                            secondary.copy(
-                                alpha =
-                                    if (isDark) 0.18f * alphaMultiplier else 0.10f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val beamBottom =
-                    LiquidRadialGradient(
-                        listOf(
-                            accent.copy(
-                                alpha =
-                                    if (isDark) 0.28f * alphaMultiplier else 0.15f * alphaMultiplier
-                            ),
-                            tertiary.copy(
-                                alpha =
-                                    if (isDark) 0.14f * alphaMultiplier else 0.07f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val auroraDiagonal =
-                    LiquidLinearGradient(
-                        listOf(
-                            primary.copy(
-                                alpha =
-                                    if (isDark) 0.28f * alphaMultiplier else 0.16f * alphaMultiplier
-                            ),
-                            secondary.copy(
-                                alpha =
-                                    if (isDark) 0.18f * alphaMultiplier else 0.10f * alphaMultiplier
-                            ),
-                            Color.Transparent,
-                        )
-                    )
-                val beamAtmosphere =
-                    Brush.verticalGradient(
-                        colors =
-                            listOf(
-                                primary.copy(
-                                    alpha =
-                                        if (isDark) 0.25f * alphaMultiplier
-                                        else 0.14f * alphaMultiplier
-                                ),
-                                secondary.copy(
-                                    alpha =
-                                        if (isDark) 0.16f * alphaMultiplier
-                                        else 0.08f * alphaMultiplier
-                                ),
-                                tertiary.copy(
-                                    alpha =
-                                        if (isDark) 0.08f * alphaMultiplier
-                                        else 0.04f * alphaMultiplier
-                                ),
-                                Color.Transparent,
-                            ),
-                        startY = 0f,
-                        endY = h * 0.80f,
-                    )
-                val vignette =
-                    Brush.radialGradient(
-                        colors =
-                            listOf(
-                                Color.Transparent,
-                                Color.Transparent,
-                                if (isDark) {
-                                    Color.Black.copy(alpha = 0.40f * normalizedIntensity)
-                                } else {
-                                    Color(0xFF1E2433).copy(alpha = 0.05f * normalizedIntensity)
-                                },
-                            ),
-                        center = Offset(w * 0.5f, h * 0.5f),
-                        radius = w * 0.95f,
-                    )
-                onDrawBehind {
-                    drawRect(baseBackgroundBrush)
-                    // Reading oscillator state in the draw phase invalidates only this canvas.
-                    // Reading it
-                    // during composition would recompose the whole background for every animation
-                    // frame.
+            // The base itself carries the chosen color, including with the effects at zero.
+            fun tint(color: Color, amount: Float) = blend(canvas, color, amount * if (isDark) 0.48f else 1f)
+
+            val canvasBrush = when (effect) {
+                LiquidBackgroundEffect.Aurora -> Brush.linearGradient(
+                    listOf(tint(primary, 0.23f), tint(secondary, 0.13f), tint(tertiary, 0.21f)),
+                    start = Offset(0f, height * 0.10f),
+                    end = Offset(width, height * 0.90f),
+                )
+                LiquidBackgroundEffect.MeshGlow -> Brush.linearGradient(
+                    listOf(tint(secondary, 0.21f), tint(accent, 0.13f), tint(primary, 0.23f)),
+                    start = Offset(width, 0f),
+                    end = Offset(0f, height),
+                )
+                LiquidBackgroundEffect.OrbitalPulse -> Brush.verticalGradient(
+                    listOf(tint(tertiary, 0.21f), tint(primary, 0.13f), tint(secondary, 0.24f)),
+                )
+                LiquidBackgroundEffect.RadiantBeam -> Brush.verticalGradient(
+                    listOf(tint(primary, 0.24f), tint(accent, 0.12f), tint(secondary, 0.25f)),
+                )
+            }
+
+            fun field(color: Color, lightOpacity: Float, darkOpacity: Float) =
+                LiquidRadialGradient(
+                    listOf(
+                        color.copy(alpha = normalizedIntensity * if (isDark) darkOpacity else lightOpacity),
+                        color.copy(alpha = normalizedIntensity * if (isDark) darkOpacity * 0.38f else lightOpacity * 0.38f),
+                        color.copy(alpha = 0f),
+                    ),
+                )
+
+            val primaryField = field(primary, lightOpacity = 0.18f, darkOpacity = 0.30f)
+            val secondaryField = field(secondary, lightOpacity = 0.14f, darkOpacity = 0.22f)
+            val tertiaryField = field(tertiary, lightOpacity = 0.14f, darkOpacity = 0.25f)
+            val accentField = field(accent, lightOpacity = 0.10f, darkOpacity = 0.16f)
+            val orbitalHalo = LiquidRadialGradient(
+                listOf(
+                    primary.copy(alpha = 0f),
+                    primary.copy(alpha = 0f),
+                    primary.copy(alpha = normalizedIntensity * if (isDark) 0.23f else 0.14f),
+                    accent.copy(alpha = 0f),
+                ),
+            )
+            val ribbon = LiquidLinearGradient(
+                listOf(
+                    primary.copy(alpha = 0f),
+                    primary.copy(alpha = normalizedIntensity * if (isDark) 0.15f else 0.10f),
+                    accent.copy(alpha = normalizedIntensity * if (isDark) 0.11f else 0.07f),
+                    tertiary.copy(alpha = 0f),
+                ),
+            )
+            val beam = LiquidLinearGradient(
+                listOf(
+                    accent.copy(alpha = 0f),
+                    accent.copy(alpha = normalizedIntensity * if (isDark) 0.20f else 0.12f),
+                    primary.copy(alpha = normalizedIntensity * if (isDark) 0.13f else 0.09f),
+                    primary.copy(alpha = 0f),
+                ),
+            )
+            val vignette = Brush.radialGradient(
+                0.0f to Color.Transparent,
+                0.54f to Color.Transparent,
+                1.0f to blend(Color.Black, tertiary, 0.42f)
+                    .copy(alpha = if (isDark) 0.24f else 0.075f),
+                center = Offset(width * 0.52f, height * 0.48f),
+                radius = span * 1.45f,
+            )
+
+            onDrawBehind {
+                drawRect(canvasBrush)
+
+                if (normalizedIntensity > 0f) {
+                    fun drawField(field: LiquidRadialGradient, x: Float, y: Float, radius: Float) {
+                        field.draw(this, Offset(width * x, height * y), span * radius, effectBlend)
+                    }
+
+                    // The phases invalidate drawing without recomposing the whole scene.
                     val p1 = p1State.value
                     val p2 = p2State.value
                     val p3 = p3State.value
                     val p4 = p4State.value
                     when (effect) {
                         LiquidBackgroundEffect.Aurora -> {
-                            // ==========================================
-                            // 1. SFUMATURE FLUIDE SHIFTING (AURORA)
-                            // Solo campi di colore e sfumature morbide che si compenetrano
-                            // ==========================================
-
-                            // Sfumatura diagonale diffusa
-                            auroraDiagonal.draw(
+                            // Two broad color bands drift past one another across the canvas.
+                            ribbon.draw(
                                 this,
-                                start = Offset(w * (0.10f + 0.08f * sin(p1)), 0f),
-                                end = Offset(w * 0.90f, h * 0.85f),
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
+                                start = Offset(width * (-0.22f + 0.10f * sin(p1)), height * 0.07f),
+                                end = Offset(width * 1.14f, height * 0.72f),
+                                blendMode = effectBlend,
                             )
-
-                            // Campo radiale primario (superiore / centro-sinistra)
-                            auroraPrimary.draw(
-                                this,
-                                center =
-                                    Offset(
-                                        w * (0.30f + 0.14f * sin(p1)),
-                                        h * (0.22f + 0.10f * cos(p2)),
-                                    ),
-                                radius = w * 0.95f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Campo radiale secondario (centro-destra / superiore)
-                            auroraSecondary.draw(
-                                this,
-                                center =
-                                    Offset(
-                                        w * (0.75f + 0.12f * cos(p2)),
-                                        h * (0.36f + 0.12f * sin(p1)),
-                                    ),
-                                radius = w * 0.90f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Campo radiale d'accento (centro-inferiore)
-                            auroraAccent.draw(
-                                this,
-                                center =
-                                    Offset(
-                                        w * (0.45f + 0.16f * sin(p3)),
-                                        h * (0.58f + 0.12f * cos(p1)),
-                                    ),
-                                radius = w * 0.85f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Terzo campo diffuso (inferiore-sinistra) in modalità dettagliata
+                            drawField(tertiaryField, -0.04f + 0.12f * sin(p2), 0.27f, 0.85f)
+                            drawField(primaryField, 0.87f, 0.38f + 0.10f * cos(p1), 0.88f)
+                            drawField(secondaryField, 0.34f + 0.12f * cos(p3), 0.89f, 0.76f)
                             if (drawDetailedBackground) {
-                                auroraComplement.draw(
-                                    this,
-                                    center =
-                                        Offset(
-                                            w * (0.22f + 0.12f * cos(p3)),
-                                            h * (0.76f + 0.08f * sin(p2)),
-                                        ),
-                                    radius = w * 0.80f,
-                                    blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                                )
+                                drawField(accentField, 0.56f, 0.64f + 0.09f * sin(p4), 0.62f)
                             }
                         }
-
                         LiquidBackgroundEffect.MeshGlow -> {
-                            // ==========================================
-                            // 2. MESH CROMATICA DIFFUSA
-                            // 5 nodi generosi di colore che si fondono fluidamente
-                            // ==========================================
-                            val c1 =
-                                Offset(w * (0.18f + 0.12f * cos(p1)), h * (0.16f + 0.10f * sin(p2)))
-                            val c2 =
-                                Offset(w * (0.82f + 0.10f * sin(p2)), h * (0.22f + 0.12f * cos(p3)))
-                            val c3 =
-                                Offset(w * (0.20f + 0.12f * sin(p3)), h * (0.78f + 0.10f * cos(p1)))
-                            val c4 =
-                                Offset(w * (0.80f + 0.10f * cos(p2)), h * (0.80f + 0.10f * sin(p1)))
-                            val c5 =
-                                Offset(
-                                    w * (0.50f + 0.14f * sin(p1 + 1f)),
-                                    h * (0.48f + 0.12f * cos(p2 + 1f)),
-                                )
-
-                            // Nodo 1: Alto-Sinistra (Primary)
-                            meshTopLeft.draw(
-                                this,
-                                center = c1,
-                                radius = w * 0.85f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Nodo 2: Alto-Destra (Secondary)
-                            meshTopRight.draw(
-                                this,
-                                center = c2,
-                                radius = w * 0.85f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Nodo 3: Basso-Sinistra (Tertiary)
-                            meshBottomLeft.draw(
-                                this,
-                                center = c3,
-                                radius = w * 0.90f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Nodo 4: Basso-Destra (Accent)
-                            meshBottomRight.draw(
-                                this,
-                                center = c4,
-                                radius = w * 0.85f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Nodo 5: Centro Focale (Pulsazione di raccordo)
-                            meshCenter.draw(
-                                this,
-                                center = c5,
-                                radius = w * 0.75f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
+                            // Four offset pools form a mesh, with a smaller fifth pool between them.
+                            drawField(primaryField, 0.19f + 0.11f * sin(p1), 0.15f, 0.64f)
+                            drawField(tertiaryField, 0.84f, 0.28f + 0.08f * cos(p2), 0.60f)
+                            drawField(secondaryField, 0.13f, 0.77f + 0.07f * cos(p1), 0.68f)
+                            drawField(primaryField, 0.90f + 0.09f * cos(p3), 0.83f, 0.55f)
+                            if (drawDetailedBackground) {
+                                drawField(accentField, 0.49f + 0.11f * sin(p4), 0.49f, 0.46f)
+                            }
                         }
-
                         LiquidBackgroundEffect.OrbitalPulse -> {
-                            // ==========================================
-                            // 3. PULSAZIONE RADIALE DI SFUMATURE
-                            // Gradienti concentrici che respirano dolcemente
-                            // ==========================================
-                            val coreCenter =
-                                Offset(
-                                    w * (0.50f + 0.06f * sin(p1)),
-                                    h * (0.42f + 0.05f * cos(p2)),
-                                )
-                            val pulseBreath = 1f + 0.08f * sin(p4 * 2f)
-
-                            // Sfumatura radiale primaria espansiva
-                            orbitalOuter.draw(
-                                this,
-                                center = coreCenter,
-                                radius = w * 0.90f * pulseBreath,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Sfumatura focale interna più luminosa
-                            orbitalCore.draw(
-                                this,
-                                center = coreCenter,
-                                radius = w * 0.42f * pulseBreath,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Sfumatura complementare superiore-destra
-                            val haloCenter1 =
-                                Offset(
-                                    w * (0.70f + 0.10f * cos(p2)),
-                                    h * (0.26f + 0.08f * sin(p3)),
-                                )
-                            orbitalTopHalo.draw(
-                                this,
-                                center = haloCenter1,
-                                radius = w * 0.70f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Sfumatura complementare inferiore-sinistra
-                            val haloCenter2 =
-                                Offset(
-                                    w * (0.30f + 0.10f * sin(p3)),
-                                    h * (0.72f + 0.08f * cos(p1)),
-                                )
-                            orbitalBottomHalo.draw(
-                                this,
-                                center = haloCenter2,
-                                radius = w * 0.75f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
+                            // An off-center halo breathes around a quieter, softly colored center.
+                            val x = 0.68f + 0.06f * sin(p1)
+                            val y = 0.38f + 0.06f * cos(p2)
+                            val breath = 1f + 0.065f * sin(p4)
+                            drawField(orbitalHalo, x, y, 0.89f * breath)
+                            drawField(accentField, x, y, 0.44f * breath)
+                            drawField(secondaryField, 0.13f + 0.06f * cos(p3), 0.80f, 0.70f)
+                            if (drawDetailedBackground) {
+                                drawField(tertiaryField, 1.02f, 0.70f, 0.54f)
+                            }
                         }
-
                         LiquidBackgroundEffect.RadiantBeam -> {
-                            // ==========================================
-                            // 4. SFUMATURA ATMOSFERICA ZENITH
-                            // Gradiente zenitale morbido dall'alto verso il basso
-                            // ==========================================
-                            val topCenter = Offset(w * (0.50f + 0.05f * sin(p1)), -h * 0.05f)
-
-                            // Bagliore zenitale superiore
-                            beamTop.draw(
+                            // An angled shaft of light fades into cooler pools at the bottom.
+                            val drift = 0.08f * sin(p1)
+                            beam.draw(
                                 this,
-                                center = topCenter,
-                                radius = w * 1.05f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
+                                start = Offset(width * (-0.25f + drift), height * 0.37f),
+                                end = Offset(width * (1.18f + drift), height * 0.61f),
+                                blendMode = effectBlend,
                             )
-
-                            // Gradiente lineare verticale morbido
-                            drawRect(
-                                brush = beamAtmosphere,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
-
-                            // Sfumatura d'accento di base (fondo schermo)
-                            val bottomCenter = Offset(w * (0.50f + 0.06f * cos(p2)), h * 1.05f)
-                            beamBottom.draw(
-                                this,
-                                center = bottomCenter,
-                                radius = w * 0.85f,
-                                blendMode = if (isDark) BlendMode.Screen else BlendMode.SrcOver,
-                            )
+                            drawField(primaryField, 0.72f + 0.09f * cos(p2), -0.08f, 0.92f)
+                            drawField(tertiaryField, 0.12f, 0.92f + 0.07f * sin(p3), 0.69f)
+                            if (drawDetailedBackground) {
+                                drawField(accentField, 0.72f, 0.62f + 0.07f * sin(p4), 0.57f)
+                            }
                         }
-                    }
-
-                    // 5. Vignettatura morbida perimetrale (incorniciatura senza linee nette)
-                    if (showVignette) {
-                        drawRect(brush = vignette)
                     }
                 }
+                if (showVignette) drawRect(brush = vignette)
             }
+        },
     )
 }

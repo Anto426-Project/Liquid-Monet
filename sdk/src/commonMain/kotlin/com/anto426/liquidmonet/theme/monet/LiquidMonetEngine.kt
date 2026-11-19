@@ -109,18 +109,22 @@ object LiquidMonetEngine {
     }
 
     private fun LiquidMonetSeed.toMaterial3ExpressiveScheme(darkTheme: Boolean): ColorScheme {
-        val primary = (if (darkTheme) darkPrimary else lightPrimary).copy(alpha = 1f)
-        val secondary = (if (darkTheme) darkSecondary else lightSecondary).copy(alpha = 1f)
-        val tertiary = (if (darkTheme) darkTertiary else lightTertiary).copy(alpha = 1f)
+        val seedPrimary = (if (darkTheme) darkPrimary else lightPrimary).copy(alpha = 1f)
+        val seedSecondary = (if (darkTheme) darkSecondary else lightSecondary).copy(alpha = 1f)
+        val seedTertiary = (if (darkTheme) darkTertiary else lightTertiary).copy(alpha = 1f)
+        val lightBase = Color(0xFFF3F3F6)
+        val lightDim = blend(lightBase, seedPrimary, 0.30f)
+        val primary = if (darkTheme) seedPrimary else readableLightAccent(seedPrimary, lightDim)
+        val secondary = if (darkTheme) seedSecondary else readableLightAccent(seedSecondary, lightDim)
+        val tertiary = if (darkTheme) seedTertiary else readableLightAccent(seedTertiary, lightDim)
         val error = if (darkTheme) Color(0xFFFFB4AB) else Color(0xFFBA1A1A)
-        val target = if (darkTheme) Black else White
+        val target = if (darkTheme) Black else lightBase
 
-        val primaryContainer = blend(primary, target, if (darkTheme) 0.42f else 0.78f)
-        val secondaryContainer = blend(secondary, target, if (darkTheme) 0.40f else 0.76f)
-        val tertiaryContainer = blend(tertiary, target, if (darkTheme) 0.40f else 0.76f)
+        val primaryContainer = blend(seedPrimary, target, if (darkTheme) 0.42f else 0.73f)
+        val secondaryContainer = blend(seedSecondary, target, if (darkTheme) 0.40f else 0.75f)
+        val tertiaryContainer = blend(seedTertiary, target, if (darkTheme) 0.40f else 0.75f)
         val errorContainer = blend(error, target, if (darkTheme) 0.40f else 0.78f)
 
-        // 100% PURE NEUTRAL SURFACES - Zero Monet tint contamination on containers/surfaces/dialogs/sheets
         return if (darkTheme) {
             val neutralSurface = Color(0xFF121212)
             val neutralBackground = Color(0xFF090A0F)
@@ -166,10 +170,8 @@ object LiquidMonetEngine {
                 scrim = Black
             )
         } else {
-            val neutralSurface = Color(0xFFFFFFFF)
-            val neutralBackground = Color(0xFFFAFAFA)
-            val neutralOnSurface = Color(0xFF1C1B1F)
-            val neutralOnSurfaceVariant = Color(0xFF49454F)
+            val onSurface = blend(Color(0xFF1C1D24), seedPrimary, 0.12f)
+            val onSurfaceVariant = readableLightAccent(blend(Color(0xFF434451), seedPrimary, 0.14f), lightDim)
 
             lightColorScheme(
                 primary = primary,
@@ -188,29 +190,47 @@ object LiquidMonetEngine {
                 onError = contentColorFor(error),
                 errorContainer = errorContainer,
                 onErrorContainer = contentColorFor(errorContainer),
-                background = neutralBackground,
-                onBackground = neutralOnSurface,
-                surface = neutralSurface,
-                onSurface = neutralOnSurface,
-                surfaceDim = Color(0xFFE2E2E2),
-                surfaceBright = Color(0xFFFFFFFF),
-                surfaceContainerLowest = Color(0xFFFFFFFF),
-                surfaceContainerLow = Color(0xFFF7F7F7),
-                surfaceContainer = Color(0xFFF2F2F2),
-                surfaceContainerHigh = Color(0xFFEBEBEB),
-                surfaceContainerHighest = Color(0xFFE3E3E3),
-                surfaceVariant = Color(0xFFE7E7E7),
-                onSurfaceVariant = neutralOnSurfaceVariant,
-                outline = Color(0xFF747474),
-                outlineVariant = Color(0xFFC7C7C7),
+                background = blend(lightBase, seedPrimary, 0.17f),
+                onBackground = onSurface,
+                surface = blend(lightBase, seedPrimary, 0.12f),
+                onSurface = onSurface,
+                surfaceDim = lightDim,
+                surfaceBright = blend(lightBase, seedPrimary, 0.06f),
+                surfaceContainerLowest = blend(lightBase, seedPrimary, 0.08f),
+                surfaceContainerLow = blend(lightBase, seedPrimary, 0.11f),
+                surfaceContainer = blend(lightBase, seedPrimary, 0.15f),
+                surfaceContainerHigh = blend(lightBase, seedPrimary, 0.20f),
+                surfaceContainerHighest = blend(lightBase, seedPrimary, 0.25f),
+                surfaceVariant = blend(lightBase, seedSecondary, 0.23f),
+                onSurfaceVariant = onSurfaceVariant,
+                outline = blend(Color(0xFF6D707B), seedPrimary, 0.22f),
+                outlineVariant = blend(Color(0xFFC5C7CE), seedPrimary, 0.20f),
                 inverseSurface = Color(0xFF313033),
                 inverseOnSurface = Color(0xFFF4EFF4),
                 inversePrimary = blend(primary, Black, 0.22f),
-                surfaceTint = Color.Transparent, // ZERO TINTING OF SURFACES
+                surfaceTint = Color.Transparent,
                 scrim = Black
             )
         }
     }
+}
+
+/** Darken only the usable foreground; light surfaces and containers still use the original seed. */
+private fun readableLightAccent(color: Color, background: Color): Color {
+    val maxForegroundLuminance = (background.luminance() + 0.05f) / 4.5f - 0.05f
+    if (color.luminance() <= maxForegroundLuminance) return color
+
+    var low = 0f
+    var high = 1f
+    repeat(10) {
+        val amount = (low + high) / 2f
+        if (blend(color, Black, amount).luminance() > maxForegroundLuminance) {
+            low = amount
+        } else {
+            high = amount
+        }
+    }
+    return blend(color, Black, high)
 }
 
 @Composable

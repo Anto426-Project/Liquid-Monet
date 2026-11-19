@@ -36,6 +36,7 @@ internal class InteractiveHighlight(
     private val performance: () -> LiquidGlassPerformanceState = {
         LiquidGlassPerformanceState.Fallback
     },
+    private val lightTint: () -> Color = { Color.Unspecified },
     val position: (size: Size, offset: Offset) -> Offset = { _, offset -> offset },
 ) {
 
@@ -81,14 +82,21 @@ half4 main(float2 coord) {
 
         val progress = motion.pressProgress
         if (progress > 0f) {
-            val resolvedColor = if (highlightColor.isSpecified) highlightColor else Color.White
+            val tint = lightTint()
+            val isTinted = tint.isSpecified
+            val resolvedColor = when {
+                highlightColor.isSpecified -> highlightColor
+                isTinted -> tint
+                else -> Color.White
+            }
+            val blendMode = if (isTinted) BlendMode.SrcOver else BlendMode.Plus
 
             val drawHighlight: () -> Unit = {
                 val shader = shader
                 if (shader != null) {
                     drawRect(
-                        resolvedColor.copy(0.08f * progress),
-                        blendMode = BlendMode.Plus,
+                        resolvedColor.copy((if (isTinted) 0.035f else 0.08f) * progress),
+                        blendMode = blendMode,
                     )
                     shader.apply {
                         val position = position(size, motion.currentPosition)
@@ -103,12 +111,12 @@ half4 main(float2 coord) {
                     }
                     drawRect(
                         ShaderBrush(shader.asComposeShader()),
-                        blendMode = BlendMode.Plus,
+                        blendMode = blendMode,
                     )
                 } else {
                     drawRect(
-                        resolvedColor.copy(0.25f * progress),
-                        blendMode = BlendMode.Plus,
+                        resolvedColor.copy((if (isTinted) 0.13f else 0.25f) * progress),
+                        blendMode = blendMode,
                     )
                 }
             }
