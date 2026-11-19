@@ -36,7 +36,7 @@ internal fun RowScope.LiquidGlassBottomTab(
     Column(
         modifier
             // Scale outside the shape clip: the tab keeps its capsule mask, while the complete
-            // bounced result can grow over the navigation container and adjacent tab slots.
+            // bounced result can grow over adjacent slots within the outer panel's bounds.
             .graphicsLayer {
                 val s = scale()
                 scaleX = s

@@ -60,7 +60,7 @@ class LiquidAdaptiveComponentsTest {
             }
         }
         // Activity recreation can finish attaching its first Compose root after setContent.
-        compose.waitUntil(5_000) {
+        compose.waitUntil(15_000) {
             runCatching { compose.onAllNodes(isRoot()).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
         }
     }
@@ -101,16 +101,16 @@ class LiquidAdaptiveComponentsTest {
             )
         }
         compose.onNodeWithText("Andamento").assertIsSelected()
-        compose.onNodeWithText("Proiezioni").performClick().assertIsSelected()
+        compose.onNodeWithText("Proiezioni").performScrollTo().performClick().assertIsSelected()
         val panel = compose.onNodeWithTag("tabs").fetchSemanticsNode().boundsInRoot
         for (label in listOf("Andamento", "Simula", "Obiettivo", "Proiezioni")) {
-            compose.onNodeWithText(label).assertIsDisplayed()
+            compose.onNodeWithText(label).performScrollTo().assertIsDisplayed()
             val bounds = compose.onNodeWithText(label).fetchSemanticsNode().boundsInRoot
             assertTrue("$label must fit inside tabs", bounds.top >= panel.top && bounds.bottom <= panel.bottom && bounds.left >= panel.left && bounds.right <= panel.right)
             val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
             compose.onNodeWithText(label).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
             assertTrue("$label must remain readable without ellipsis", layouts.isNotEmpty() && layouts.none { layout ->
-                layout.didOverflowHeight || (0 until layout.lineCount).any { layout.isLineEllipsized(it) }
+                layout.lineCount != 1 || layout.didOverflowHeight || (0 until layout.lineCount).any { layout.isLineEllipsized(it) }
             })
         }
         capture("compact-tabs-large-text-dark")
@@ -130,6 +130,27 @@ class LiquidAdaptiveComponentsTest {
             assertTrue("OTP digit must stay inside the field", bounds.left >= viewport.left && bounds.right <= viewport.right)
         }
         capture("compact-otp-large-text")
+    }
+
+    @Test fun scrolledRtlTabsKeepTheLensDraggableAndSelectTheAdjacentTab() {
+        content(dark = true) {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                var selected by remember { mutableIntStateOf(3) }
+                LiquidTabBar(
+                    listOf("Andamento", "Simula", "Obiettivo", "Proiezioni").map { LiquidNavigationItem(it) },
+                    selected, { selected = it }, Modifier.width(320.dp).testTag("tabs"),
+                )
+            }
+        }
+        val selected = compose.onNodeWithText("Proiezioni")
+        selected.assertIsDisplayed().assertIsSelected()
+        selected.performTouchInput {
+            down(center)
+            moveBy(androidx.compose.ui.geometry.Offset(width * 0.85f, 0f), 240)
+            up()
+        }
+        compose.onNodeWithText("Obiettivo").assertIsSelected().assertIsDisplayed()
+        capture("compact-tabs-rtl-after-drag")
     }
 
     @Test fun longDialogKeepsActionsReachableAtLargeFontScale() {
@@ -262,11 +283,20 @@ class LiquidAdaptiveComponentsTest {
         }
         compose.onNodeWithText("Notizie").assertIsDisplayed()
         compose.onNodeWithText("99+").assertIsDisplayed()
+        val clickableTab = hasAnyAncestor(hasClickAction())
+        val badgeBounds = compose.onNode(hasText("99+") and clickableTab, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val labelBounds = listOf("Home", "Didattica", "Servizi", "Notizie").map {
+            compose.onNode(hasText(it) and clickableTab, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        }
+        assertTrue("Navigation labels must share a baseline below the badge", labelBounds.all {
+            it.top > badgeBounds.bottom && kotlin.math.abs(it.top - labelBounds.first().top) <= 1f
+        })
         for (label in listOf("Home", "Didattica", "Servizi", "Notizie")) {
             val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
             compose.onNodeWithText(label).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
-            assertTrue("$label must not be ellipsized: " + layouts.joinToString { "size=${it.size}, lines=${it.lineCount}, constraints=${it.layoutInput.constraints}" }, layouts.none { layout ->
-                (0 until layout.lineCount).any { layout.isLineEllipsized(it) }
+            assertTrue("$label must stay on one line: " + layouts.joinToString { "size=${it.size}, lines=${it.lineCount}, constraints=${it.layoutInput.constraints}" }, layouts.none { layout ->
+                layout.lineCount != 1 || layout.multiParagraph.height > layout.size.height + 1f
             })
         }
         capture("navigation-large-text-dark")
@@ -283,7 +313,7 @@ class LiquidAdaptiveComponentsTest {
         }
         compose.onNodeWithTag("tabs").assertWidthIsEqualTo(320.dp)
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("Proiezioni").performTouchInput { down(center) }
+        compose.onNodeWithText("Andamento").performTouchInput { down(center) }
         compose.mainClock.advanceTimeBy(160)
         val bitmap = compose.onNodeWithTag("viewport").captureToImage()
         val pixels = bitmap.toPixelMap()
@@ -293,7 +323,7 @@ class LiquidAdaptiveComponentsTest {
                 assertTrue("Tab surface painted beyond its viewport at $x,$y", pixels[x, y] == Color.Magenta)
             }
         }
-        compose.onNodeWithText("Proiezioni").performTouchInput { up() }
+        compose.onNodeWithText("Andamento").performTouchInput { up() }
         compose.mainClock.advanceTimeBy(1200)
         capture("tabs-bounded-during-press")
     }

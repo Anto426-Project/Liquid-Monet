@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,6 +59,9 @@ fun LiquidNavigationBar(
     val normalizedSelectedIndex = selectedIndex.coerceIn(items.indices)
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
     val contentColor = LiquidGlassTheme.colors.content
+    val reserveBadgeSpace = items.any { !it.badge.isNullOrEmpty() }
+    val badgeHeight = with(LocalDensity.current) { 20.sp.toDp() } + 2.dp
+    val minimumHeight = if (reserveBadgeSpace) badgeHeight * 2 + 26.dp else 0.dp
 
     LiquidNavigationBarShell(
         modifier = modifier,
@@ -68,6 +72,7 @@ fun LiquidNavigationBar(
             onTabSelected = onItemSelected,
             backdrop = effectiveBackdrop,
             tabsCount = items.size,
+            minimumContentHeight = minimumHeight,
         ) {
             for (index in items.indices) {
                 val item = items[index]
@@ -81,6 +86,7 @@ fun LiquidNavigationBar(
                         item = item,
                         itemsCount = items.size,
                         contentColor = contentColor,
+                        reserveBadgeSpace = reserveBadgeSpace,
                     )
                 }
             }
@@ -122,13 +128,13 @@ private fun AdaptiveNavItem(
     item: LiquidNavigationItem,
     itemsCount: Int,
     contentColor: Color,
+    reserveBadgeSpace: Boolean,
 ) {
     val glassColors = LiquidGlassTheme.colors
     val count = itemsCount.coerceAtLeast(1)
     val icon = item.icon
     val badge = item.badge?.takeIf(String::isNotEmpty)
     val hasIcon = icon != null
-    val hasBadge = badge != null
 
     val iconSize =
         when {
@@ -164,36 +170,35 @@ private fun AdaptiveNavItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing, Alignment.CenterVertically),
     ) {
-        if (icon != null) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(iconSize),
-                    tint = contentColor,
-                )
+        if (reserveBadgeSpace) {
+            Box(
+                Modifier.fillMaxWidth().height(with(LocalDensity.current) { 20.sp.toDp() } + 2.dp),
+                contentAlignment = Alignment.Center,
+            ) {
                 if (badge != null) {
-                    Box(
-                        modifier =
-                            Modifier.align(Alignment.TopEnd)
-                                .offset(x = 6.dp, y = (-3).dp)
-                                .clip(Capsule())
-                                .background(glassColors.neutralContainer)
-                                .padding(horizontal = 4.dp, vertical = 1.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = badge,
-                            color = contentColor,
-                            fontSize = 12.sp,
-                            lineHeight = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            softWrap = false,
-                        )
-                    }
+                    Text(
+                        text = badge,
+                        modifier = Modifier.clip(Capsule())
+                            .background(glassColors.neutralContainer)
+                            .padding(horizontal = 4.dp, vertical = 1.dp),
+                        color = contentColor,
+                        fontSize = 12.sp,
+                        lineHeight = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
+        }
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(iconSize),
+                tint = contentColor,
+            )
         }
 
         if (item.label.isNotEmpty()) {
@@ -203,7 +208,8 @@ private fun AdaptiveNavItem(
                 fontSize = fontSize,
                 lineHeight = (fontSize.value * 1.25f).sp,
                 fontWeight = FontWeight.Medium,
-                maxLines = 2,
+                maxLines = 1,
+                softWrap = false,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
             )

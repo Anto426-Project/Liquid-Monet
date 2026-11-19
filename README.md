@@ -93,7 +93,9 @@ wrap into balanced rows on narrow containers, and dialogs scroll long content wh
 their actions visible. Android native kernels are linked for 16 KB pages on every supported ABI;
 SDK packaging rejects incompatible ELF LOAD segments or RELRO boundaries.
 The segmented tab bar keeps its complete surface inside the available width, including while
-pressed. Labels wrap within their own segments and the bar grows vertically to fit them.
+pressed. Labels stay on one line. On narrow screens the tab content scrolls inside the fixed capsule;
+the optical background remains within the available width. Navigation labels use a single line
+with ellipsis when necessary, while their full accessible labels remain available.
 
 ### Custom avatars, badges, buttons and icon containers
 
