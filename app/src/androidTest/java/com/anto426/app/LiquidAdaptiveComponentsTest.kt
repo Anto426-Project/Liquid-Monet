@@ -303,6 +303,7 @@ class LiquidAdaptiveComponentsTest {
             LiquidCard(
                 contentPadding = PaddingValues(24.dp),
                 modifier = Modifier.size(280.dp, 160.dp).testTag("card"),
+                clipContent = true,
                 contentAlignment = androidx.compose.ui.Alignment.Center,
                 onClick = {},
             ) { androidx.compose.material3.Text("Contenuto", Modifier.testTag("anchor")) }

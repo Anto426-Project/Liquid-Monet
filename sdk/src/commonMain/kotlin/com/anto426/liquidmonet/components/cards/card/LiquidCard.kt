@@ -141,7 +141,6 @@ private fun LiquidCardContainer(
         modifier =
             modifier
                 .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
-                .then(if (clipContent) Modifier.clip(shape) else Modifier)
                 .then(
                     if (isInteractive && cardLayerBlock != null) {
                         Modifier.graphicsLayer(cardLayerBlock)
@@ -149,6 +148,7 @@ private fun LiquidCardContainer(
                         Modifier
                     }
                 )
+                .then(if (clipContent) Modifier.clip(shape) else Modifier)
                 .then(
                     if (isInteractive) {
                         interactiveHighlight.modifier(clipShape = shape)
