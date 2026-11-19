@@ -27,21 +27,6 @@ import com.kyant.backdrop.asComposeShader
 import com.kyant.backdrop.isRuntimeShaderSupported
 import kotlinx.coroutines.CoroutineScope
 
-/** Coordinates visual feedback across a tree of cards without consuming the initial touch. */
-internal class LiquidCardPressOwner {
-    private var active = false
-
-    fun tryStart(): Boolean {
-        if (active) return false
-        active = true
-        return true
-    }
-
-    fun finish() {
-        active = false
-    }
-}
-
 @androidx.compose.runtime.Stable
 internal class InteractiveHighlight(
     val animationScope: CoroutineScope,
@@ -151,16 +136,16 @@ half4 main(float2 coord) {
     internal fun release() = motion.release()
 
     /** Observe the owned press between clickable and the moving graphics layer. */
-    internal fun ownedGestureModifier(cardPressOwner: LiquidCardPressOwner? = null): Modifier =
-        Modifier.pointerInput(animationScope, cardPressOwner) {
+    internal fun ownedGestureModifier(animateQuickTap: Boolean = false): Modifier =
+        Modifier.pointerInput(animationScope, animateQuickTap) {
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
-                if (down.isConsumed || cardPressOwner?.tryStart() == false) return@awaitEachGesture
+                if (down.isConsumed) return@awaitEachGesture
                 val touchSlop = viewConfiguration.touchSlop
                 var dragged = false
                 var tapped = false
+                press(down.position)
                 try {
-                    press(down.position)
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Main)
                         val change = event.changes.firstOrNull { it.id == down.id } ?: break
@@ -178,8 +163,7 @@ half4 main(float2 coord) {
                         move(change.position)
                     }
                 } finally {
-                    cardPressOwner?.finish()
-                    motion.release(finishTap = cardPressOwner != null && tapped)
+                    motion.release(finishTap = animateQuickTap && tapped)
                 }
             }
         }

@@ -2,7 +2,6 @@ package com.anto426.app
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -10,7 +9,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -373,7 +371,7 @@ class LiquidAdaptiveComponentsTest {
         content(fontScale = 1f) {
             LiquidCard(
                 contentPadding = PaddingValues(24.dp),
-                modifier = Modifier.size(340.dp, 220.dp).testTag("card"),
+                modifier = Modifier.size(380.dp, 580.dp).testTag("card"),
                 clipContent = true,
                 contentAlignment = androidx.compose.ui.Alignment.Center,
                 onClick = {},
@@ -384,15 +382,74 @@ class LiquidAdaptiveComponentsTest {
         compose.mainClock.autoAdvance = false
         compose.onNodeWithTag("card").performTouchInput { down(androidx.compose.ui.geometry.Offset(center.x, height * .8f)) }
         compose.mainClock.advanceTimeBy(160)
-        val held = anchor.fetchSemanticsNode().boundsInRoot.center
-        compose.onNodeWithTag("card").performTouchInput { moveBy(androidx.compose.ui.geometry.Offset(80f, 0f), 100) }
+        val held = anchor.fetchSemanticsNode().boundsInRoot
+        capture("large-clickable-card-held")
+        compose.onNodeWithTag("card").performTouchInput { moveBy(Offset(110f, 0f), 100) }
         compose.mainClock.advanceTimeBy(80)
-        val dragged = anchor.fetchSemanticsNode().boundsInRoot.center
-        assertTrue("A large card must visibly follow its own drag: $held -> $dragged", dragged.x > held.x + 5f)
+        val dragged = anchor.fetchSemanticsNode().boundsInRoot
+        capture("large-clickable-card-dragged")
+        assertTrue("A large card must visibly follow its own drag: $held -> $dragged", dragged.center.x > held.center.x + 18f)
+        assertTrue("A large card should stretch in the direction of the drag", dragged.width > held.width * 1.015f)
         compose.onNodeWithTag("card").performTouchInput { cancel() }
         compose.mainClock.advanceTimeBy(1600)
         val returned = anchor.fetchSemanticsNode().boundsInRoot.center
         assertTrue("Card must settle back after cancellation", (returned - initial).getDistance() < 1f)
+    }
+
+    @Test fun nearlyFullScreenCardWithoutAnActionStaysStill() {
+        content(fontScale = 1f) {
+            LiquidCard(
+                modifier = Modifier.size(380.dp, 580.dp).testTag("static-card"),
+                contentPadding = PaddingValues(0.dp),
+                contentAlignment = androidx.compose.ui.Alignment.Center,
+            ) {
+                Box(Modifier.size(80.dp).background(Color.Cyan).testTag("body"))
+            }
+        }
+        val card = compose.onNodeWithTag("static-card")
+        card.assert(hasClickAction().not())
+        val body = compose.onNodeWithTag("body", useUnmergedTree = true)
+        val rest = body.fetchSemanticsNode().boundsInRoot
+        compose.mainClock.autoAdvance = false
+        card.performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(160)
+        assertTrue(body.fetchSemanticsNode().boundsInRoot == rest)
+        card.performTouchInput { moveBy(Offset(110f, 0f), 120) }
+        compose.mainClock.advanceTimeBy(160)
+        assertTrue(body.fetchSemanticsNode().boundsInRoot == rest)
+        card.performTouchInput { up() }
+    }
+
+    @Test fun largeClickableCardDistinguishesDragTapAndLongPress() {
+        var taps = 0
+        var longPresses = 0
+        content(fontScale = 1f) {
+            LiquidCard(
+                modifier = Modifier.width(360.dp).height(480.dp).testTag("hero"),
+                contentPadding = 0.dp,
+                onClick = { taps++ },
+                onLongClick = { longPresses++ },
+            ) {
+                Box(Modifier.fillMaxSize().testTag("artwork"))
+            }
+        }
+        val hero = compose.onNodeWithTag("hero")
+        val artwork = compose.onNodeWithTag("artwork", useUnmergedTree = true)
+        val restingWidth = artwork.fetchSemanticsNode().boundsInRoot.width
+        compose.mainClock.autoAdvance = false
+        hero.performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(160)
+        assertTrue(artwork.fetchSemanticsNode().boundsInRoot.width < restingWidth)
+        hero.performTouchInput {
+            moveBy(Offset(100f, 0f), 120)
+            up()
+        }
+        compose.mainClock.advanceTimeBy(1200)
+        compose.runOnIdle { assertTrue(taps == 0 && longPresses == 0) }
+        compose.mainClock.autoAdvance = true
+        hero.performTouchInput { click() }
+        hero.performTouchInput { longClick() }
+        compose.runOnIdle { assertTrue(taps == 1 && longPresses == 1) }
     }
 
     @Test fun nestedCardDragsInsideTheRoundedParentWithoutMovingIt() {
@@ -407,6 +464,7 @@ class LiquidAdaptiveComponentsTest {
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.fillMaxWidth().height(100.dp).testTag("child"),
                         clipContent = true,
+                        onClick = {},
                     ) {
                         Box(Modifier.fillMaxSize().background(Color.Red))
                     }
@@ -467,76 +525,6 @@ class LiquidAdaptiveComponentsTest {
         compose.mainClock.advanceTimeBy(1200)
         assertTrue(body.fetchSemanticsNode().boundsInRoot.width == widthAtRest)
         compose.runOnIdle { assertTrue(clicks == 1) }
-    }
-
-    @Test fun nearlyFullScreenCardWithoutAnActionRespondsToDragAndLetsThePageScroll() {
-        val listState = androidx.compose.foundation.lazy.LazyListState()
-        content(fontScale = 1f) {
-            LazyColumn(Modifier.width(380.dp).height(700.dp), state = listState) {
-                item {
-                    LiquidCard(
-                        modifier = Modifier.fillMaxWidth().height(580.dp).testTag("large-card"),
-                        contentPadding = PaddingValues(0.dp),
-                        contentAlignment = androidx.compose.ui.Alignment.Center,
-                    ) {
-                        Box(Modifier.size(80.dp).background(Color.Cyan).testTag("body"))
-                    }
-                }
-                item { Spacer(Modifier.height(720.dp)) }
-            }
-        }
-        val card = compose.onNodeWithTag("large-card")
-        card.assert(hasClickAction().not())
-        val body = compose.onNodeWithTag("body", useUnmergedTree = true)
-        val rest = body.fetchSemanticsNode().boundsInRoot.center
-        compose.mainClock.autoAdvance = false
-        card.performTouchInput {
-            down(center)
-            moveBy(Offset(110f, 0f), 120)
-        }
-        compose.mainClock.advanceTimeBy(160)
-        capture("nearly-full-screen-card-drag")
-        assertTrue("The large content card must visibly follow the finger",
-            body.fetchSemanticsNode().boundsInRoot.center.x > rest.x + 7f,
-        )
-        card.performTouchInput { up() }
-        compose.mainClock.advanceTimeBy(1400)
-        assertTrue((body.fetchSemanticsNode().boundsInRoot.center - rest).getDistance() < 1f)
-        compose.mainClock.autoAdvance = true
-        card.performTouchInput { swipeUp() }
-        compose.runOnIdle {
-            assertTrue(listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0)
-        }
-    }
-
-    @Test fun largeCardSharesItsSurfaceWithAnExternalTapAndLongPressHandler() {
-        var taps = 0
-        var longPresses = 0
-        content(fontScale = 1f) {
-            LiquidCard(
-                modifier = Modifier.width(360.dp).height(480.dp).testTag("hero")
-                    .pointerInput(Unit) {
-                        detectTapGestures(onTap = { taps++ }, onLongPress = { longPresses++ })
-                    },
-                contentPadding = PaddingValues(0.dp),
-            ) {
-                Box(Modifier.fillMaxSize().testTag("artwork"))
-            }
-        }
-        val hero = compose.onNodeWithTag("hero")
-        val artwork = compose.onNodeWithTag("artwork", useUnmergedTree = true)
-        val restingWidth = artwork.fetchSemanticsNode().boundsInRoot.width
-        compose.mainClock.autoAdvance = false
-        hero.performTouchInput { down(center) }
-        compose.mainClock.advanceTimeBy(160)
-        assertTrue(artwork.fetchSemanticsNode().boundsInRoot.width < restingWidth)
-        hero.performTouchInput { moveBy(Offset(100f, 0f), 120); up() }
-        compose.mainClock.advanceTimeBy(1200)
-        compose.runOnIdle { assertTrue(taps == 0 && longPresses == 0) }
-        compose.mainClock.autoAdvance = true
-        hero.performTouchInput { click() }
-        hero.performTouchInput { longClick() }
-        compose.runOnIdle { assertTrue(taps == 1 && longPresses == 1) }
     }
 
     @Test fun cardReactsToTheInitialTouchInsideAScrollingList() {

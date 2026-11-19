@@ -1,13 +1,13 @@
 package com.anto426.liquidmonet.components.interaction
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.Role
-import com.anto426.liquidmonet.components.internal.LiquidCardPressOwner
 import com.anto426.liquidmonet.components.internal.motion.LiquidCardMotion
 import com.anto426.liquidmonet.components.internal.motion.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
@@ -44,14 +44,12 @@ internal fun Modifier.liquidClickable(
     clipContent: Boolean,
     interactionSource: MutableInteractionSource? = null,
     cardMotion: LiquidCardMotion?,
-    cardPressOwner: LiquidCardPressOwner? = null,
     onClick: (() -> Unit)?,
+    onLongClick: (() -> Unit)? = null,
 ): Modifier {
     val contentClip = if (clipContent) Modifier.clip(shape) else Modifier
-    if (onClick == null && (cardPressOwner == null || !enabled)) return then(contentClip)
-
-    val highlight = rememberLiquidControlHighlight()
-    val action = if (onClick != null) {
+    val action = if (onLongClick == null) {
+        if (onClick == null) return then(contentClip)
         clickable(
             enabled = enabled,
             interactionSource = interactionSource,
@@ -60,10 +58,19 @@ internal fun Modifier.liquidClickable(
             onClick = onClick,
         )
     } else {
-        this
+        combinedClickable(
+            enabled = enabled,
+            interactionSource = interactionSource,
+            indication = null,
+            role = role,
+            hapticFeedbackEnabled = false,
+            onClick = onClick ?: {},
+            onLongClick = onLongClick,
+        )
     }
+    val highlight = rememberLiquidControlHighlight()
     return action
-        .then(if (enabled) highlight.ownedGestureModifier(cardPressOwner) else Modifier)
+        .then(if (enabled) highlight.ownedGestureModifier(animateQuickTap = cardMotion != null) else Modifier)
         .liquidControlLayer(enabled, highlight, cardMotion)
         .then(contentClip)
         .then(if (enabled) highlight.modifier(clipShape = shape) else Modifier)

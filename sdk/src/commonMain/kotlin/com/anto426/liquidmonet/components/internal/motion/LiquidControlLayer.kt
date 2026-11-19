@@ -3,6 +3,7 @@ package com.anto426.liquidmonet.components.internal.motion
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.internal.InteractiveHighlight
 import com.anto426.liquidmonet.components.internal.LiquidControlDefaults
 import kotlin.math.abs
@@ -37,19 +38,27 @@ internal fun liquidControlLayerBlock(
             val progress = interactiveHighlight.pressProgress
             val baseScale = 1f + (LiquidControlDefaults.pressedScale - 1f) * progress
 
-            val initialDerivative = 0.20f * translationFactor
             val offset = interactiveHighlight.offset
-            translationX = minDim * translationFactor * tanh(initialDerivative * offset.x / minDim)
-            translationY = minDim * translationFactor * tanh(initialDerivative * offset.y / minDim)
+            if (cardMotion != null) {
+                val limit = minOf(24.dp.toPx(), minDim * 0.25f)
+                translationX = limit * tanh(0.24f * offset.x / limit)
+                translationY = limit * tanh(0.24f * offset.y / limit)
+            } else {
+                val initialDerivative = 0.20f * translationFactor
+                translationX = minDim * translationFactor * tanh(initialDerivative * offset.x / minDim)
+                translationY = minDim * translationFactor * tanh(initialDerivative * offset.y / minDim)
+            }
 
             // Fluid non-linear elastic stretching in all directions.
-            val maxDragScale = 0.15f * progress * stretchFactor
+            val maxDragScale = (if (cardMotion != null) 0.30f else 0.15f) * progress * stretchFactor
             val aspectX = (width / height).coerceIn(0.5f, 2f)
             val aspectY = (height / width).coerceIn(0.5f, 2f)
             val distance = offset.getDistance()
             if (distance > 0f) {
-                val fraction = distance / maxDim
-                val stretch = maxDragScale * if (cardMotion != null) tanh(fraction) else fraction
+                // Use a physical drag distance for cards so taller layouts retain visible stretch.
+                val fraction = if (cardMotion != null) tanh(distance / minOf(maxDim, 100.dp.toPx()))
+                    else distance / maxDim
+                val stretch = maxDragScale * fraction
                 val direction = offset / distance
                 scaleX = baseScale + stretch * direction.x * direction.x * aspectX
                 scaleY = baseScale + stretch * direction.y * direction.y * aspectY
@@ -79,7 +88,6 @@ internal fun Modifier.liquidControlLayer(
     liquidControlLayerBlock(
         enabled,
         interactiveHighlight,
-        translationFactor = if (cardMotion != null) 0.7f else LiquidControlDefaults.deformationFactor,
         cardMotion = cardMotion,
     )?.let { graphicsLayer(it) } ?: this
 
