@@ -9,7 +9,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.DpOffset
-import com.anto426.liquidmonet.components.internal.motion.rememberLiquidOwnedPressInteractionSource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,6 +37,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
+import com.anto426.liquidmonet.components.interaction.liquidClickable
 import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.motion.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
@@ -115,9 +115,6 @@ fun LiquidAvatar(
     LiquidInputNormalization.positive(iconSize, "LiquidAvatar iconSize")
     LiquidInputNormalization.positive(presenceSize, "LiquidAvatar presenceSize")
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
-    val highlight = rememberLiquidControlHighlight()
-    val interactive = enabled && onClick != null
-    val interactionSource = rememberLiquidOwnedPressInteractionSource(interactive, highlight)
     val colorScheme = MaterialTheme.colorScheme
     val colors = LiquidGlassTheme.colors
     val fill = containerColor ?: colors.accentContainer
@@ -131,12 +128,7 @@ fun LiquidAvatar(
     }
     Box(
         modifier = modifier.size(size)
-            .liquidControlLayer(interactive, highlight)
-            .then(if (interactive) highlight.modifier(clipShape = shape).then(highlight.pointerTrackingModifier) else Modifier)
-            .then(if (onClick != null) Modifier.clickable(
-                interactionSource = interactionSource, indication = null,
-                enabled = enabled, role = Role.Button, onClick = onClick,
-            ) else Modifier),
+            .liquidClickable(shape = shape, enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Box(

@@ -2,7 +2,6 @@ package com.anto426.liquidmonet.components.cards.card
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,18 +17,13 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
-import com.anto426.liquidmonet.components.internal.motion.rememberLiquidOwnedPressInteractionSource
-import com.anto426.liquidmonet.components.internal.motion.liquidControlLayerBlock
-import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
+import com.anto426.liquidmonet.components.interaction.liquidClickable
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LocalLiquidGlassContainerMode
@@ -131,40 +125,17 @@ private fun LiquidCardContainer(
         contentPadding.calculateTopPadding(),
         contentPadding.calculateBottomPadding(),
     ).forEach { LiquidInputNormalization.nonNegative(it, "LiquidCard contentPadding") }
-    val isInteractive = onClick != null && enabled
-    val interactiveHighlight = rememberLiquidControlHighlight()
-    val interactionSource = rememberLiquidOwnedPressInteractionSource(isInteractive, interactiveHighlight)
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
-    val cardLayerBlock = liquidControlLayerBlock(isInteractive, interactiveHighlight)
 
     Box(
         modifier =
             modifier
                 .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
-                .then(
-                    if (isInteractive && cardLayerBlock != null) {
-                        Modifier.graphicsLayer(cardLayerBlock)
-                    } else {
-                        Modifier
-                    }
-                )
-                .then(if (clipContent) Modifier.clip(shape) else Modifier)
-                .then(
-                    if (isInteractive) {
-                        interactiveHighlight.modifier(clipShape = shape)
-                            .then(interactiveHighlight.pointerTrackingModifier)
-                    } else Modifier
-                )
-                .then(
-                    if (onClick != null) {
-                        Modifier.clickable(
-                            enabled = enabled,
-                            interactionSource = interactionSource,
-                            indication = null,
-                            role = Role.Button,
-                            onClick = onClick,
-                        )
-                    } else Modifier
+                .liquidClickable(
+                    shape = shape,
+                    clipContent = clipContent,
+                    enabled = enabled,
+                    onClick = onClick,
                 ),
         contentAlignment = contentAlignment,
         propagateMinConstraints = propagateMinConstraints,

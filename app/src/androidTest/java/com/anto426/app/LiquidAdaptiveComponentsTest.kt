@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import com.anto426.liquidmonet.components.cards.card.LiquidCard
 import com.anto426.liquidmonet.components.cards.card.LiquidCardDefaults
+import com.anto426.liquidmonet.components.cards.preferenceitem.LiquidPreferenceGroup
+import com.anto426.liquidmonet.components.cards.preferenceitem.LiquidPreferenceItem
 import com.anto426.liquidmonet.components.buttons.button.LiquidButton
 import com.anto426.liquidmonet.components.buttons.iconbutton.LiquidIconButton
 import com.anto426.liquidmonet.components.feedback.dialog.LiquidDialog
@@ -311,24 +313,42 @@ class LiquidAdaptiveComponentsTest {
                 )
             }
         }
-        val panel = compose.onNodeWithTag("tabs").assertWidthIsEqualTo(320.dp).fetchSemanticsNode().boundsInRoot
+        compose.onNodeWithTag("tabs").assertWidthIsEqualTo(320.dp)
+        assertSurfaceExpandsOnPress("Andamento", "tabs-expanded-during-press")
+    }
+
+    @Test fun navigationBarCanExpandPastItsRestingOutlineDuringPress() {
+        content {
+            Box(Modifier.size(400.dp, 232.dp).background(Color.Magenta).testTag("viewport")) {
+                LiquidNavigationBar(
+                    listOf("Home", "Didattica", "Servizi", "Notizie").map {
+                        LiquidNavigationItem(it, icon = LiquidIcons.Star)
+                    },
+                    0, {}, Modifier.offset(40.dp, 40.dp).width(320.dp),
+                )
+            }
+        }
+        assertSurfaceExpandsOnPress("Home", "navbar-expanded-during-press")
+    }
+
+    private fun assertSurfaceExpandsOnPress(label: String, captureName: String) {
         val viewport = compose.onNodeWithTag("viewport")
         val origin = viewport.fetchSemanticsNode().boundsInRoot.topLeft
-        val selected = compose.onNodeWithText("Andamento")
+        val selected = compose.onNodeWithText(label)
         val x = (selected.fetchSemanticsNode().boundsInRoot.center.x - origin.x).toInt()
-        val top = (panel.top - origin.y).toInt()
         val atRest = viewport.captureToImage().toPixelMap()
+        val restingTop = (0 until atRest.height).first { atRest[x, it] != Color.Magenta }
 
         compose.mainClock.autoAdvance = false
         selected.performTouchInput { down(center) }
         compose.mainClock.advanceTimeBy(160)
         val pressed = viewport.captureToImage().toPixelMap()
         assertTrue("The lens should remain visible above the resting outline during its spring",
-            (top - 32).coerceAtLeast(0).until(top - 2).any { y ->
+            (restingTop - 32).coerceAtLeast(0).until(restingTop - 2).any { y ->
                 atRest[x, y] == Color.Magenta && pressed[x, y] != Color.Magenta
             },
         )
-        capture("tabs-expanded-during-press")
+        capture(captureName)
         selected.performTouchInput { up() }
         compose.mainClock.advanceTimeBy(1200)
     }
@@ -410,6 +430,42 @@ class LiquidAdaptiveComponentsTest {
         compose.onNodeWithTag("avatar").performTouchInput { click(androidx.compose.ui.geometry.Offset(width * .25f, height * .75f)) }
         compose.runOnIdle { assertTrue(avatarClicks == 1) }
         capture("custom-avatar-and-presence")
+    }
+
+    @Test fun settingsRowAndItsTrailingActionKeepIndependentPresses() {
+        var rowClicks = 0
+        var trailingClicks = 0
+        content(fontScale = 1f) {
+            LiquidPreferenceGroup(modifier = Modifier.width(320.dp)) {
+                LiquidPreferenceItem(
+                    title = "Impostazione",
+                    onClick = { rowClicks++ },
+                    trailingContent = {
+                        LiquidButton({ trailingClicks++ }, text = "Azione", modifier = Modifier.testTag("action"))
+                    },
+                )
+                LiquidPreferenceItem(title = "Altra impostazione", onClick = {})
+            }
+        }
+        val row = compose.onNodeWithText("Impostazione", useUnmergedTree = true)
+        val sibling = compose.onNodeWithText("Altra impostazione", useUnmergedTree = true)
+        val action = compose.onNodeWithTag("action")
+        val before = row.fetchSemanticsNode().boundsInRoot
+        val siblingBefore = sibling.fetchSemanticsNode().boundsInRoot
+
+        compose.mainClock.autoAdvance = false
+        action.performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(160)
+        assertTrue("The trailing action must not animate its row", before == row.fetchSemanticsNode().boundsInRoot)
+        action.performTouchInput { up() }
+        compose.mainClock.advanceTimeBy(1200)
+        row.performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(160)
+        assertTrue("The row must animate its own press", before != row.fetchSemanticsNode().boundsInRoot)
+        assertTrue("The sibling item must stay in place", siblingBefore == sibling.fetchSemanticsNode().boundsInRoot)
+        row.performTouchInput { up() }
+        compose.mainClock.advanceTimeBy(1200)
+        compose.runOnIdle { assertTrue(rowClicks == 1 && trailingClicks == 1) }
     }
 
     @Test fun badgeSupportsCustomShapePaddingTypographyAndDotSize() {

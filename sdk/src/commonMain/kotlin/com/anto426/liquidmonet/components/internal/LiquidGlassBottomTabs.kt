@@ -27,7 +27,6 @@ import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -97,7 +96,7 @@ internal fun LiquidGlassBottomTabs(
     BoxWithConstraints(
         // The scrolling strip clips its own labels. Keep the glass and its spring outside
         // that clip so both rounded surfaces can draw their full shape during an animation.
-        modifier = if (tabScrollState == null) modifier.clip(Capsule()) else modifier,
+        modifier = modifier,
         contentAlignment = Alignment.CenterStart,
     ) {
         val density = LocalDensity.current

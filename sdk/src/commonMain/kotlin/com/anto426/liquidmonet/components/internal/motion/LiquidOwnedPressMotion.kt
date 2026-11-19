@@ -12,8 +12,9 @@ import com.anto426.liquidmonet.components.internal.InteractiveHighlight
 internal fun rememberLiquidOwnedPressInteractionSource(
     enabled: Boolean,
     highlight: InteractiveHighlight,
+    interactionSource: MutableInteractionSource? = null,
 ): MutableInteractionSource {
-    val source = remember { MutableInteractionSource() }
+    val source = interactionSource ?: remember { MutableInteractionSource() }
     LaunchedEffect(source, enabled, highlight) {
         if (!enabled) return@LaunchedEffect
         var activePress: PressInteraction.Press? = null

@@ -33,8 +33,7 @@ import com.anto426.liquidmonet.components.cards.card.LiquidCard
 import com.anto426.liquidmonet.components.cards.preferenceitem.motion.LiquidPreferenceItemMotion
 import com.anto426.liquidmonet.components.display.sectionheader.LiquidSectionHeader
 import com.anto426.liquidmonet.components.display.sectionheader.LiquidSectionHeaderSize
-import com.anto426.liquidmonet.components.internal.liquidControlInteractive
-import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
+import com.anto426.liquidmonet.components.interaction.liquidClickable
 import com.anto426.liquidmonet.components.menu.dropdownmenu.LiquidDropdownMenu
 import com.anto426.liquidmonet.components.menu.menuitem.LiquidMenuItem
 import com.anto426.liquidmonet.glass.LiquidGlassRole
@@ -99,7 +98,6 @@ fun LiquidPreferenceItem(
     val isInteractive = onClick != null
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val interactiveHighlight = rememberLiquidControlHighlight()
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
     val performance = LocalLiquidGlassPerformance.current
@@ -120,16 +118,10 @@ fun LiquidPreferenceItem(
         modifier =
             modifier
                 .fillMaxWidth()
-                .then(
-                    if (onClick != null)
-                        Modifier.liquidControlInteractive(
-                            enabled = true,
-                            interactiveHighlight = interactiveHighlight,
-                            shape = rowShape,
-                            interactionSource = interactionSource,
-                            onClick = onClick,
-                        )
-                    else Modifier
+                .liquidClickable(
+                    shape = rowShape,
+                    interactionSource = interactionSource,
+                    onClick = onClick,
                 )
                 .padding(horizontal = 6.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
