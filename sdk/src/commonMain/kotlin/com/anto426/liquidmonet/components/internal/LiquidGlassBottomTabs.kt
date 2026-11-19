@@ -95,7 +95,9 @@ internal fun LiquidGlassBottomTabs(
     val tabsBackdrop = rememberLayerBackdrop()
 
     BoxWithConstraints(
-        modifier = modifier.clip(Capsule()),
+        // The scrolling strip clips its own labels. Keep the glass and its spring outside
+        // that clip so both rounded surfaces can draw their full shape during an animation.
+        modifier = if (tabScrollState == null) modifier.clip(Capsule()) else modifier,
         contentAlignment = Alignment.CenterStart,
     ) {
         val density = LocalDensity.current
@@ -318,6 +320,11 @@ internal fun LiquidGlassBottomTabs(
                             } else {
                                 (maxIndex - dampedDragAnimation.value) * tabWidth + panelOffset + contentOffset()
                             }
+                        if (tabScrollState != null) {
+                            val slotLeft = translationX + 4.dp.toPx()
+                            val isScrolledOut = slotLeft + tabWidth <= 0f || slotLeft >= constraints.maxWidth
+                            alpha = if (isScrolledOut) 0f else 1f
+                        }
                     }
                     .then(interactiveHighlight.gestureModifier)
                     .then(dampedDragAnimation.modifier)

@@ -302,30 +302,35 @@ class LiquidAdaptiveComponentsTest {
         capture("navigation-large-text-dark")
     }
 
-    @Test fun tabsKeepTheirSurfaceInsideTheViewportDuringPress() {
+    @Test fun tabsCanExpandPastTheirRestingOutlineDuringPress() {
         content {
-            Box(Modifier.size(360.dp, 200.dp).background(Color.Magenta).testTag("viewport")) {
+            Box(Modifier.size(400.dp, 220.dp).background(Color.Magenta).testTag("viewport")) {
                 LiquidTabBar(
                     listOf("Andamento", "Simula", "Obiettivo", "Proiezioni").map { LiquidNavigationItem(it) },
-                    0, {}, Modifier.offset(20.dp, 20.dp).width(320.dp).testTag("tabs"),
+                    0, {}, Modifier.offset(40.dp, 40.dp).width(320.dp).testTag("tabs"),
                 )
             }
         }
-        compose.onNodeWithTag("tabs").assertWidthIsEqualTo(320.dp)
+        val panel = compose.onNodeWithTag("tabs").assertWidthIsEqualTo(320.dp).fetchSemanticsNode().boundsInRoot
+        val viewport = compose.onNodeWithTag("viewport")
+        val origin = viewport.fetchSemanticsNode().boundsInRoot.topLeft
+        val selected = compose.onNodeWithText("Andamento")
+        val x = (selected.fetchSemanticsNode().boundsInRoot.center.x - origin.x).toInt()
+        val top = (panel.top - origin.y).toInt()
+        val atRest = viewport.captureToImage().toPixelMap()
+
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("Andamento").performTouchInput { down(center) }
+        selected.performTouchInput { down(center) }
         compose.mainClock.advanceTimeBy(160)
-        val bitmap = compose.onNodeWithTag("viewport").captureToImage()
-        val pixels = bitmap.toPixelMap()
-        // Sample the outside margins while the lens is expanded, not just layout bounds.
-        for (x in listOf(bitmap.width / 72, bitmap.width * 71 / 72)) {
-            for (y in 0 until bitmap.height) {
-                assertTrue("Tab surface painted beyond its viewport at $x,$y", pixels[x, y] == Color.Magenta)
-            }
-        }
-        compose.onNodeWithText("Andamento").performTouchInput { up() }
+        val pressed = viewport.captureToImage().toPixelMap()
+        assertTrue("The lens should remain visible above the resting outline during its spring",
+            (top - 32).coerceAtLeast(0).until(top - 2).any { y ->
+                atRest[x, y] == Color.Magenta && pressed[x, y] != Color.Magenta
+            },
+        )
+        capture("tabs-expanded-during-press")
+        selected.performTouchInput { up() }
         compose.mainClock.advanceTimeBy(1200)
-        capture("tabs-bounded-during-press")
     }
 
     @Test fun cardFollowsItsOwnedDragAndReturnsOnCancellation() {
