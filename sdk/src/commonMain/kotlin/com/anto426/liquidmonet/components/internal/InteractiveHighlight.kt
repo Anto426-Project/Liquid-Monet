@@ -28,7 +28,7 @@ import com.kyant.backdrop.isRuntimeShaderSupported
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 
-private const val CardDragHoldMillis = 120L
+private const val ControlDragHoldMillis = 120L
 
 @androidx.compose.runtime.Stable
 internal class InteractiveHighlight(
@@ -147,13 +147,13 @@ half4 main(float2 coord) {
     internal fun release() = motion.release()
 
     /** Observe the owned press between clickable and the moving graphics layer. */
-    internal fun ownedGestureModifier(isCard: Boolean = false): Modifier =
-        Modifier.pointerInput(animationScope, isCard) {
+    internal fun ownedGestureModifier(): Modifier =
+        Modifier.pointerInput(animationScope) {
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
                 if (down.isConsumed) return@awaitEachGesture
                 val touchSlop = viewConfiguration.touchSlop
-                val canDragCard = isCard && motionEnabled
+                val canOwnDrag = motionEnabled
                 var dragged = false
                 var tapped = false
                 var heldBeforeMoving: Boolean? = null
@@ -173,10 +173,10 @@ half4 main(float2 coord) {
                             else tapped = true
                             break
                         }
-                        // A short stationary press gives the card priority on either axis.
+                        // A short stationary press gives the control priority on either axis.
                         // A drag already in progress must not become a hold just because time passed.
-                        if (canDragCard && heldBeforeMoving == null && distance > touchSlop / 2f) {
-                            heldBeforeMoving = change.uptimeMillis - down.uptimeMillis >= CardDragHoldMillis
+                        if (canOwnDrag && heldBeforeMoving == null && distance > touchSlop / 2f) {
+                            heldBeforeMoving = change.uptimeMillis - down.uptimeMillis >= ControlDragHoldMillis
                         }
                         if (heldBeforeMoving == true && dragged) ownsDrag = true
 
@@ -187,14 +187,14 @@ half4 main(float2 coord) {
                             awaitPointerEvent(PointerEventPass.Final)
                             if (change.isConsumed) break
                             // An accepted horizontal drag can turn vertically without handing off.
-                            if (canDragCard && abs(offset.x) > touchSlop && abs(offset.x) > abs(offset.y)) {
+                            if (canOwnDrag && abs(offset.x) > touchSlop && abs(offset.x) > abs(offset.y)) {
                                 ownsDrag = true
                             }
                         }
                         move(change.position)
                     }
                 } finally {
-                    motion.release(finishTap = isCard && tapped)
+                    motion.release(finishTap = tapped)
                 }
             }
         }

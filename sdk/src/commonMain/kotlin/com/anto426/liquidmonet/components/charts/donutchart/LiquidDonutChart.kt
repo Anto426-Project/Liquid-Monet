@@ -1,40 +1,42 @@
 package com.anto426.liquidmonet.components.charts.donutchart
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.anto426.liquidmonet.components.charts.donutchart.motion.LiquidDonutChartMotion
+import com.anto426.liquidmonet.components.charts.internal.LiquidChartLegendItem
 import com.anto426.liquidmonet.components.charts.model.LiquidPieEntry
+import com.anto426.liquidmonet.components.charts.model.formatLiquidChartValue
+import com.anto426.liquidmonet.components.display.badge.LiquidBadge
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
-import com.anto426.liquidmonet.glass.LiquidGlassRole
-import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
@@ -42,14 +44,11 @@ import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.roundToInt
 
-/**
- * LiquidDonutChart - Optical Liquid Glass Radial Donut Chart.
- *
- * Features segmented optical Monet arcs, center refractive glass hub, smooth spring entrance, slice
- * selection, and legend pills.
- */
+/** A part-to-whole chart with a selectable ring and a numerical legend. */
 @Composable
 fun LiquidDonutChart(
     entries: List<LiquidPieEntry>,
@@ -72,220 +71,167 @@ fun LiquidDonutChart(
     }
     if (entries.isEmpty()) return
 
-    val colorScheme = MaterialTheme.colorScheme
+    val scheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
-    val trackColor = LiquidGlassTheme.colors.inactiveTrack
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
     val performance = LocalLiquidGlassPerformance.current
-
-    // Default Monet palette if entry color is null
-    val defaultColors =
-        listOf(
-            colorScheme.primary,
-            colorScheme.tertiary,
-            colorScheme.secondary,
-            glassColors.warning,
-            glassColors.success,
-            colorScheme.error,
-        )
-
-    val totalValue = entries.sumOf { it.value.toDouble() }.toFloat().coerceAtLeast(0.001f)
-
-    // Fluid spring entrance animation
-    var animationPlayed by remember { mutableStateOf(false) }
-    val progressAnimation by
-        LiquidDonutChartMotion.animateFloat(
-            targetValue = if (animationPlayed) 1f else 0f,
-            performance = performance,
-            label = "DonutChartProgress",
-        )
-    androidx.compose.runtime.LaunchedEffect(entries) {
-        animationPlayed = true
+    val defaultColors = listOf(
+        scheme.primary, scheme.tertiary, scheme.secondary,
+        glassColors.warning, glassColors.success, scheme.error,
+    )
+    val total = entries.sumOf { it.value.toDouble() }
+    val fractions = remember(entries, total) {
+        entries.map { entry -> if (total == 0.0) 0f else (entry.value / total).toFloat() }
     }
+    val singleSlice = fractions.count { it > 0f } == 1
 
-    var selectedIndex by remember { mutableStateOf<Int?>(null) }
-    val selectedEntry = selectedIndex?.let { entries.getOrNull(it) }
+    var animationPlayed by remember { mutableStateOf(false) }
+    val progressAnimation by LiquidDonutChartMotion.animateFloat(
+        targetValue = if (animationPlayed) 1f else 0f,
+        performance = performance,
+        label = "DonutChartProgress",
+    )
+    LaunchedEffect(Unit) { animationPlayed = true }
+
+    var selectedIndex by remember(entries) { mutableStateOf<Int?>(null) }
+    val selectedEntry = selectedIndex?.let(entries::get)
+    val currentOnEntrySelected by rememberUpdatedState(onEntrySelected)
+    val currentProgress by rememberUpdatedState(progressAnimation)
+    fun toggleSelection(index: Int?) {
+        val next = index.takeUnless { it == selectedIndex }
+        selectedIndex = next
+        currentOnEntrySelected?.invoke(next?.let(entries::get))
+    }
 
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        // Donut Ring + Center Hub
-        Box(
-            modifier = Modifier.size(size),
-            contentAlignment = Alignment.Center,
-        ) {
+        Box(Modifier.size(size), contentAlignment = Alignment.Center) {
             Canvas(
-                modifier =
-                    Modifier.matchParentSize().pointerInput(entries) {
-                        detectTapGestures { offset ->
-                            val center =
-                                Offset(
-                                    this@pointerInput.size.width / 2f,
-                                    this@pointerInput.size.height / 2f,
-                                )
-                            val touchOffset = offset - center
-                            var angle =
-                                (atan2(touchOffset.y.toDouble(), touchOffset.x.toDouble()) * 180.0 /
-                                        PI)
-                                    .toFloat()
-                            if (angle < 0) angle += 360f
+                Modifier.matchParentSize().pointerInput(entries, strokeWidth) {
+                    detectTapGestures { position ->
+                        val diameter = minOf(this.size.width, this.size.height).toFloat()
+                        val touch = position - Offset(this.size.width / 2f, this.size.height / 2f)
+                        val stroke = minOf(strokeWidth.toPx(), diameter / 3.5f)
+                        val radius = (diameter - stroke * 1.5f) / 2f
+                        val halfTarget = maxOf(24.dp.toPx(), stroke * 0.65f).coerceAtMost(radius * 0.65f)
+                        if (abs(touch.getDistance() - radius) > halfTarget) return@detectTapGestures
 
-                            // Angle 0 is at 3 o'clock; our chart starts at -90 (12 o'clock)
-                            var adjustedAngle = (angle + 90f) % 360f
-                            var accumulated = 0f
-                            var clickedIndex: Int? = null
-
-                            for (i in entries.indices) {
-                                val sliceAngle = (entries[i].value / totalValue) * 360f
-                                if (adjustedAngle in accumulated..(accumulated + sliceAngle)) {
-                                    clickedIndex = i
-                                    break
-                                }
-                                accumulated += sliceAngle
+                        val degrees = (atan2(touch.y.toDouble(), touch.x.toDouble()) * 180.0 / PI).toFloat()
+                        val angle = (degrees + 450f) % 360f
+                        val progress = currentProgress.coerceIn(0f, 1f)
+                        var start = 0f
+                        for (index in fractions.indices) {
+                            val sweep = fractions[index] * 360f
+                            val gap = ringGap(sweep, singleSlice)
+                            val first = start + gap / 2f
+                            val last = start + sweep * progress - gap / 2f
+                            if (sweep > gap && angle >= first && angle < last) {
+                                toggleSelection(index)
+                                return@detectTapGestures
                             }
-
-                            if (selectedIndex == clickedIndex) {
-                                selectedIndex = null
-                                onEntrySelected?.invoke(null)
-                            } else {
-                                selectedIndex = clickedIndex
-                                clickedIndex?.let { onEntrySelected?.invoke(entries[it]) }
-                            }
+                            start += sweep
                         }
                     }
+                },
             ) {
-                val strokePx = strokeWidth.toPx()
-                val canvasWidth = this.size.width
-                val canvasHeight = this.size.height
-                val arcSize = Size(canvasWidth - strokePx * 1.5f, canvasHeight - strokePx * 1.5f)
-                val topLeft = Offset(strokePx * 0.75f, strokePx * 0.75f)
-
-                // 1. Background Track Ring
+                val diameter = this.size.minDimension
+                if (diameter <= 0f) return@Canvas
+                val stroke = minOf(strokeWidth.toPx(), diameter / 3.5f)
+                val arcDiameter = diameter - stroke * 1.5f
+                val arcSize = Size(arcDiameter, arcDiameter)
+                val topLeft = center - Offset(arcDiameter / 2f, arcDiameter / 2f)
                 drawArc(
-                    color = trackColor,
+                    color = glassColors.inactiveTrack,
                     startAngle = 0f,
                     sweepAngle = 360f,
                     useCenter = false,
                     topLeft = topLeft,
                     size = arcSize,
-                    style = Stroke(width = strokePx, cap = StrokeCap.Round),
+                    style = Stroke(stroke),
                 )
 
-                // 2. Slices with Spring Progress
-                var startAngle = -90f
+                var start = -90f
+                val progress = progressAnimation.coerceIn(0f, 1f)
                 entries.forEachIndexed { index, entry ->
-                    val sliceColor = entry.color ?: defaultColors[index % defaultColors.size]
-                    val isSelected = index == selectedIndex
-                    val sliceSweep = ((entry.value / totalValue) * 360f) * progressAnimation
-                    val actualStroke = if (isSelected) strokePx * 1.25f else strokePx
-
-                    if (sliceSweep > 0.5f) {
+                    val sweep = fractions[index] * 360f
+                    val gap = ringGap(sweep, singleSlice)
+                    val animatedSweep = sweep * progress - gap
+                    if (animatedSweep > 0f) {
+                        val color = entry.color ?: defaultColors[index % defaultColors.size]
+                        val active = selectedIndex == index
                         drawArc(
-                            color = sliceColor,
-                            startAngle = startAngle,
-                            sweepAngle = (sliceSweep - 2f).coerceAtLeast(0.5f),
+                            color = if (selectedIndex == null || active) color else color.copy(alpha = color.alpha * 0.58f),
+                            startAngle = start + gap / 2f,
+                            sweepAngle = animatedSweep,
                             useCenter = false,
                             topLeft = topLeft,
                             size = arcSize,
-                            style = Stroke(width = actualStroke, cap = StrokeCap.Round),
+                            style = Stroke(width = if (active) stroke * 1.22f else stroke, cap = StrokeCap.Butt),
                         )
                     }
-
-                    startAngle += (entry.value / totalValue) * 360f
+                    start += sweep
                 }
             }
 
-            // Center Refractive Glass Hub
-            Box(
-                modifier =
-                    Modifier.size(size * 0.52f)
-                        .liquidGlass(
-                            backdrop = effectiveBackdrop,
-                            shape = Capsule(),
-                            role = LiquidGlassRole.Control,
-                            containerColor = colorScheme.surface.copy(alpha = 0.20f),
-                        ),
-                contentAlignment = Alignment.Center,
+            LiquidBadge(
+                shape = Capsule(),
+                modifier = Modifier.size(size * 0.52f),
+                contentPadding = PaddingValues(horizontal = 4.dp),
+                containerColor = scheme.surface.copy(alpha = 0.26f),
+                backdropState = effectiveBackdrop,
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(1.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    val displayValue =
-                        if (selectedEntry != null) {
-                            "${selectedEntry.value}"
-                        } else {
-                            centerValue ?: "${totalValue.toInt()}"
-                        }
-
-                    val displayLabel =
-                        if (selectedEntry != null) {
-                            selectedEntry.label
-                        } else {
-                            centerLabel ?: "Totale"
-                        }
-
+                    val amount = selectedEntry?.value?.let(::formatLiquidChartValue)
+                        ?: centerValue ?: formatLiquidChartValue(total.toFloat())
                     Text(
-                        text = displayValue,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Black,
-                        color = colorScheme.onSurface,
+                        text = amount,
+                        style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                        fontWeight = FontWeight.Bold,
+                        color = scheme.onSurface,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = displayLabel,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = colorScheme.onSurfaceVariant,
+                        text = selectedEntry?.label ?: centerLabel ?: "Totale",
+                        modifier = Modifier.padding(horizontal = 2.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = scheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
         }
 
-        // Legend Pills Row
         if (showLegend) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 entries.forEachIndexed { index, entry ->
-                    val sliceColor = entry.color ?: defaultColors[index % defaultColors.size]
-                    val isSelected = index == selectedIndex
-
-                    Box(
-                        modifier =
-                            Modifier.padding(horizontal = 4.dp)
-                                .liquidGlass(
-                                    backdrop = effectiveBackdrop,
-                                    shape = Capsule(),
-                                    role = LiquidGlassRole.Control,
-                                    containerColor =
-                                        if (isSelected) sliceColor.copy(alpha = 0.22f)
-                                        else Color.Transparent,
-                                )
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp),
-                        ) {
-                            Box(
-                                modifier =
-                                    Modifier.size(8.dp).clip(Capsule()).background(sliceColor)
-                            )
-                            Text(
-                                text = entry.label,
-                                fontSize = 11.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color =
-                                    if (isSelected) sliceColor else colorScheme.onSurfaceVariant,
-                            )
-                        }
+                    key(entry, index) {
+                        val percentage = fractions[index] * 100f
+                        val percentageLabel = if (percentage > 0f && percentage < 0.5f) "<1%" else "${percentage.roundToInt()}%"
+                        LiquidChartLegendItem(
+                            label = entry.label,
+                            color = entry.color ?: defaultColors[index % defaultColors.size],
+                            selected = index == selectedIndex,
+                            backdrop = effectiveBackdrop,
+                            modifier = Modifier.fillMaxWidth(),
+                            value = "${formatLiquidChartValue(entry.value)} · $percentageLabel",
+                            onClick = { toggleSelection(index) },
+                        )
                     }
                 }
             }
         }
     }
 }
+
+private fun ringGap(sweep: Float, singleSlice: Boolean): Float =
+    if (singleSlice) 0f else minOf(3f, sweep * 0.30f)

@@ -1,61 +1,63 @@
 package com.anto426.liquidmonet.components.cards.accordion.motion
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
 import com.anto426.liquidmonet.motion.LiquidMotion
-import com.anto426.liquidmonet.motion.animateLiquidColorAsState
 import com.anto426.liquidmonet.motion.animateLiquidFloatAsState
+import kotlin.math.PI
+import kotlin.math.sin
 
-/** Motion owned by LiquidAccordion; no rendering or application state. */
+/** Expansion, deformation and chevron motion for an expandable card. */
 internal object LiquidAccordionMotion {
-    fun bubbleSpring(performance: LiquidGlassPerformanceState): FiniteAnimationSpec<Float> =
-        LiquidMotion.spring(performance, dampingRatio = 0.58f, stiffness = 300f)
+    @Composable
+    fun animateOpeningProgress(
+        expanded: Boolean,
+        performance: LiquidGlassPerformanceState,
+    ): State<Float> = animateLiquidFloatAsState(
+        targetValue = if (expanded) 1f else 0f,
+        animationSpec = remember(performance) {
+            LiquidMotion.spring(performance, dampingRatio = 0.58f, stiffness = 300f)
+        },
+        label = "AccordionOpening",
+    )
 
     @Composable
-    fun animateFloatPrimary(
-        targetValue: Float,
+    fun animateChevronRotation(
+        expanded: Boolean,
         performance: LiquidGlassPerformanceState,
-        label: String,
-    ): State<Float> = animateLiquidFloatAsState(targetValue, bubbleSpring(performance), label)
+    ): State<Float> = animateLiquidFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = remember(performance) {
+            LiquidMotion.spring(performance, dampingRatio = 0.54f, stiffness = 320f)
+        },
+        label = "AccordionChevron",
+    )
+
+    fun deformation(progress: Float): Float = sin(progress.coerceIn(0f, 1f) * PI.toFloat())
 
     @Composable
-    fun animateFloatSecondary(
-        targetValue: Float,
-        performance: LiquidGlassPerformanceState,
-        label: String,
-    ): State<Float> =
-        animateLiquidFloatAsState(
-            targetValue,
-            remember(performance) {
-                LiquidMotion.spring(
-                    performance = performance,
-                    dampingRatio = 0.54f,
-                    stiffness = 320f,
-                )
-            },
-            label,
-        )
+    fun transitions(performance: LiquidGlassPerformanceState): Pair<EnterTransition, ExitTransition> =
+        remember(performance) {
+            if (performance.motionScale.isFinite() && performance.motionScale <= 0f) {
+                EnterTransition.None to ExitTransition.None
+            } else {
+                enter(performance) to exit(performance)
+            }
+        }
 
-    @Composable
-    fun animateColor(
-        targetValue: Color,
-        performance: LiquidGlassPerformanceState,
-        label: String,
-    ): State<Color> =
-        animateLiquidColorAsState(
-            targetValue,
-            remember(performance) { LiquidMotion.tween(performance, 200) },
-            label,
-        )
-
-    fun enter(performance: LiquidGlassPerformanceState): EnterTransition =
+    private fun enter(performance: LiquidGlassPerformanceState): EnterTransition =
         expandVertically(
             animationSpec =
                 LiquidMotion.spring(
@@ -84,7 +86,7 @@ internal object LiquidAccordionMotion {
                     )
             )
 
-    fun exit(performance: LiquidGlassPerformanceState): ExitTransition =
+    private fun exit(performance: LiquidGlassPerformanceState): ExitTransition =
         shrinkVertically(
             animationSpec = LiquidMotion.snappySpring(performance),
             shrinkTowards = Alignment.Top,

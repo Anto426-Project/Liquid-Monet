@@ -2,15 +2,20 @@ package com.anto426.app
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
+import com.anto426.liquidmonet.components.buttons.button.LiquidButton
+import com.anto426.liquidmonet.components.cards.accordion.LiquidExpandableCard
+import com.anto426.liquidmonet.components.cards.accordion.LiquidExpandableCardStyle
 import com.anto426.liquidmonet.components.layout.animatedswitcher.LiquidSwitcherTransition
 import com.anto426.liquidmonet.components.layout.animatedswitcher.rememberLiquidContentTransition
 import com.anto426.liquidmonet.components.layout.expandablecontent.LiquidExpandableContent
@@ -19,6 +24,7 @@ import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.motion.rememberLiquidAmbientPhase
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -83,6 +89,92 @@ class LiquidSharedMotionTest {
         compose.runOnIdle { visible.value = false }
         compose.mainClock.advanceTimeBy(32); compose.waitForIdle()
         compose.onNodeWithTag("controls").assertDoesNotExist()
+    }
+
+    @Test fun expandableCardSeparatesTheDisclosureFromItsChildAction() {
+        var changes = 0
+        var childClicks = 0
+        compose.setContent {
+            MaterialTheme {
+                var expanded by remember { mutableStateOf(false) }
+                LiquidExpandableCard(
+                    title = "Exam details",
+                    style = LiquidExpandableCardStyle(
+                        headerPadding = PaddingValues(horizontal = 12.dp),
+                        showDivider = false,
+                    ),
+                    isExpanded = expanded,
+                    onExpandedChange = {
+                        expanded = it
+                        changes++
+                    },
+                ) {
+                    LiquidButton(text = "Save grade", onClick = { childClicks++ })
+                }
+            }
+        }
+
+        val header = compose.onNode(hasText("Exam details") and hasClickAction())
+        val button = compose.onNode(hasText("Save grade") and hasClickAction())
+        button.assertDoesNotExist()
+        header.performSemanticsAction(SemanticsActions.Expand) { it() }
+        header.assert(SemanticsMatcher.keyIsDefined(SemanticsActions.Collapse))
+        button.performTouchInput { click(center) }
+        compose.runOnIdle {
+            assertEquals(1, childClicks)
+            assertEquals(1, changes)
+        }
+        header.performTouchInput { click(center) }
+        button.assertDoesNotExist()
+        header.assert(SemanticsMatcher.keyIsDefined(SemanticsActions.Expand))
+        compose.runOnIdle { assertEquals(2, changes) }
+    }
+
+    @Test fun expandableCardRevealsItsBodyGraduallyAndRespectsReducedMotion() {
+        compose.mainClock.autoAdvance = false
+        val expanded = mutableStateOf(false)
+        val reduceMotion = mutableStateOf(false)
+        compose.setContent {
+            MaterialTheme {
+                val performance = LiquidGlassPerformanceState.Fallback.copy(
+                    motionScale = if (reduceMotion.value) 0f else 1f,
+                )
+                CompositionLocalProvider(LocalLiquidGlassPerformance provides performance) {
+                    LiquidExpandableCard(
+                        title = "Details",
+                        modifier = Modifier.testTag("expandable-card"),
+                        isExpanded = expanded.value,
+                    ) {
+                        Box(Modifier.size(width = 120.dp, height = 160.dp).testTag("expandable-body"))
+                    }
+                }
+            }
+        }
+
+        val card = compose.onNodeWithTag("expandable-card")
+        val body = compose.onNodeWithTag("expandable-body")
+        fun cardHeight() = card.fetchSemanticsNode().boundsInRoot.height
+        val collapsedHeight = cardHeight()
+        compose.runOnIdle { expanded.value = true }
+        compose.mainClock.advanceTimeBy(96)
+        compose.waitForIdle()
+        val openingHeight = cardHeight()
+
+        compose.mainClock.advanceTimeBy(1_000)
+        compose.waitForIdle()
+        val expandedHeight = cardHeight()
+        assertTrue(
+            "Expected an intermediate height, got $collapsedHeight, $openingHeight, $expandedHeight",
+            openingHeight > collapsedHeight && openingHeight < expandedHeight,
+        )
+
+        compose.runOnIdle { reduceMotion.value = true }
+        compose.mainClock.advanceTimeBy(32)
+        compose.runOnIdle { expanded.value = false }
+        compose.mainClock.advanceTimeBy(80)
+        compose.waitForIdle()
+        body.assertDoesNotExist()
+        assertEquals(collapsedHeight, cardHeight(), 1f)
     }
 
     @Test fun inactiveOrReducedAmbientArtworkHasNoMovingPhase() {
