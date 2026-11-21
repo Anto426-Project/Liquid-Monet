@@ -55,6 +55,7 @@ import com.anto426.liquidmonet.glass.liquidTopBarZIndex
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
+import com.anto426.liquidmonet.glass.runtime.asBalancedFrostedIfEssential
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
@@ -102,6 +103,7 @@ fun LiquidTopBar(
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
     val effectiveScrollBehavior = scrollBehavior ?: LocalLiquidGlassTopBarScrollBehavior.current
     val performance = LocalLiquidGlassPerformance.current
+    val topBarPerformance = remember(performance) { performance.asBalancedFrostedIfEssential() }
     val density = LocalDensity.current
     val currentOnHeightChanged by rememberUpdatedState(onHeightChanged)
 
@@ -125,6 +127,7 @@ fun LiquidTopBar(
                         backdrop = effectiveBackdrop,
                         shape = RectangleShape,
                         role = LiquidGlassRole.TopBar,
+                        performance = topBarPerformance,
                     )
         )
 

@@ -32,6 +32,7 @@ import com.anto426.liquidmonet.components.internal.liquidControlInteractive
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.components.selection.chip.motion.LiquidChipMotion
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
+import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
@@ -83,10 +84,15 @@ fun LiquidChip(
             label = "chipContentColor",
         )
 
+    val isEssential =
+        (performance.opticalQualityTier ?: performance.qualityTier) ==
+            LiquidGlassQualityTier.MINIMAL
     // Vibrant Radiant Monet Glow & Fill
     val targetContainerColor =
         if (selected) {
-            activeMonetColor.copy(alpha = glassColors.selectedContainer.alpha)
+            activeMonetColor.copy(
+                alpha = if (isEssential) 0.30f else glassColors.selectedContainer.alpha
+            )
         } else {
             glassColors.neutralContainer
         }

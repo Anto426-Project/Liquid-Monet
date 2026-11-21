@@ -44,10 +44,13 @@ import com.anto426.liquidmonet.glass.LiquidGlassStyleManager
 import com.anto426.liquidmonet.glass.internal.liquidGlassDynamic
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.liquidInteractiveZIndex
+import com.anto426.liquidmonet.glass.resolveEssentialChromeSurfaceColor
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassDynamicPresets
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPresets
+import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
+import com.anto426.liquidmonet.glass.runtime.asBalancedFrostedIfEssential
 import com.anto426.liquidmonet.motion.LiquidDragMotion
 import com.anto426.liquidmonet.motion.LiquidElasticDrag
 import com.anto426.liquidmonet.motion.createLiquidNavigationSelectionMotion
@@ -84,6 +87,30 @@ internal fun LiquidGlassBottomTabs(
     val lightTint = rememberUpdatedState(if (isLightSurface) accentColor else Color.Unspecified)
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val performance = LocalLiquidGlassPerformance.current
+    val navPerformance = remember(performance) { performance.asBalancedFrostedIfEssential() }
+    val useEssentialFallback =
+        (navPerformance.opticalQualityTier ?: navPerformance.qualityTier) ==
+            LiquidGlassQualityTier.MINIMAL
+    val maskSurfaceColor =
+        if (useEssentialFallback) {
+            remember(
+                isLightSurface,
+                colorScheme.surface,
+                colorScheme.onSurface,
+                accentColor,
+            ) {
+                resolveEssentialChromeSurfaceColor(
+                    containerColor = null,
+                    role = LiquidGlassRole.Navigation,
+                    isLightSurface = isLightSurface,
+                    surface = colorScheme.surface,
+                    onSurface = colorScheme.onSurface,
+                    primary = accentColor,
+                )
+            }
+        } else {
+            containerColor
+        }
     val motionEnabled = performance.motionScale > 0f
     val currentSelectedTabIndex by rememberUpdatedState(selectedTabIndex)
     val currentOnTabSelected by rememberUpdatedState(onTabSelected)
@@ -214,8 +241,9 @@ internal fun LiquidGlassBottomTabs(
                         backdrop = effectiveBackdrop,
                         shape = Capsule(),
                         role = LiquidGlassRole.Navigation,
-                        containerColor = containerColor,
+                        containerColor = if (useEssentialFallback) null else containerColor,
                         preset = LiquidGlassPresets.Navigation,
+                        performance = navPerformance,
                         layerBlock = {
                             val growth =
                                 if (motionEnabled) 16.dp.toPx() / size.width.coerceAtLeast(1f)
@@ -262,9 +290,9 @@ internal fun LiquidGlassBottomTabs(
                             backdrop = effectiveBackdrop,
                             shape = Capsule(),
                             preset = LiquidGlassDynamicPresets.NavigationMask,
-                            performance = performance,
+                            performance = navPerformance,
                             effectProgress = { dampedDragAnimation.pressProgress },
-                            onDrawSurface = { drawRect(containerColor) },
+                            onDrawSurface = { drawRect(maskSurfaceColor) },
                         )
                         .then(interactiveHighlight.modifier(clipShape = Capsule()))
                         .height(contentHeight)
@@ -297,7 +325,7 @@ internal fun LiquidGlassBottomTabs(
                         backdrop = rememberCombinedBackdrop(effectiveBackdrop, tabsBackdrop),
                         shape = Capsule(),
                         preset = LiquidGlassDynamicPresets.NavigationDroplet,
-                        performance = performance,
+                        performance = navPerformance,
                         effectProgress = { dropletInteractionProgress },
                         decorationProgress = { dampedDragAnimation.pressProgress },
                         layerBlock = {

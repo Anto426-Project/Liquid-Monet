@@ -1,5 +1,7 @@
 package com.anto426.liquidmonet.components.internal
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import com.anto426.liquidmonet.motion.DampedDragAnimation
 import androidx.compose.foundation.layout.size
@@ -16,9 +18,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
@@ -33,13 +38,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.lerp
 import com.anto426.liquidmonet.glass.LiquidGlassRole
+import com.anto426.liquidmonet.glass.essentialCardBaseColor
 import com.anto426.liquidmonet.glass.liquidInteractiveZIndex
 import com.anto426.liquidmonet.glass.internal.liquidGlassDynamic
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassDynamicPresets
+import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
+import com.anto426.liquidmonet.glass.runtime.asBalancedFrostedIfEssential
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
+import com.anto426.liquidmonet.theme.monet.blend
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberBackdrop
@@ -133,13 +142,43 @@ internal fun LiquidGlassToggle(
     }
 
     val trackBackdrop = rememberLayerBackdrop()
+    val togglePerformance = remember(performance) { performance.asBalancedFrostedIfEssential() }
+    val useEssentialFallback =
+        (togglePerformance.opticalQualityTier ?: togglePerformance.qualityTier) ==
+            LiquidGlassQualityTier.MINIMAL
+    val isFrostedWithoutLens = togglePerformance.refractionScale <= 0f
+    val isLightSurface = remember(colorScheme.surface) { colorScheme.surface.luminance() > 0.5f }
     val resolvedTrackColor = lerp(
         trackColor,
         glassColors.focusIndicator,
         dampedDragAnimation.value
     )
-    // Fade the resting thumb out completely on press so the magnified track remains visible.
-    val thumbColor = glassColors.content.copy(alpha = 0.90f)
+    val cardBase =
+        remember(isLightSurface, colorScheme.surface, accentColor) {
+            essentialCardBaseColor(isLightSurface, colorScheme.surface, accentColor)
+        }
+    val essentialOffTrack = trackColor.compositeOver(cardBase).copy(alpha = 0.74f)
+    val essentialOnTrack =
+        blend(cardBase, accentColor, if (isLightSurface) 0.78f else 0.65f).copy(alpha = 0.84f)
+    val essentialTrackColor = lerp(
+        essentialOffTrack,
+        essentialOnTrack,
+        dampedDragAnimation.value,
+    )
+    val essentialTrackBorder = lerp(
+        Color.White.copy(alpha = if (isLightSurface) 0.48f else 0.24f),
+        accentColor.copy(alpha = if (isLightSurface) 0.35f else 0.50f),
+        dampedDragAnimation.value,
+    )
+    val essentialThumbColor = Color.White
+    // Fade the resting thumb out on press only when the lens refracts the track; keep it visible
+    // in frosted-no-lens mode so dragging never makes the thumb vanish.
+    val thumbColor =
+        if (isFrostedWithoutLens) {
+            Color.White.copy(alpha = 0.94f)
+        } else {
+            glassColors.content.copy(alpha = 0.90f)
+        }
 
     Box(
         modifier = modifier
@@ -155,64 +194,100 @@ internal fun LiquidGlassToggle(
             .then(if (enabled) dampedDragAnimation.dragModifier(consumeTap = true) else Modifier),
         contentAlignment = Alignment.CenterStart
     ) {
-        Box(
-            modifier = Modifier
-                .layerBackdrop(trackBackdrop)
-                .size(52.dp, 32.dp)
-                .liquidGlass(
-                    backdrop = effectiveBackdrop,
-                    shape = Capsule(),
-                    role = LiquidGlassRole.Control,
-                    containerColor = resolvedTrackColor,
-                )
-        )
+        if (useEssentialFallback) {
+            Box(
+                modifier = Modifier
+                    .size(52.dp, 32.dp)
+                    .background(essentialTrackColor, Capsule())
+                    .border(1.dp, essentialTrackBorder, Capsule())
+            )
 
-        Box(
-            modifier = Modifier
-                .graphicsLayer {
-                    val padding = 4.dp.toPx()
-                    alpha = if (enabled) 1f else 0.5f
-                    translationX = if (isLtr) {
-                        lerp(padding, padding + dragWidth, dampedDragAnimation.value)
-                    } else {
-                        lerp(-padding, -(padding + dragWidth), dampedDragAnimation.value)
-                    }
-                }
-                .liquidGlassDynamic(
-                    backdrop = rememberCombinedBackdrop(
-                        effectiveBackdrop,
-                        rememberBackdrop(trackBackdrop) { drawBackdrop ->
-                            val progress = dampedDragAnimation.pressProgress
-                            scale(
-                                scaleX = lerp(2f / 3f, 0.75f, progress),
-                                scaleY = lerp(0f, 0.75f, progress)
-                            ) {
-                                drawBackdrop()
-                            }
+            Box(
+                modifier = Modifier
+                    .graphicsLayer {
+                        val padding = 4.dp.toPx()
+                        alpha = if (enabled) 1f else 0.5f
+                        translationX = if (isLtr) {
+                            lerp(padding, padding + dragWidth, dampedDragAnimation.value)
+                        } else {
+                            lerp(-padding, -(padding + dragWidth), dampedDragAnimation.value)
                         }
-                    ),
-                    shape = Capsule(),
-                    preset = LiquidGlassDynamicPresets.ToggleThumb,
-                    performance = performance,
-                    effectProgress = { dampedDragAnimation.pressProgress },
-                    layerBlock = {
-                        scaleX = dampedDragAnimation.scaleX
-                        scaleY = dampedDragAnimation.scaleY
+                        val pressScale = lerp(1f, 1.12f, dampedDragAnimation.pressProgress.coerceIn(0f, 1f))
                         val velocity = dampedDragAnimation.velocity / 50f
-                        scaleX /= 1f - (velocity * 0.75f).fastCoerceIn(-0.2f, 0.2f)
-                        scaleY *= 1f - (velocity * 0.25f).fastCoerceIn(-0.2f, 0.2f)
-                    },
-                    onDrawSurface = {
-                        drawRect(
-                            thumbColor.copy(
-                                alpha = thumbColor.alpha *
-                                    (1f - dampedDragAnimation.pressProgress.coerceIn(0f, 1f))
-                            )
-                        )
+                        scaleX = pressScale / (1f - (velocity * 0.45f).fastCoerceIn(-0.15f, 0.15f))
+                        scaleY = pressScale * (1f - (velocity * 0.18f).fastCoerceIn(-0.12f, 0.12f))
                     }
-                )
-                .liquidInteractiveZIndex(enabled)
-                .size(24.dp)
-        )
+                    .background(essentialThumbColor, Capsule())
+                    .border(
+                        width = 0.75.dp,
+                        color = Color.Black.copy(alpha = if (isLightSurface) 0.14f else 0.22f),
+                        shape = Capsule(),
+                    )
+                    .liquidInteractiveZIndex(enabled)
+                    .size(24.dp)
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .layerBackdrop(trackBackdrop)
+                    .size(52.dp, 32.dp)
+                    .liquidGlass(
+                        backdrop = effectiveBackdrop,
+                        shape = Capsule(),
+                        role = LiquidGlassRole.Control,
+                        containerColor = resolvedTrackColor,
+                        performance = togglePerformance,
+                    )
+            )
+
+            Box(
+                modifier = Modifier
+                    .graphicsLayer {
+                        val padding = 4.dp.toPx()
+                        alpha = if (enabled) 1f else 0.5f
+                        translationX = if (isLtr) {
+                            lerp(padding, padding + dragWidth, dampedDragAnimation.value)
+                        } else {
+                            lerp(-padding, -(padding + dragWidth), dampedDragAnimation.value)
+                        }
+                    }
+                    .liquidGlassDynamic(
+                        backdrop = rememberCombinedBackdrop(
+                            effectiveBackdrop,
+                            rememberBackdrop(trackBackdrop) { drawBackdrop ->
+                                val progress = dampedDragAnimation.pressProgress
+                                scale(
+                                    scaleX = lerp(2f / 3f, 0.75f, progress),
+                                    scaleY = lerp(0f, 0.75f, progress)
+                                ) {
+                                    drawBackdrop()
+                                }
+                            }
+                        ),
+                        shape = Capsule(),
+                        preset = LiquidGlassDynamicPresets.ToggleThumb,
+                        performance = togglePerformance,
+                        effectProgress = { dampedDragAnimation.pressProgress },
+                        layerBlock = {
+                            scaleX = dampedDragAnimation.scaleX
+                            scaleY = dampedDragAnimation.scaleY
+                            val velocity = dampedDragAnimation.velocity / 50f
+                            scaleX /= 1f - (velocity * 0.75f).fastCoerceIn(-0.2f, 0.2f)
+                            scaleY *= 1f - (velocity * 0.25f).fastCoerceIn(-0.2f, 0.2f)
+                        },
+                        onDrawSurface = {
+                            val pressFade =
+                                if (isFrostedWithoutLens) {
+                                    1f - 0.16f * dampedDragAnimation.pressProgress.coerceIn(0f, 1f)
+                                } else {
+                                    1f - dampedDragAnimation.pressProgress.coerceIn(0f, 1f)
+                                }
+                            drawRect(thumbColor.copy(alpha = thumbColor.alpha * pressFade))
+                        }
+                    )
+                    .liquidInteractiveZIndex(enabled)
+                    .size(24.dp)
+            )
+        }
     }
 }

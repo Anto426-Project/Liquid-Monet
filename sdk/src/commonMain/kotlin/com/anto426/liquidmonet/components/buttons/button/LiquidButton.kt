@@ -30,6 +30,7 @@ import com.anto426.liquidmonet.components.feedback.progressbar.LiquidCircularPro
 import com.anto426.liquidmonet.components.internal.LiquidControlDefaults
 import com.anto426.liquidmonet.components.internal.LiquidGlassButton
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
+import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
@@ -122,6 +123,9 @@ fun LiquidButton(
     LiquidInputNormalization.positive(minimumHeight, "LiquidButton minimumHeight")
     val isInteractive = enabled && !isLoading
     val performance = LocalLiquidGlassPerformance.current
+    val isEssential =
+        (performance.opticalQualityTier ?: performance.qualityTier) ==
+            LiquidGlassQualityTier.MINIMAL
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
     val targetTint =
@@ -134,6 +138,7 @@ fun LiquidButton(
                 colorScheme.secondary.copy(alpha = glassColors.accentContainer.alpha * 0.72f)
             variant == LiquidButtonVariant.Tonal ->
                 colorScheme.tertiary.copy(alpha = glassColors.accentContainer.alpha * 0.80f)
+            variant == LiquidButtonVariant.Glass && isEssential -> glassColors.neutralContainer
             else -> Color.Transparent
         }
     val targetContentColor =

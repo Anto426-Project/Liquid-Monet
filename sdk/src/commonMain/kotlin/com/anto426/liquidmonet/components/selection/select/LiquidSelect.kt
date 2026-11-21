@@ -1,5 +1,6 @@
 package com.anto426.liquidmonet.components.selection.select
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -70,7 +71,15 @@ fun <T> LiquidSelect(
     val anchorState = rememberLiquidGlassOverlayAnchorState()
     val interactiveHighlight = rememberLiquidControlHighlight()
     val colorScheme = MaterialTheme.colorScheme
+    val glassColors = LiquidGlassTheme.colors
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val selectBorderColor =
+        when {
+            isExpanded -> glassColors.focusIndicator
+            enabled -> glassColors.outline
+            else -> glassColors.outline.copy(alpha = glassColors.outline.alpha * 0.55f)
+        }
+    val selectBorderWidth = if (isExpanded) 1.5.dp else 1.dp
 
     val chevronRotation by
         LiquidSelectMotion.animateFloat(
@@ -90,9 +99,16 @@ fun <T> LiquidSelect(
                         shape = shape,
                         role = LiquidGlassRole.Control,
                         containerColor =
-                            if (isExpanded) colorScheme.primary.copy(alpha = 0.08f) else null,
+                            if (isExpanded) {
+                                glassColors.accentContainer.copy(
+                                    alpha = glassColors.neutralContainer.alpha * 1.6f
+                                )
+                            } else {
+                                glassColors.neutralContainer
+                            },
                         layerBlock = liquidControlLayerBlock(enabled, interactiveHighlight),
                     )
+                    .border(width = selectBorderWidth, color = selectBorderColor, shape = shape)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,

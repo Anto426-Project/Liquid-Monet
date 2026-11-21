@@ -25,6 +25,7 @@ import androidx.compose.ui.node.GlobalPositionAwareModifierNode
 import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.ObserverModifierNode
+import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.node.observeReads
 import androidx.compose.ui.node.requireGraphicsContext
 import androidx.compose.ui.platform.InspectorInfo
@@ -254,6 +255,7 @@ private class DrawBackdropElement(
         node.onDrawFront = onDrawFront
         node.resolutionScale = resolutionScale
         if (effectsChanged) node.invalidateDrawCache()
+        node.invalidateDraw()
     }
 
     override fun InspectorInfo.inspectableProperties() {

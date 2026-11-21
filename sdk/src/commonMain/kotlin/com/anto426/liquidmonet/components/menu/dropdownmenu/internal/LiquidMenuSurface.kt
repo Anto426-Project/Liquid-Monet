@@ -32,6 +32,8 @@ import com.anto426.liquidmonet.glass.LocalLiquidGlassContainerMode
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
+import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
+import com.anto426.liquidmonet.glass.runtime.asBalancedFrostedIfEssential
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.RoundedRectangle
@@ -46,6 +48,15 @@ internal fun LiquidGlassMenuSurface(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val performance = LocalLiquidGlassPerformance.current
+    val menuPerformance =
+        remember(performance, effectiveBackdrop) {
+            if (effectiveBackdrop != emptyBackdrop()) {
+                performance.asBalancedFrostedIfEssential()
+            } else {
+                performance
+            }
+        }
     val isLightSurface = MaterialTheme.colorScheme.surface.luminance() > 0.5f
     val dragSelection = remember { LiquidMenuDragSelection() }
     val menuShape = remember { RoundedRectangle(22.dp) }
@@ -82,6 +93,7 @@ internal fun LiquidGlassMenuSurface(
                     backdrop = effectiveBackdrop,
                     shape = menuShape,
                     role = LiquidGlassRole.Menu,
+                    performance = menuPerformance,
                     layerBlock = menuLayerBlock,
                 )
                 .border(

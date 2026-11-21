@@ -2,6 +2,7 @@ package com.anto426.liquidmonet.components.feedback.toast
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -29,11 +30,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -41,15 +48,18 @@ import androidx.compose.ui.zIndex
 import com.anto426.liquidmonet.components.feedback.toast.motion.LiquidToastMotion
 import com.anto426.liquidmonet.components.feedback.toast.state.LiquidToastData
 import com.anto426.liquidmonet.components.feedback.toast.state.LiquidToastState
-import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LiquidGlassZIndex
+import com.anto426.liquidmonet.glass.essentialCardBaseColor
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
+import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
+import com.anto426.liquidmonet.glass.runtime.asBalancedFrostedIfEssential
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.motion.LiquidFloatMotion
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
+import com.anto426.liquidmonet.theme.monet.blend
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
@@ -107,7 +117,7 @@ fun LiquidToastHost(
                 LiquidToast(
                     data = currentToastItem,
                     modifier =
-                        Modifier.fillMaxWidth().widthIn(max = 520.dp).graphicsLayer(clip = false),
+                        Modifier.widthIn(max = 520.dp).fillMaxWidth().graphicsLayer(clip = false),
                     onDismiss = { state.dismiss() },
                     backdropState = backdropState,
                 )
@@ -131,13 +141,98 @@ fun LiquidToast(
     val offsetYAnim = remember(data.id) { LiquidFloatMotion(0f) }
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
-    val toastHighlight = rememberLiquidControlHighlight()
 
     val accentColor = colorScheme.primary
     val iconVector: ImageVector = data.icon ?: LiquidIcons.Info
 
     val shape = RoundedRectangle(20.dp)
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val toastPerformance = remember(performance) { performance.asBalancedFrostedIfEssential() }
+    val effectiveTier = toastPerformance.opticalQualityTier ?: toastPerformance.qualityTier
+    val isLightSurface = remember(colorScheme.surface) { colorScheme.surface.luminance() > 0.5f }
+    val hasBackdrop =
+        effectiveBackdrop != emptyBackdrop() && toastPerformance.device.supportsRenderEffect
+    val useEssentialSurface = effectiveTier == LiquidGlassQualityTier.MINIMAL || !hasBackdrop
+
+    val toastSurfaceColor =
+        remember(effectiveTier, isLightSurface, colorScheme, accentColor, useEssentialSurface) {
+            val essentialToastColor = {
+                essentialCardBaseColor(
+                        isLightSurface = isLightSurface,
+                        surface = colorScheme.surface,
+                        primary = accentColor,
+                    )
+                    .copy(alpha = if (isLightSurface) 0.80f else 0.82f)
+            }
+            if (useEssentialSurface) {
+                essentialToastColor()
+            } else {
+                when (effectiveTier) {
+                    LiquidGlassQualityTier.MINIMAL -> essentialToastColor()
+                    LiquidGlassQualityTier.BALANCED -> {
+                        val base =
+                            if (isLightSurface) {
+                                blend(colorScheme.surface, accentColor, 0.14f)
+                            } else {
+                                blend(colorScheme.surfaceContainerHigh, accentColor, 0.18f)
+                            }
+                        base.copy(alpha = if (isLightSurface) 0.44f else 0.50f)
+                    }
+                    LiquidGlassQualityTier.HIGH -> {
+                        val base =
+                            if (isLightSurface) {
+                                blend(colorScheme.surface, accentColor, 0.12f)
+                            } else {
+                                blend(colorScheme.surfaceContainer, accentColor, 0.16f)
+                            }
+                        base.copy(alpha = if (isLightSurface) 0.24f else 0.28f)
+                    }
+                    LiquidGlassQualityTier.ULTRA -> {
+                        val base =
+                            if (isLightSurface) {
+                                blend(colorScheme.surface, accentColor, 0.10f)
+                            } else {
+                                blend(colorScheme.surfaceContainer, accentColor, 0.14f)
+                            }
+                        base.copy(alpha = if (isLightSurface) 0.16f else 0.20f)
+                    }
+                }
+            }
+        }
+
+    val essentialSheenBrush =
+        remember(isLightSurface) {
+            Brush.verticalGradient(
+                0.0f to Color.White.copy(alpha = if (isLightSurface) 0.26f else 0.14f),
+                0.45f to Color.White.copy(alpha = if (isLightSurface) 0.05f else 0.03f),
+                1.0f to Color.Transparent,
+            )
+        }
+
+    val essentialRimBrush =
+        remember(isLightSurface) {
+            Brush.verticalGradient(
+                listOf(
+                    Color.White.copy(alpha = if (isLightSurface) 0.54f else 0.26f),
+                    Color.White.copy(alpha = if (isLightSurface) 0.18f else 0.10f),
+                )
+            )
+        }
+
+    val surfaceModifier =
+        if (useEssentialSurface) {
+            Modifier.background(toastSurfaceColor, shape)
+                .background(essentialSheenBrush, shape)
+                .border(width = 1.dp, brush = essentialRimBrush, shape = shape)
+        } else {
+            Modifier.liquidGlass(
+                backdrop = effectiveBackdrop,
+                shape = shape,
+                role = LiquidGlassRole.Surface,
+                containerColor = toastSurfaceColor,
+                performance = toastPerformance,
+            )
+        }
 
     val currentOffsetX = offsetXAnim.value
     val currentOffsetY = offsetYAnim.value
@@ -232,15 +327,8 @@ fun LiquidToast(
                         },
                     )
                 }
-                .liquidGlass(
-                    backdrop = effectiveBackdrop,
-                    shape = shape,
-                    role = LiquidGlassRole.Surface,
-                    containerColor =
-                        accentColor.copy(
-                            alpha = (glassColors.neutralContainer.alpha * 1.5f).coerceAtMost(0.28f)
-                        ),
-                )
+                .then(surfaceModifier)
+                .semantics { liveRegion = LiveRegionMode.Polite }
                 .clickable(
                     interactionSource = null,
                     indication = null,

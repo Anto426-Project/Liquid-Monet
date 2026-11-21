@@ -23,7 +23,6 @@ import com.anto426.liquidmonet.components.buttons.button.LiquidButton
 import com.anto426.liquidmonet.components.buttons.button.LiquidButtonVariant
 import com.anto426.liquidmonet.components.cards.card.LiquidCard
 import com.anto426.liquidmonet.components.selection.checkbox.LiquidCheckbox
-import com.anto426.liquidmonet.components.pickers.colorpicker.LiquidColorPicker
 import com.anto426.liquidmonet.components.pickers.datepicker.LiquidDatePickerDialog
 import com.anto426.liquidmonet.components.pickers.datepicker.LiquidDatePickerField
 import com.anto426.liquidmonet.components.selection.select.LiquidSelect
@@ -93,8 +92,6 @@ fun ControlsInputHubScreen(
     var radioVal by remember { mutableIntStateOf(0) }
     var sliderVal by remember { mutableFloatStateOf(0.60f) }
     var rangeSliderVal by remember { mutableStateOf(0.20f..0.80f) }
-    val themePrimary = MaterialTheme.colorScheme.primary
-    var colorPickerVal by remember(themePrimary) { mutableStateOf(themePrimary) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -238,12 +235,6 @@ fun ControlsInputHubScreen(
                                 )
                             }
                         }
-
-                        LiquidSectionHeader(
-                            title = "Selettore Spettro Cromatico",
-                            subtitle = "Esplora lo spettro e restituisci il colore scelto in tempo reale."
-                        )
-                        LiquidColorPicker(selectedColor = colorPickerVal, onColorSelected = { colorPickerVal = it }, backdropState = backdropState)
                     }
                 }
 

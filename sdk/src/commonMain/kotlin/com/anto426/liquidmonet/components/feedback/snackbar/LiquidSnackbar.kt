@@ -140,7 +140,7 @@ fun LiquidSnackbar(
                     .liquidGlass(
                         backdrop = effectiveBackdrop,
                         shape = shape,
-                        role = LiquidGlassRole.Surface,
+                        role = LiquidGlassRole.Menu,
                         containerColor =
                             accentColor.copy(alpha = glassColors.neutralContainer.alpha),
                     )

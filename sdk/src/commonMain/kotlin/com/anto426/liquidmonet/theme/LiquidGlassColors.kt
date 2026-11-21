@@ -7,6 +7,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import com.anto426.liquidmonet.theme.monet.blend
 import com.anto426.liquidmonet.theme.monet.contentColorFor as monetContentColorFor
 
 /**
@@ -47,8 +48,10 @@ object LiquidGlassDefaults {
             selectedContainer = colorScheme.primary.copy(alpha = if (isLight) 0.24f else 0.28f),
             inactiveTrack = colorScheme.onSurface.copy(alpha = if (isLight) 0.14f else 0.18f),
             activeTrack = colorScheme.primary.copy(alpha = if (isLight) 0.56f else 0.52f),
-            focusIndicator = colorScheme.primary.copy(alpha = if (isLight) 0.52f else 0.40f),
-            outline = colorScheme.outlineVariant.copy(alpha = if (isLight) 0.82f else 0.72f),
+            focusIndicator = colorScheme.primary.copy(alpha = if (isLight) 0.78f else 0.72f),
+            outline =
+                blend(colorScheme.onSurface, colorScheme.primary, 0.25f)
+                    .copy(alpha = if (isLight) 0.24f else 0.26f),
             scrim = Color.Black.copy(alpha = if (isLight) 0.22f else 0.32f),
             success = if (isLight) Color(0xFF1E824C) else Color(0xFF4EE49B),
             warning = if (isLight) Color(0xFFD97706) else Color(0xFFFFB039),

@@ -179,12 +179,21 @@ fun LiquidTextField(
     val animatedBorderColor by
         LiquidTextFieldMotion.animateColor(
             targetValue =
-                if (isFocused) {
-                    glassColors.focusIndicator
-                } else Color.Transparent,
+                when {
+                    isFocused -> glassColors.focusIndicator
+                    enabled -> glassColors.outline
+                    else -> glassColors.outline.copy(alpha = glassColors.outline.alpha * 0.55f)
+                },
             performance = performance,
             label = "inputBorderColor",
         )
+    val borderWidth = if (isFocused) 1.5.dp else 1.dp
+    val fieldContainerColor =
+        if (isFocused) {
+            glassColors.accentContainer.copy(alpha = glassColors.neutralContainer.alpha * 1.6f)
+        } else {
+            glassColors.neutralContainer
+        }
 
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
 
@@ -212,8 +221,9 @@ fun LiquidTextField(
                         backdrop = effectiveBackdrop,
                         shape = shape,
                         role = LiquidGlassRole.Control,
+                        containerColor = fieldContainerColor,
                     )
-                    .border(width = 1.dp, color = animatedBorderColor, shape = shape),
+                    .border(width = borderWidth, color = animatedBorderColor, shape = shape),
             enabled = enabled,
             readOnly = readOnly,
             textStyle =
@@ -294,8 +304,9 @@ fun LiquidTextField(
                             backdrop = effectiveBackdrop,
                             shape = shape,
                             role = LiquidGlassRole.Control,
+                            containerColor = fieldContainerColor,
                         )
-                        .border(width = 1.dp, color = animatedBorderColor, shape = shape),
+                        .border(width = borderWidth, color = animatedBorderColor, shape = shape),
                 enabled = enabled,
                 readOnly = readOnly,
                 textStyle =

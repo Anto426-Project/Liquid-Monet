@@ -41,6 +41,25 @@ internal fun liquidGlassPerformanceState(
 internal fun normalizeLiquidGlassIntensity(value: Float): Float =
     if (value.isFinite()) value.coerceIn(0f, 1f) else 1f
 
+/**
+ * Elevates an Essential (`MINIMAL`) performance state to Balanced frosted blur without lens
+ * refraction or chromatic aberration when the device supports `RenderEffect`.
+ */
+internal fun LiquidGlassPerformanceState.asBalancedFrostedIfEssential(): LiquidGlassPerformanceState {
+    val currentOptical = opticalQualityTier ?: qualityTier
+    if (currentOptical != LiquidGlassQualityTier.MINIMAL || !device.supportsRenderEffect) {
+        return this
+    }
+    val intensity = normalizeLiquidGlassIntensity(liquidIntensity)
+    return copy(
+        qualityTier = maxOf(qualityTier, LiquidGlassQualityTier.BALANCED),
+        opticalQualityTier = LiquidGlassQualityTier.BALANCED,
+        blurScale = maxOf(blurScale, 0.7f * intensity),
+        refractionScale = 0f,
+        chromaticAberrationScale = 0f,
+    )
+}
+
 private data class PerformanceScales(
     val blur: Float,
     val refraction: Float,
