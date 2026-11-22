@@ -19,8 +19,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.cards.controlcenterslider.LiquidControlCenterSlider
-import com.anto426.liquidmonet.components.cards.controlcentertile.*
 import com.anto426.liquidmonet.components.display.swipetodismiss.LiquidSwipeToDismissBox
 import com.anto426.liquidmonet.components.inputs.splitclearbutton.LiquidSplitClearButton
 import com.anto426.liquidmonet.components.layout.lazy.LiquidLazyColumn
@@ -83,50 +81,6 @@ class LiquidRefactoredComponentsTest {
             .map { it.config[SemanticsProperties.ProgressBarRangeInfo].current }
             .sorted()
         assertEquals(listOf(0.75f, 1f), thumbValues)
-    }
-
-    @Test
-    fun controlCenterSharesEnabledStateAndCurrentCallbacks() {
-        val enabled = mutableStateOf(true)
-        val version = mutableIntStateOf(0)
-        val calls = mutableListOf<Int>()
-        compose.setContent {
-            MaterialTheme {
-                LiquidGlassScene {
-                    Column {
-                        LiquidControlCenterTile(
-                            "Wi-Fi",
-                            "Connesso",
-                            LiquidIcons.Star,
-                            true,
-                            { calls += version.intValue },
-                            enabled = enabled.value,
-                            modifier = Modifier.testTag("tile"),
-                        )
-                        LiquidControlCenterSlider(
-                            .5f,
-                            { calls += version.intValue },
-                            LiquidIcons.Star,
-                            "Volume",
-                            enabled = enabled.value,
-                            modifier = Modifier.testTag("slider"),
-                        )
-                    }
-                }
-            }
-        }
-        compose.onNodeWithTag("tile").performClick()
-        compose.runOnIdle { version.intValue = 1 }
-        compose.onNodeWithTag("slider").performSemanticsAction(SemanticsActions.SetProgress) {
-            assertTrue(it(.8f))
-        }
-        compose.runOnIdle {
-            assertEquals(listOf(0, 1), calls)
-            enabled.value = false
-        }
-        compose.onNodeWithTag("tile").assertIsNotEnabled().performTouchInput { click() }
-        compose.onNodeWithTag("slider").assertIsNotEnabled().performTouchInput { click() }
-        compose.runOnIdle { assertEquals(2, calls.size) }
     }
 
     @Test
@@ -312,24 +266,6 @@ class LiquidRefactoredComponentsTest {
                         if (calendar.value) {
                             LiquidDatePicker(state)
                         } else {
-                            LiquidControlCenterTile("Wi-Fi", "Connesso", LiquidIcons.Star, true, {})
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                LiquidControlCenterCompactTile(
-                                    "Bluetooth",
-                                    LiquidIcons.Star,
-                                    true,
-                                    {},
-                                    Modifier.weight(1f),
-                                )
-                                LiquidControlCenterCompactTile(
-                                    "Torcia",
-                                    LiquidIcons.Star,
-                                    false,
-                                    {},
-                                    Modifier.weight(1f),
-                                )
-                            }
-                            LiquidControlCenterSlider(.65f, {}, LiquidIcons.Star, "Luminosità")
                             LiquidPagination(2, 5, {}, Modifier.fillMaxWidth())
                             LiquidPageIndicator(5, 2)
                         }

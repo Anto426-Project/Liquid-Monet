@@ -21,10 +21,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
-import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,23 +36,35 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.navigation.topbar.LiquidTopBar
+import com.anto426.app.demo.DemoTab
+import com.anto426.app.demo.DemoThemeMode
+import com.anto426.app.demo.demoCatalogEntries
+import com.anto426.app.demo.displayName
+import com.anto426.app.demo.rememberDemoSettingsState
+import com.anto426.app.screens.ChartsSurfacesScreen
+import com.anto426.app.screens.ControlsScreen
+import com.anto426.app.screens.DemoSectionMotion
+import com.anto426.app.screens.ExploreScreen
+import com.anto426.app.screens.LocalDemoSectionMotion
+import com.anto426.app.screens.OverlaysMotionScreen
+import com.anto426.app.screens.QuickSettingsSheet
+import com.anto426.app.screens.SettingsScreen
 import com.anto426.liquidmonet.components.buttons.floatingactionbutton.LiquidFloatingActionButton
-import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigationBar
-import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigationItem
-import com.anto426.liquidmonet.components.inputs.searchbar.LiquidSearchBar
-import com.anto426.liquidmonet.components.navigation.topbar.LiquidTopBarAction
+import com.anto426.liquidmonet.components.cards.preferenceitem.LiquidPreferenceItem
+import com.anto426.liquidmonet.components.display.emptystate.LiquidEmptyState
+import com.anto426.liquidmonet.components.display.sectionheader.LiquidSectionHeader
 import com.anto426.liquidmonet.components.feedback.toast.LiquidToastHost
 import com.anto426.liquidmonet.components.feedback.toast.rememberLiquidToastState
-import com.anto426.liquidmonet.glass.LiquidBackgroundEffect
-import com.anto426.liquidmonet.glass.LiquidGlassScene
+import com.anto426.liquidmonet.components.layout.animatedswitcher.LiquidAnimatedSwitcher
+import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigationBar
+import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigationItem
+import com.anto426.liquidmonet.components.navigation.topbar.LiquidTopBar
+import com.anto426.liquidmonet.components.navigation.topbar.LiquidTopBarAction
 import com.anto426.liquidmonet.glass.LiquidBackground
+import com.anto426.liquidmonet.glass.LiquidGlassScene
+import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.theme.LiquidMonetTheme
-import com.anto426.app.screens.ControlsInputHubScreen
-import com.anto426.app.screens.ModalsFeedbackHubScreen
-import com.anto426.app.screens.NavigationHubScreen
-import com.anto426.app.screens.StudioHubScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -61,46 +72,57 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            var sliderVal by remember { mutableFloatStateOf(0.65f) }
+            val settings = rememberDemoSettingsState()
             val systemDark = isSystemInDarkTheme()
-            var isDarkTheme by remember { mutableStateOf<Boolean?>(null) }
-            val isDark = isDarkTheme ?: systemDark
-            var backgroundSpeed by remember { mutableFloatStateOf(1.0f) }
-            var backgroundIntensity by remember { mutableFloatStateOf(1.0f) }
-            var useSystemDynamicColor by remember { mutableStateOf(true) }
+            val isDark = settings.resolveDarkTheme(systemDark)
 
             LiquidMonetTheme(
                 darkTheme = isDark,
-                useMonetEngine = useSystemDynamicColor,
-                liquidIntensity = sliderVal,
-                maximumGlassQuality = LiquidGlassQualityTier.ULTRA
+                useMonetEngine = settings.useSystemDynamicColor,
+                customMonetSeed = settings.activePalette.seed,
+                liquidIntensity = settings.liquidIntensity,
+                maximumGlassQuality = settings.glassQuality,
+                reduceMotion = settings.reduceMotion,
             ) {
                 val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-
-                var selectedEffectIndex by remember { mutableIntStateOf(0) }
-                val backgroundEffects = listOf(
-                    LiquidBackgroundEffect.Aurora,
-                    LiquidBackgroundEffect.MeshGlow,
-                    LiquidBackgroundEffect.OrbitalPulse,
-                    LiquidBackgroundEffect.RadiantBeam
-                )
-
                 val toastState = rememberLiquidToastState()
+
+                var currentTab by remember { mutableStateOf(DemoTab.Explore) }
+                var controlsSubTab by remember { mutableIntStateOf(0) }
+                var overlaysSubTab by remember { mutableIntStateOf(0) }
+
                 var isSearchOpen by remember { mutableStateOf(false) }
                 var searchQuery by remember { mutableStateOf("") }
+                var isQuickSettingsOpen by remember { mutableStateOf(false) }
                 var isNavBarVisible by remember { mutableStateOf(true) }
-                var currentTab by remember { mutableIntStateOf(0) }
+                var topBarHeight by remember { mutableStateOf(148.dp) }
 
-                // Ogni categoria parte dalla propria intestazione espansa:
-                // evita di ereditare lo stato collassato della categoria precedente.
+                val navigateTo: (DemoTab, Int) -> Unit = { tab, subTab ->
+                    when (tab) {
+                        DemoTab.Controls -> controlsSubTab = subTab
+                        DemoTab.Overlays -> overlaysSubTab = subTab
+                        else -> Unit
+                    }
+                    currentTab = tab
+                    isSearchOpen = false
+                    searchQuery = ""
+                    isNavBarVisible = true
+                }
+
                 LaunchedEffect(currentTab) {
                     scrollBehavior.state.heightOffset = 0f
                     scrollBehavior.state.contentOffset = 0f
+                    isNavBarVisible = true
                 }
 
-                val navBarScrollConnection = remember {
+                LaunchedEffect(settings.autoHideNavBar) {
+                    if (!settings.autoHideNavBar) isNavBarVisible = true
+                }
+
+                val navBarScrollConnection = remember(settings.autoHideNavBar) {
                     object : NestedScrollConnection {
                         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                            if (!settings.autoHideNavBar) return Offset.Zero
                             if (available.y < -12f) {
                                 isNavBarVisible = false
                             } else if (available.y > 12f) {
@@ -111,189 +133,269 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // La demo è organizzata in quattro aree principali; ogni hub
-                // contiene le proprie sotto-schermate e non duplica la shell.
-                val pageTitles = listOf("Studio", "Controlli", "Feedback", "Navigazione")
-                var topBarHeight by remember { mutableStateOf(152.dp) }
+                val sectionMotion = remember(settings.sectionEntrance, settings.sectionReplayCounter) {
+                    DemoSectionMotion(
+                        animation = settings.sectionEntrance,
+                        onAnimationSelected = { settings.sectionEntrance = it },
+                        replay = settings.sectionReplayCounter,
+                        onReplay = settings::replaySections,
+                    )
+                }
 
-                LiquidGlassScene(
-                    modifier = Modifier.fillMaxSize(),
-                    background = {
-                        LiquidBackground(
-                            effect = backgroundEffects[selectedEffectIndex],
-                            isDark = isDark,
-                            speedFactor = backgroundSpeed,
-                            intensity = backgroundIntensity
-                        )
-                    },
-                    topBar = { contentBackdrop ->
-                        LiquidTopBar(
-                            title = pageTitles[currentTab],
-                            subtitle = "Demo catalog",
-                            backdropState = contentBackdrop,
-                            scrollBehavior = scrollBehavior,
-                            isSearchActive = isSearchOpen,
-                            searchQuery = searchQuery,
-                            onQueryChange = { searchQuery = it },
-                            onSearchActiveChange = { isSearchOpen = it },
-                            searchPlaceholder = "Cerca componenti, controlli, gesture...",
-                            onHeightChanged = { topBarHeight = it },
-                            actionItems = listOf(
-                                LiquidTopBarAction(
-                                    icon = LiquidIcons.Search,
-                                    label = "Cerca componenti",
-                                    onClick = { isSearchOpen = !isSearchOpen }
-                                ),
-                                LiquidTopBarAction(
-                                    icon = LiquidIcons.MoreVert,
-                                    label = "Azioni",
-                                    subItems = listOf(
-                                        LiquidTopBarAction(
-                                            icon = LiquidIcons.Refresh,
-                                            label = "Ricarica catalogo",
-                                            onClick = {
-                                                toastState.show(
-                                                    message = "Catalogo sincronizzato",
-                                                    subtitle = "Interfaccia fluida a 120 FPS",
-                                                    icon = LiquidIcons.Refresh
-                                                )
-                                            }
-                                        ),
-                                        LiquidTopBarAction(
-                                            icon = LiquidIcons.Share,
-                                            label = "Condividi link",
-                                            onClick = {
-                                                toastState.show(
-                                                    message = "Link copiato negli appunti",
-                                                    subtitle = "https://github.com/Anto426/Antosdk",
-                                                    icon = LiquidIcons.Share
-                                                )
-                                            }
-                                        ),
-                                        LiquidTopBarAction(
-                                            icon = LiquidIcons.Info,
-                                            label = "Informazioni SDK",
-                                            onClick = {
-                                                toastState.show(
-                                                    message = "Liquid Monet Liquid Monet 2.0",
-                                                    subtitle = "AGSL Optical Snell Refraction Engine",
-                                                    icon = LiquidIcons.Info
-                                                )
-                                            }
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    },
-                    bottomBar = { contentBackdrop ->
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxWidth()
-                        ) {
-                            LiquidNavigationBar(
-                                selectedIndex = currentTab,
-                                onItemSelected = { selectedNav ->
-                                    currentTab = selectedNav
-                                },
-                                items = listOf(
-                                    LiquidNavigationItem(label = "Studio", icon = LiquidIcons.Star),
-                                    LiquidNavigationItem(label = "Controlli", icon = LiquidIcons.Edit),
-                                    LiquidNavigationItem(label = "Feedback", icon = LiquidIcons.Notifications),
-                                    LiquidNavigationItem(label = "Navigazione", icon = LiquidIcons.Share)
-                                ),
-                                visible = isNavBarVisible,
-                                backdropState = contentBackdrop
-                            )
-                        }
-                    },
-                    overlay = { contentBackdrop ->
-                        LiquidFloatingActionButton(
-                            onClick = {
-                                toastState.show(
-                                    message = "Azione rapida eseguita!",
-                                    subtitle = "Scheda attiva: ${pageTitles[currentTab]}",
-                                    icon = LiquidIcons.Check
-                                )
-                            },
-                            visible = isNavBarVisible,
-                            backdropState = contentBackdrop,
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .navigationBarsPadding()
-                                .padding(end = 16.dp, bottom = 92.dp)
-                        ) {
-                            Icon(
-                                imageVector = LiquidIcons.Add,
-                                contentDescription = "Nuovo",
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        LiquidToastHost(
-                            state = toastState,
-                            backdropState = contentBackdrop,
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(top = 80.dp)
-                        )
+                val navItems = remember {
+                    DemoTab.entries.map { tab ->
+                        LiquidNavigationItem(label = tab.label, icon = tab.icon)
                     }
-                ) { backdropState ->
-                    Box(modifier = Modifier.fillMaxSize()) {
+                }
+
+                CompositionLocalProvider(LocalDemoSectionMotion provides sectionMotion) {
+                    LiquidGlassScene(
+                        modifier = Modifier.fillMaxSize(),
+                        background = {
+                            LiquidBackground(
+                                effect = settings.backgroundEffect,
+                                isDark = isDark,
+                                speedFactor = settings.backgroundSpeed,
+                                intensity = settings.backgroundIntensity,
+                                showVignette = settings.showVignette,
+                            )
+                        },
+                        topBar = { contentBackdrop ->
+                            LiquidTopBar(
+                                title = currentTab.title,
+                                subtitle = currentTab.subtitle,
+                                backdropState = contentBackdrop,
+                                scrollBehavior = scrollBehavior,
+                                isSearchActive = isSearchOpen,
+                                searchQuery = searchQuery,
+                                onQueryChange = { searchQuery = it },
+                                onSearchActiveChange = { active ->
+                                    isSearchOpen = active
+                                    if (!active) searchQuery = ""
+                                },
+                                searchPlaceholder = "Cerca componenti, grafici, impostazioni...",
+                                onHeightChanged = { topBarHeight = it },
+                                actionItems = listOf(
+                                    LiquidTopBarAction(
+                                        icon = LiquidIcons.Search,
+                                        label = "Cerca nel catalogo",
+                                        onClick = { isSearchOpen = !isSearchOpen },
+                                    ),
+                                    LiquidTopBarAction(
+                                        icon = LiquidIcons.MoreVert,
+                                        label = "Azioni rapide",
+                                        subItems = listOf(
+                                            LiquidTopBarAction(
+                                                icon = LiquidIcons.Visibility,
+                                                label = if (isDark) "Passa a tema Chiaro" else "Passa a tema Scuro",
+                                                onClick = {
+                                                    settings.themeMode = if (isDark) DemoThemeMode.Light else DemoThemeMode.Dark
+                                                },
+                                            ),
+                                            LiquidTopBarAction(
+                                                icon = LiquidIcons.Star,
+                                                label = "Cambia qualità vetro (${settings.glassQuality.displayName()})",
+                                                onClick = {
+                                                    val cycle = listOf(
+                                                        LiquidGlassQualityTier.MINIMAL,
+                                                        LiquidGlassQualityTier.BALANCED,
+                                                        LiquidGlassQualityTier.HIGH,
+                                                        LiquidGlassQualityTier.ULTRA,
+                                                    )
+                                                    val next = cycle[(cycle.indexOf(settings.glassQuality) + 1) % cycle.size]
+                                                    settings.glassQuality = next
+                                                    toastState.show("Qualità vetro", next.displayName(), LiquidIcons.Star)
+                                                },
+                                            ),
+                                            LiquidTopBarAction(
+                                                icon = LiquidIcons.PlayArrow,
+                                                label = "Riproduci ingressi sezioni",
+                                                onClick = {
+                                                    settings.replaySections()
+                                                    toastState.show("Animazioni riprodotte", settings.sectionEntrance.displayName(), LiquidIcons.PlayArrow)
+                                                },
+                                            ),
+                                            LiquidTopBarAction(
+                                                icon = LiquidIcons.Refresh,
+                                                label = "Ripristina predefiniti",
+                                                onClick = {
+                                                    settings.resetDefaults()
+                                                    toastState.show("Impostazioni ripristinate", icon = LiquidIcons.Refresh)
+                                                },
+                                            ),
+                                            LiquidTopBarAction(
+                                                icon = LiquidIcons.Info,
+                                                label = "Info Liquid Monet SDK",
+                                                onClick = {
+                                                    toastState.show(
+                                                        message = "Liquid Monet 2.0",
+                                                        subtitle = "Transizione: ${settings.screenTransition.displayName()} · Vetro: ${settings.glassQuality.displayName()}",
+                                                        icon = LiquidIcons.Info,
+                                                    )
+                                                },
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            )
+                        },
+                        bottomBar = { contentBackdrop ->
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth(),
+                            ) {
+                                LiquidNavigationBar(
+                                    selectedIndex = currentTab.index,
+                                    onItemSelected = { selectedIndex ->
+                                        currentTab = DemoTab.entries[selectedIndex]
+                                    },
+                                    items = navItems,
+                                    visible = isNavBarVisible && !isSearchOpen,
+                                    backdropState = contentBackdrop,
+                                )
+                            }
+                        },
+                        overlay = { contentBackdrop ->
+                            if (settings.showFab) {
+                                LiquidFloatingActionButton(
+                                    onClick = { isQuickSettingsOpen = true },
+                                    visible = isNavBarVisible && !isSearchOpen,
+                                    backdropState = contentBackdrop,
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .navigationBarsPadding()
+                                        .padding(end = 16.dp, bottom = 92.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = LiquidIcons.Palette,
+                                        contentDescription = "Controlli rapidi SDK",
+                                        modifier = Modifier.size(22.dp),
+                                    )
+                                }
+                            }
+
+                            LiquidToastHost(
+                                state = toastState,
+                                backdropState = contentBackdrop,
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                                    .padding(top = 84.dp),
+                            )
+
+                            if (isQuickSettingsOpen) {
+                                QuickSettingsSheet(
+                                    settings = settings,
+                                    onDismiss = { isQuickSettingsOpen = false },
+                                    onOpenFullSettings = { navigateTo(DemoTab.Settings, 0) },
+                                    backdropState = contentBackdrop,
+                                )
+                            }
+                        },
+                    ) { backdropState ->
                         Scaffold(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                                 .nestedScroll(navBarScrollConnection),
-                            containerColor = Color.Transparent
-                        ) { innerPadding ->
-                            Box(
-                                modifier = Modifier.fillMaxSize()
-                            ) {
+                            containerColor = Color.Transparent,
+                        ) { _ ->
+                            val showingSearch = isSearchOpen && searchQuery.isNotBlank()
+                            if (showingSearch) {
+                                val normalized = searchQuery.trim().lowercase()
+                                val matches = remember(normalized) {
+                                    demoCatalogEntries.filter { entry ->
+                                        entry.title.lowercase().contains(normalized) ||
+                                            entry.description.lowercase().contains(normalized) ||
+                                            entry.keywords.lowercase().contains(normalized)
+                                    }
+                                }
                                 Column(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .verticalScroll(rememberScrollState())
                                         .padding(horizontal = 16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
                                     Spacer(modifier = Modifier.height(topBarHeight + 8.dp))
-
-                                    when (currentTab) {
-                                            0 -> StudioHubScreen(
-                                                sliderVal = sliderVal,
-                                                onSliderChange = { sliderVal = it },
-                                                selectedEffect = backgroundEffects[selectedEffectIndex],
-                                                onSelectEffect = { effect -> selectedEffectIndex = backgroundEffects.indexOf(effect) },
+                                    LiquidSectionHeader(
+                                        title = "Risultati ricerca (${matches.size})",
+                                        subtitle = "Tocca un risultato per aprire direttamente la sezione corrispondente.",
+                                    )
+                                    if (matches.isEmpty()) {
+                                        LiquidEmptyState(
+                                            title = "Nessun componente trovato",
+                                            description = "Prova con parole come switch, slider, dialog, grafici, essential o transizioni.",
+                                            icon = LiquidIcons.Search,
+                                            actionButtonText = "Cancella ricerca",
+                                            onActionClick = { searchQuery = "" },
+                                            backdropState = backdropState,
+                                        )
+                                    } else {
+                                        matches.forEach { entry ->
+                                            LiquidPreferenceItem(
+                                                title = entry.title,
+                                                subtitle = "${entry.tab.label} · ${entry.description}",
+                                                icon = entry.icon,
+                                                onClick = { navigateTo(entry.tab, entry.subTab) },
                                                 backdropState = backdropState,
-                                                isDark = isDark,
-                                                onToggleDark = { isDarkTheme = it },
-                                                backgroundSpeed = backgroundSpeed,
-                                                onSpeedChange = { backgroundSpeed = it },
-                                                backgroundIntensity = backgroundIntensity,
-                                                onIntensityChange = { backgroundIntensity = it },
-                                                useDynamicColor = useSystemDynamicColor,
-                                                onToggleDynamicColor = { useSystemDynamicColor = it }
                                             )
-                                            1 -> ControlsInputHubScreen(
-                                                backdropState = backdropState
-                                            )
-                                            2 -> ModalsFeedbackHubScreen(
-                                                toastState = toastState,
-                                                backdropState = backdropState
-                                            )
-                                            else -> NavigationHubScreen(
-                                                toastState = toastState,
-                                                backdropState = backdropState
-                                            )
+                                        }
                                     }
-
-                                    Spacer(modifier = Modifier.height(115.dp))
+                                    Spacer(modifier = Modifier.height(116.dp))
+                                }
+                            } else {
+                                LiquidAnimatedSwitcher(
+                                    targetState = currentTab,
+                                    transition = settings.screenTransition,
+                                    isForward = { from, to -> to.index >= from.index },
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.TopCenter,
+                                    label = "mainDemoTabSwitcher",
+                                ) { tab ->
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .verticalScroll(rememberScrollState())
+                                            .padding(horizontal = 16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    ) {
+                                        Spacer(modifier = Modifier.height(topBarHeight + 8.dp))
+                                        when (tab) {
+                                            DemoTab.Explore -> ExploreScreen(
+                                                settings = settings,
+                                                toastState = toastState,
+                                                backdropState = backdropState,
+                                                onNavigate = navigateTo,
+                                                onOpenQuickSettings = { isQuickSettingsOpen = true },
+                                            )
+                                            DemoTab.Controls -> ControlsScreen(
+                                                settings = settings,
+                                                requestedSubTab = controlsSubTab,
+                                                toastState = toastState,
+                                                backdropState = backdropState,
+                                            )
+                                            DemoTab.Overlays -> OverlaysMotionScreen(
+                                                settings = settings,
+                                                requestedSubTab = overlaysSubTab,
+                                                toastState = toastState,
+                                                backdropState = backdropState,
+                                            )
+                                            DemoTab.Charts -> ChartsSurfacesScreen(
+                                                toastState = toastState,
+                                                backdropState = backdropState,
+                                            )
+                                            DemoTab.Settings -> SettingsScreen(
+                                                settings = settings,
+                                                toastState = toastState,
+                                                backdropState = backdropState,
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(116.dp))
+                                    }
                                 }
                             }
                         }
-
                     }
                 }
             }
