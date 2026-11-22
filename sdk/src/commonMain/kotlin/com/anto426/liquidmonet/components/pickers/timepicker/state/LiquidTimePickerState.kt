@@ -27,19 +27,27 @@ class LiquidTimePickerState(
         get() = "${hour.twoDigits()}:${minute.twoDigits()}"
 
     fun incrementHour() {
-        hour = (hour + 1) % 24
+        adjustHour(1)
     }
 
     fun decrementHour() {
-        hour = (hour + 23) % 24
+        adjustHour(-1)
+    }
+
+    fun adjustHour(delta: Int) {
+        hour = normalizeClockValue(hour + delta, 24)
     }
 
     fun incrementMinute() {
-        minute = (minute + 1) % 60
+        adjustMinute(1)
     }
 
     fun decrementMinute() {
-        minute = (minute + 59) % 60
+        adjustMinute(-1)
+    }
+
+    fun adjustMinute(delta: Int) {
+        minute = normalizeClockValue(minute + delta, 60)
     }
 }
 

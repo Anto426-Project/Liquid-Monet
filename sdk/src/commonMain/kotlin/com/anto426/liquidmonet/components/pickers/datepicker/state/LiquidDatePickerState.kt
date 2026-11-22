@@ -60,6 +60,11 @@ class LiquidDatePickerState(initialDate: LocalDate = currentLocalDate()) {
         selectedDate = LocalDate(displayedYear, displayedMonth, day)
     }
 
+    fun goToToday(today: LocalDate = currentLocalDate()) {
+        showMonth(today.year, today.month.number)
+        selectDay(today.day)
+    }
+
     fun isSelected(day: Int): Boolean {
         val current = selectedDate ?: return false
         return current.year == displayedYear &&
@@ -90,6 +95,25 @@ internal val monthNames =
         "Novembre",
         "Dicembre",
     )
+
+internal val shortMonthNames =
+    listOf(
+        "Gen",
+        "Feb",
+        "Mar",
+        "Apr",
+        "Mag",
+        "Giu",
+        "Lug",
+        "Ago",
+        "Set",
+        "Ott",
+        "Nov",
+        "Dic",
+    )
+
+internal val shortWeekdayNames =
+    listOf("Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom")
 
 internal fun currentLocalDate(): LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 

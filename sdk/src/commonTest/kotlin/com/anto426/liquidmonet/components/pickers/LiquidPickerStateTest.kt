@@ -49,5 +49,20 @@ class LiquidPickerStateTest {
         state.hour = 23
         state.incrementHour()
         assertEquals(0, state.hour)
+        state.adjustHour(-2)
+        assertEquals(22, state.hour)
+        state.minute = 5
+        state.adjustMinute(-10)
+        assertEquals(55, state.minute)
+    }
+
+    @Test
+    fun goToTodayUpdatesDisplayedMonthAndSelection() {
+        val state = LiquidDatePickerState(LocalDate(2024, 1, 10))
+        val target = LocalDate(2026, 11, 21)
+        state.goToToday(target)
+        assertEquals(2026, state.displayedYear)
+        assertEquals(11, state.displayedMonth)
+        assertEquals(target, state.selectedDate)
     }
 }

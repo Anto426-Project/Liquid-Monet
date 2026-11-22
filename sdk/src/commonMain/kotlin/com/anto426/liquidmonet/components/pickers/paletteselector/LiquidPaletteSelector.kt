@@ -2,52 +2,67 @@ package com.anto426.liquidmonet.components.pickers.paletteselector
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.internal.LiquidGlassButton
+import com.anto426.liquidmonet.components.internal.LiquidHapticCue
+import com.anto426.liquidmonet.components.internal.performLiquidHaptic
 import com.anto426.liquidmonet.components.pickers.paletteselector.motion.LiquidPaletteSelectorMotion
-import com.anto426.liquidmonet.glass.LiquidGlassGroup
-import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.icons.LiquidIcons
-import com.anto426.liquidmonet.theme.LiquidGlassTheme
+import com.anto426.liquidmonet.theme.monet.blend
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
 
 /** LiquidPaletteOption - Represents a color option in LiquidPaletteSelector. */
+@Immutable
 data class LiquidPaletteOption(
     val name: String,
     val color: Color,
 )
 
 /**
- * LiquidPaletteSelector - Pure Liquid Glass Palette & Color Selector Component.
+ * LiquidPaletteSelector - Vibrant Seed & Palette Selector.
  *
- * Renders an array of vibrant Monet colors encased inside real-time optical glass pills with
- * specular AGSL highlight reflections, lens refraction, and spring physics.
+ * Displays full-saturation circular jewel swatches with an animated selection ring, adaptive
+ * checkmark contrast, accessible touch targets, and a legible active color badge.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LiquidPaletteSelector(
     options: List<LiquidPaletteOption>,
@@ -58,11 +73,12 @@ fun LiquidPaletteSelector(
     showBadge: Boolean = true,
     backdropState: Backdrop = emptyBackdrop(),
 ) {
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val colorScheme = MaterialTheme.colorScheme
+    val hapticFeedback = LocalHapticFeedback.current
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (title != null || showBadge) {
             Row(
@@ -73,46 +89,82 @@ fun LiquidPaletteSelector(
                 if (title != null) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
                     )
                 }
                 if (showBadge && selectedIndex in options.indices) {
                     val activeOption = options[selectedIndex]
-                    Box(
+                    Row(
                         modifier =
                             Modifier.clip(Capsule())
-                                .background(activeOption.color.copy(alpha = 0.20f))
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                                .background(activeOption.color.copy(alpha = 0.16f))
+                                .border(
+                                    width = 1.dp,
+                                    color = activeOption.color.copy(alpha = 0.36f),
+                                    shape = Capsule(),
+                                )
+                                .padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
+                        Box(
+                            modifier =
+                                Modifier.size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(activeOption.color)
+                        )
                         Text(
                             text = activeOption.name,
                             style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = activeOption.color,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colorScheme.onSurface,
+                            maxLines = 1,
                         )
                     }
                 }
             }
         }
 
-        LiquidGlassGroup(
-            modifier = Modifier.fillMaxWidth(),
-            backdropState = effectiveBackdrop,
-            shape = Capsule(),
-        ) {
+        if (options.size <= 6) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
             ) {
                 options.forEachIndexed { index, option ->
-                    val isSelected = selectedIndex == index
-                    LiquidPaletteItem(
-                        color = option.color,
-                        isSelected = isSelected,
-                        onClick = { onSelectIndex(index) },
-                        backdropState = backdropState,
-                        modifier = Modifier.weight(1f).height(48.dp),
+                    LiquidPaletteSwatch(
+                        option = option,
+                        isSelected = selectedIndex == index,
+                        onClick = {
+                            if (selectedIndex != index) {
+                                hapticFeedback.performLiquidHaptic(LiquidHapticCue.Selection)
+                                onSelectIndex(index)
+                            }
+                        },
+                    )
+                }
+            }
+        } else {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+            ) {
+                options.forEachIndexed { index, option ->
+                    LiquidPaletteSwatch(
+                        option = option,
+                        isSelected = selectedIndex == index,
+                        onClick = {
+                            if (selectedIndex != index) {
+                                hapticFeedback.performLiquidHaptic(LiquidHapticCue.Selection)
+                                onSelectIndex(index)
+                            }
+                        },
                     )
                 }
             }
@@ -120,57 +172,93 @@ fun LiquidPaletteSelector(
     }
 }
 
-/** LiquidPaletteItem - Individual Liquid Glass Pill for color selection. */
 @Composable
-private fun LiquidPaletteItem(
-    color: Color,
+private fun LiquidPaletteSwatch(
+    option: LiquidPaletteOption,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
 ) {
     val performance = LocalLiquidGlassPerformance.current
-    val glassColors = LiquidGlassTheme.colors
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val colorScheme = MaterialTheme.colorScheme
     val scale by
         LiquidPaletteSelectorMotion.animateFloat(
-            targetValue = if (isSelected) 1.04f else 1.0f,
+            targetValue = if (isSelected) 1.06f else 1.0f,
             performance = performance,
-            label = "paletteItemScale",
+            label = "paletteSwatchScale",
         )
+    val ringColor = if (isSelected) colorScheme.onSurface else Color.Transparent
+    val jewelBrush =
+        remember(option.color) {
+            Brush.verticalGradient(
+                listOf(
+                    blend(option.color, Color.White, 0.20f),
+                    option.color,
+                    blend(option.color, Color.Black, 0.14f),
+                )
+            )
+        }
+    val checkTint = if (option.color.luminance() > 0.48f) Color.Black else Color.White
 
-    LiquidGlassButton(
-        onClick = onClick,
-        backdrop = effectiveBackdrop,
-        tint = color,
-        surfaceColor =
-            if (isSelected) {
-                color.copy(alpha = glassColors.selectedContainer.alpha)
-            } else {
-                color.copy(alpha = glassColors.neutralContainer.alpha)
-            },
+    Box(
         modifier =
-            modifier.graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                clip = false
-            },
+            modifier
+                .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                .size(48.dp)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    clip = false
+                }
+                .clip(CircleShape)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    role = Role.RadioButton,
+                    onClick = onClick,
+                )
+                .semantics {
+                    selected = isSelected
+                    contentDescription = option.name
+                },
+        contentAlignment = Alignment.Center,
     ) {
+        // Outer selection ring with a clean breathing gap around the color jewel
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier.size(44.dp)
+                    .border(
+                        width = if (isSelected) 2.dp else 0.dp,
+                        color = ringColor,
+                        shape = CircleShape,
+                    )
+                    .padding(if (isSelected) 4.dp else 2.dp),
             contentAlignment = Alignment.Center,
         ) {
-            androidx.compose.animation.AnimatedVisibility(
-                visible = isSelected,
-                enter = remember(performance) { LiquidPaletteSelectorMotion.enter(performance) },
-                exit = remember(performance) { LiquidPaletteSelectorMotion.exit(performance) },
+            Box(
+                modifier =
+                    Modifier.fillMaxSize()
+                        .clip(CircleShape)
+                        .background(jewelBrush)
+                        .border(
+                            width = 0.85.dp,
+                            color = Color.White.copy(alpha = 0.34f),
+                            shape = CircleShape,
+                        ),
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = LiquidIcons.Check,
-                    contentDescription = "Selezionato",
-                    tint = if (color.luminance() > 0.48f) Color.Black else Color.White,
-                    modifier = Modifier.size(18.dp),
-                )
+                AnimatedVisibility(
+                    visible = isSelected,
+                    enter = remember(performance) { LiquidPaletteSelectorMotion.enter(performance) },
+                    exit = remember(performance) { LiquidPaletteSelectorMotion.exit(performance) },
+                ) {
+                    Icon(
+                        imageVector = LiquidIcons.Check,
+                        contentDescription = null,
+                        tint = checkTint,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
         }
     }
