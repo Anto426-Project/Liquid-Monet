@@ -220,14 +220,10 @@ internal fun LiquidGlassBottomTabs(
         val dropletInteractionProgress by
             remember(dampedDragAnimation) {
                 derivedStateOf {
-                    val displacementProgress =
-                        abs(dampedDragAnimation.targetValue - dampedDragAnimation.value)
-                            .fastCoerceIn(0f, 1f)
                     val velocityProgress =
                         (abs(dampedDragAnimation.velocity) / 4f).fastCoerceIn(0f, 1f)
                     maxOf(
                             dampedDragAnimation.pressProgress,
-                            displacementProgress,
                             velocityProgress,
                         )
                         .fastCoerceIn(0f, 1f)

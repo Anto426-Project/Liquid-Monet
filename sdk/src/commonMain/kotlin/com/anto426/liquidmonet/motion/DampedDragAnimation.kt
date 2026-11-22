@@ -1,5 +1,6 @@
 package com.anto426.liquidmonet.motion
 
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.setValue
@@ -28,6 +29,10 @@ internal class DampedDragAnimation(
     val onDragStopped: DampedDragAnimation.() -> Unit,
     val onDragCancelled: DampedDragAnimation.() -> Unit = {},
     val onDrag: DampedDragAnimation.(size: IntSize, dragAmount: Offset) -> Unit,
+    private val animateToValueSpec:
+        (LiquidGlassPerformanceState, Float) -> FiniteAnimationSpec<Float> =
+        LiquidDragMotion::tracking,
+    private val trackVelocityOnAnimateToValue: Boolean = false,
 ) {
 
     constructor(
@@ -42,6 +47,10 @@ internal class DampedDragAnimation(
         onDragStopped: DampedDragAnimation.() -> Unit,
         onDragCancelled: DampedDragAnimation.() -> Unit = {},
         onDrag: DampedDragAnimation.(size: IntSize, dragAmount: Offset) -> Unit,
+        animateToValueSpec:
+            (LiquidGlassPerformanceState, Float) -> FiniteAnimationSpec<Float> =
+            LiquidDragMotion::tracking,
+        trackVelocityOnAnimateToValue: Boolean = false,
     ) : this(
         animationScope = animationScope,
         performance = { performance },
@@ -54,10 +63,14 @@ internal class DampedDragAnimation(
         onDragStopped = onDragStopped,
         onDragCancelled = onDragCancelled,
         onDrag = onDrag,
+        animateToValueSpec = animateToValueSpec,
+        trackVelocityOnAnimateToValue = trackVelocityOnAnimateToValue,
     )
 
     private val springs = LiquidSpringBatch(5)
     private var configuredPerformance: LiquidGlassPerformanceState? = null
+    private var useAnimateToValueSpec = false
+    private var configuredUseAnimateToValueSpec: Boolean? = null
     private var frameJob: Job? = null
     private var velocityTracking = false
     private var pendingRelease = false
@@ -107,13 +120,21 @@ internal class DampedDragAnimation(
 
     private fun configureSprings() {
         val state = performance()
-        if (configuredPerformance == state) return
+        val performanceChanged = configuredPerformance != state
+        val modeChanged = configuredUseAnimateToValueSpec != useAnimateToValueSpec
+        if (!performanceChanged && !modeChanged) return
         configuredPerformance = state
+        configuredUseAnimateToValueSpec = useAnimateToValueSpec
         springs.configure(
             Value,
-            LiquidDragMotion.tracking(state, visibilityThreshold),
+            if (useAnimateToValueSpec) {
+                animateToValueSpec(state, visibilityThreshold)
+            } else {
+                LiquidDragMotion.tracking(state, visibilityThreshold)
+            },
             visibilityThreshold,
         )
+        if (!performanceChanged) return
         springs.configure(
             Velocity,
             LiquidDragMotion.velocity(state, visibilityThreshold * 10f),
@@ -153,11 +174,13 @@ internal class DampedDragAnimation(
                                 else 0f,
                             )
                         }
-                        val moving =
-                            springs.step(
-                                ((frame - previousFrame).coerceAtLeast(0L) / 1_000_000_000.0)
-                                    .toFloat()
-                            )
+                        // Cap per-frame integration so a heavy route-composition stall cannot
+                        // teleport a spring straight to its target in a single frame.
+                        val deltaSeconds =
+                            ((frame - previousFrame).coerceAtLeast(0L) / 1_000_000_000.0)
+                                .toFloat()
+                                .coerceAtMost(MaxFrameDeltaSeconds)
+                        val moving = springs.step(deltaSeconds)
                         previousFrame = frame
                         if (pendingRelease && frameIndex > releaseRequestedFrame) {
                             val threshold =
@@ -211,6 +234,7 @@ internal class DampedDragAnimation(
         }
 
     fun startDrag(position: Offset) {
+        useAnimateToValueSpec = false
         onDragStarted(position)
         press()
     }
@@ -241,6 +265,7 @@ internal class DampedDragAnimation(
 
     fun updateValue(value: Float) {
         if (!value.isFinite()) return
+        useAnimateToValueSpec = false
         configureSprings()
         velocityTracking = true
         springs.setTarget(Value, value.coerceIn(valueRange))
@@ -250,10 +275,13 @@ internal class DampedDragAnimation(
 
     fun animateToValue(value: Float) {
         if (!value.isFinite()) return
+        useAnimateToValueSpec = true
         press()
-        velocityTracking = false
+        velocityTracking = trackVelocityOnAnimateToValue
         springs.setTarget(Value, value.coerceIn(valueRange))
-        springs.setTarget(Velocity, 0f)
+        if (!velocityTracking) {
+            springs.setTarget(Velocity, 0f)
+        }
         release()
         publish()
     }
@@ -264,5 +292,6 @@ internal class DampedDragAnimation(
         const val Press = 2
         const val ScaleX = 3
         const val ScaleY = 4
+        const val MaxFrameDeltaSeconds = 0.025f
     }
 }

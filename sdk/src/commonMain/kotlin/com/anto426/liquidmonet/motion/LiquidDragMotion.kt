@@ -13,6 +13,12 @@ internal object LiquidDragMotion {
     fun tracking(performance: LiquidGlassPerformanceState, threshold: Float) =
         LiquidMotion.spring(performance, 1f, 1000f, threshold)
 
+    fun selectionGlide(performance: LiquidGlassPerformanceState, threshold: Float) =
+        LiquidMotion.spring(performance, 0.88f, 320f, threshold)
+
+    fun toggleGlide(performance: LiquidGlassPerformanceState, threshold: Float) =
+        LiquidMotion.spring(performance, 0.85f, 420f, threshold)
+
     fun velocity(performance: LiquidGlassPerformanceState, threshold: Float) =
         LiquidMotion.spring(performance, 0.5f, 300f, threshold)
 

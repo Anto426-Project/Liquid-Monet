@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import com.anto426.liquidmonet.motion.DampedDragAnimation
+import com.anto426.liquidmonet.motion.LiquidDragMotion
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -15,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,7 +55,6 @@ import com.kyant.backdrop.backdrops.rememberBackdrop
 import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.shapes.Capsule
-import kotlinx.coroutines.flow.collectLatest
 
 /** Reference-aligned liquid switch renderer with tap, drag and elastic thumb deformation. */
 @Composable
@@ -72,6 +71,7 @@ internal fun LiquidGlassToggle(
     val trackColor = glassColors.inactiveTrack
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val performance = LocalLiquidGlassPerformance.current
+    val currentPerformance by rememberUpdatedState(performance)
     val currentChecked by rememberUpdatedState(checked)
     val currentEnabled by rememberUpdatedState(enabled)
     val currentOnCheckedChange by rememberUpdatedState(onCheckedChange)
@@ -84,10 +84,10 @@ internal fun LiquidGlassToggle(
     val animationScope = rememberCoroutineScope()
     var didDrag by remember { mutableStateOf(false) }
     var fraction by remember { mutableFloatStateOf(if (checked) 1f else 0f) }
-    val dampedDragAnimation = remember(animationScope, performance) {
+    val dampedDragAnimation = remember(animationScope) {
         DampedDragAnimation(
             animationScope = animationScope,
-            performance = performance,
+            performance = { currentPerformance },
             initialValue = fraction,
             valueRange = 0f..1f,
             visibilityThreshold = 0.001f,
@@ -96,16 +96,20 @@ internal fun LiquidGlassToggle(
             onDragStarted = { didDrag = false },
             onDragStopped = {
                 if (!currentEnabled) return@DampedDragAnimation
-                fraction = if (didDrag) {
+                val target = if (didDrag) {
                     if (targetValue >= 0.5f) 1f else 0f
                 } else {
                     if (currentChecked) 0f else 1f
                 }
-                currentOnCheckedChange(fraction == 1f)
+                fraction = target
+                animateToValue(target)
+                currentOnCheckedChange(target == 1f)
                 didDrag = false
             },
             onDragCancelled = {
-                fraction = if (currentChecked) 1f else 0f
+                val target = if (currentChecked) 1f else 0f
+                fraction = target
+                animateToValue(target)
                 didDrag = false
             },
             onDrag = { _, dragAmount ->
@@ -117,17 +121,16 @@ internal fun LiquidGlassToggle(
                 } else {
                     (fraction - delta).fastCoerceIn(0f, 1f)
                 }
-            }
+                updateValue(fraction)
+            },
+            animateToValueSpec = LiquidDragMotion::toggleGlide,
+            trackVelocityOnAnimateToValue = true,
         )
     }
 
-    LaunchedEffect(dampedDragAnimation) {
-        snapshotFlow { fraction }
-            .collectLatest { dampedDragAnimation.updateValue(it) }
-    }
     LaunchedEffect(checked, dampedDragAnimation) {
         val target = if (checked) 1f else 0f
-        if (target != fraction) {
+        if (target != fraction || dampedDragAnimation.targetValue != target) {
             fraction = target
             dampedDragAnimation.animateToValue(target)
         }

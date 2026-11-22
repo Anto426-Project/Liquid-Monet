@@ -117,4 +117,47 @@ class LiquidNavigationFrameTest {
         assertEquals(0f, motion.pressProgress)
         assertFalse(clock.hasAwaiters)
     }
+
+    @Test
+    fun tappedSelectionGlidesSmoothlyEvenAfterAHeavyNavigationFrame() = runTest {
+        val clock = BroadcastFrameClock()
+        val motion =
+            createLiquidNavigationSelectionMotion(
+                CoroutineScope(backgroundScope.coroutineContext + clock),
+                { LiquidGlassPerformanceState.Fallback },
+                0,
+                4,
+            )
+        motion.animateToValue(3f)
+        // First frame captures start timestamp; second frame simulates a 160ms route-composition stall.
+        clock.sendFrame(0L)
+        runCurrent()
+        clock.sendFrame(160_000_000L)
+        runCurrent()
+
+        assertTrue(
+            motion.value in 0.05f..0.65f,
+            "Expected a smooth launch instead of teleporting after a heavy frame, got ${motion.value}",
+        )
+
+        var peakVelocity = 0f
+        var timeNs = 160_000_000L
+        repeat(180) {
+            timeNs += 16_000_000L
+            clock.sendFrame(timeNs)
+            runCurrent()
+            if (motion.velocity > peakVelocity) peakVelocity = motion.velocity
+        }
+
+        assertTrue(
+            peakVelocity > 0.25f,
+            "Expected tapped navigation glide to drive liquid velocity deformation, got $peakVelocity",
+        )
+        assertEquals(3f, motion.value)
+        assertEquals(0f, motion.velocity)
+        assertEquals(0f, motion.pressProgress)
+        assertEquals(1f, motion.scaleX)
+        assertEquals(1f, motion.scaleY)
+        assertFalse(clock.hasAwaiters, "A settled tap glide must stop requesting frames")
+    }
 }

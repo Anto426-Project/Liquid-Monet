@@ -3,6 +3,10 @@ package com.anto426.liquidmonet.motion
 import androidx.compose.animation.core.SnapSpec
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.TweenSpec
+import com.anto426.liquidmonet.components.layout.animatedswitcher.LiquidSwitcherMode
+import com.anto426.liquidmonet.components.layout.animatedswitcher.LiquidSwitcherTransition
+import com.anto426.liquidmonet.components.layout.animatedswitcher.motion.LiquidAnimatedSwitcherMotion
+import com.anto426.liquidmonet.components.layout.animatedswitcher.motion.TransitionZOrderState
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPerformanceState
 import kotlin.test.*
 import kotlinx.coroutines.test.runTest
@@ -77,5 +81,66 @@ class LiquidMotionTest {
         assertEquals(1f, motion.initialScale)
         assertEquals(1f, liquidNavigationSelectionScaleX(motion))
         assertEquals(1f, liquidNavigationSelectionScaleY(motion))
+    }
+
+    @Test
+    fun screenSpringIsCriticallySmoothAndSnapsOnReducedMotion() {
+        val normal = assertIs<SpringSpec<Float>>(LiquidMotion.screenSpring<Float>(LiquidGlassPerformanceState.Fallback))
+        assertTrue(normal.dampingRatio >= 0.94f)
+        assertTrue(normal.stiffness >= 400f)
+
+        val reduced = LiquidGlassPerformanceState.Fallback.copy(motionScale = 0f)
+        assertIs<SnapSpec<Float>>(LiquidMotion.screenSpring<Float>(reduced))
+    }
+
+    @Test
+    fun transitionZOrderIsMonotonicAcrossPushPopAndIdempotentOnRecomposition() {
+        val zOrder = TransitionZOrderState<String>()
+        val zPush1 = zOrder.resolve("home", "grades", forward = true, layered = true)
+        val zPush1Recomposed = zOrder.resolve("home", "grades", forward = true, layered = true)
+        assertEquals(zPush1, zPush1Recomposed)
+        assertTrue(zPush1 > 0f)
+
+        val zPush2 = zOrder.resolve("grades", "detail", forward = true, layered = true)
+        assertTrue(zPush2 > zPush1)
+
+        val zPop1 = zOrder.resolve("detail", "grades", forward = false, layered = true)
+        assertTrue(zPop1 < zPush2)
+
+        val zPop2 = zOrder.resolve("grades", "home", forward = false, layered = true)
+        assertTrue(zPop2 < zPop1)
+
+        val zUnlayered = zOrder.resolve("home", "settings", forward = true, layered = false)
+        assertEquals(zPop2, zUnlayered)
+    }
+
+    @Test
+    fun everyScreenTransitionPresetBuildsForwardAndBackwardTransforms() {
+        val performance = LiquidGlassPerformanceState.Fallback
+        LiquidSwitcherMode.entries.forEach { mode ->
+            LiquidSwitcherTransition.entries.forEach { preset ->
+                val forward =
+                    LiquidAnimatedSwitcherMotion.buildContentTransform(
+                        performance = performance,
+                        selectedTransition = preset,
+                        forward = true,
+                        horizontalDirection = 1,
+                        targetContentZIndex = 2f,
+                        mode = mode,
+                    )
+                assertEquals(2f, forward.targetContentZIndex)
+
+                val backward =
+                    LiquidAnimatedSwitcherMotion.buildContentTransform(
+                        performance = performance,
+                        selectedTransition = preset,
+                        forward = false,
+                        horizontalDirection = -1,
+                        targetContentZIndex = -1f,
+                        mode = mode,
+                    )
+                assertEquals(-1f, backward.targetContentZIndex)
+            }
+        }
     }
 }

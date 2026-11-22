@@ -30,6 +30,8 @@ internal fun createLiquidNavigationSelectionMotion(
         onDragStopped = onDragStopped,
         onDragCancelled = onDragCancelled,
         onDrag = onDrag,
+        animateToValueSpec = LiquidDragMotion::selectionGlide,
+        trackVelocityOnAnimateToValue = true,
     )
 
 private fun navigationSpeed(motion: DampedDragAnimation): Float =

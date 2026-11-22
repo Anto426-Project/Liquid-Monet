@@ -60,6 +60,14 @@ object LiquidMotion {
     const val SpatialDampingRatio: Float = 0.82f
     const val SpatialStiffness: Float = 360f
 
+    /** Critically smooth physics for full-screen navigation slides without edge overshoot. */
+    const val ScreenSlideDampingRatio: Float = 0.96f
+    const val ScreenSlideStiffness: Float = 420f
+
+    /** Zero-bounce settling spring for shared-axis screen transitions and layout size changes. */
+    const val ScreenSettleDampingRatio: Float = 0.94f
+    const val ScreenSettleStiffness: Float = 440f
+
     /**
      * Playful, organic liquid bounce for charts, jelly droplet indicators, and pagination pills.
      */
@@ -166,6 +174,17 @@ object LiquidMotion {
             spring(performance, SpatialDampingRatio, SpatialStiffness, visibilityThreshold)
         } else {
             spring(SpatialDampingRatio, SpatialStiffness, visibilityThreshold)
+        }
+
+    /** Critically smooth spring shortcut for full-screen navigation transitions without overshoot. */
+    fun <T> screenSpring(
+        performance: LiquidGlassPerformanceState? = null,
+        visibilityThreshold: T? = null,
+    ): FiniteAnimationSpec<T> =
+        if (performance != null) {
+            spring(performance, ScreenSlideDampingRatio, ScreenSlideStiffness, visibilityThreshold)
+        } else {
+            spring(ScreenSlideDampingRatio, ScreenSlideStiffness, visibilityThreshold)
         }
 
     /** Fluid / bouncy spring shortcut (charts, indicators, tabs). */

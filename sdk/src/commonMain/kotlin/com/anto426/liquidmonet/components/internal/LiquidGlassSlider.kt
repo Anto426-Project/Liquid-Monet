@@ -103,14 +103,15 @@ internal fun LiquidGlassSlider(
         val visibilityThreshold =
             ((valueRange.endInclusive - valueRange.start) / 1000f).coerceAtLeast(0.0001f)
         val currentOnValueChange by rememberUpdatedState(onValueChange)
+        val latestPerformance by rememberUpdatedState(performance)
         val inputInteractionSource = remember { MutableInteractionSource() }
         val isInputPressed by inputInteractionSource.collectIsPressedAsState()
         val isInputDragged by inputInteractionSource.collectIsDraggedAsState()
         val dampedDragAnimation =
-            remember(animationScope, valueRange, visibilityThreshold, performance) {
+            remember(animationScope, valueRange, visibilityThreshold) {
                 DampedDragAnimation(
                     animationScope = animationScope,
-                    performance = performance,
+                    performance = { latestPerformance },
                     initialValue = value.coerceIn(valueRange),
                     valueRange = valueRange,
                     visibilityThreshold = visibilityThreshold,
@@ -289,7 +290,9 @@ internal fun LiquidGlassSlider(
             LiquidSliderInput(
                 value = value.coerceIn(valueRange),
                 onValueChange = { nextValue ->
-                    currentOnValueChange(snapLiquidSliderValue(nextValue, valueRange, steps))
+                    val snapped = snapLiquidSliderValue(nextValue, valueRange, steps)
+                    dampedDragAnimation.updateValue(snapped)
+                    currentOnValueChange(snapped)
                 },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 enabled = enabled,
