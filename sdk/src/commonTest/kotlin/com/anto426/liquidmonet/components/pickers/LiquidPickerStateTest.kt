@@ -116,20 +116,20 @@ class LiquidPickerStateTest {
     }
 
     @Test
-    fun datePickerLabelsResolveSupportedLanguagesWithoutHardcodedFallbackLeakage() {
-        val en = LiquidDatePickerLabels.forLanguage("en-US")
-        val it = LiquidDatePickerLabels.forLanguage("it_IT")
-        val de = LiquidDatePickerLabels.forLanguage("de")
-        val unknown = LiquidDatePickerLabels.forLanguage("sv")
+    fun datePickerLabelsUseDefaultAndAcceptCustomOverrides() {
+        val defaultLabels = LiquidDatePickerLabels.Default
+        assertEquals("November", defaultLabels.monthNames[10])
+        assertEquals("3 dates", defaultLabels.selectedCountFormat(3))
+        assertEquals("No date selected", defaultLabels.emptySelection)
 
-        assertEquals("November", en.monthNames[10])
-        assertEquals("3 dates", en.selectedCountFormat(3))
-        assertEquals("No date selected", en.emptySelection)
-
-        assertEquals("Novembre", it.monthNames[10])
-        assertEquals("3 date", it.selectedCountFormat(3))
-
-        assertEquals("März", de.monthNames[2])
-        assertEquals(en, unknown)
+        val customLabels =
+            defaultLabels.copy(
+                emptySelection = "Nessuna data",
+                selectedCountFormat = { count -> "$count date" },
+            )
+        val state = LiquidDatePickerState(LocalDate(2026, 11, 22))
+        assertEquals("November 2026", state.formatMonthName(defaultLabels))
+        assertEquals("Nessuna data", customLabels.emptySelection)
+        assertEquals("3 date", customLabels.selectedCountFormat(3))
     }
 }

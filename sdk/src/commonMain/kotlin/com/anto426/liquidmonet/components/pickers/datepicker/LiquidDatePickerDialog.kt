@@ -24,7 +24,7 @@ fun LiquidDatePickerDialog(
     modifier: Modifier = Modifier,
     initialDate: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     filter: LiquidDatePickerFilter = LiquidDatePickerFilter.All,
-    labels: LiquidDatePickerLabels = rememberLiquidDatePickerLabels(),
+    labels: LiquidDatePickerLabels = LiquidDatePickerLabels.Default,
     backdropState: Backdrop = emptyBackdrop(),
 ) {
     if (!isOpen) return

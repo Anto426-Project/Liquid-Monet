@@ -36,7 +36,6 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -76,12 +75,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
 
 @Composable
-fun rememberLiquidDatePickerLabels(
-    languageTag: String = Locale.current.language
-): LiquidDatePickerLabels =
-    remember(languageTag) { LiquidDatePickerLabels.forLanguage(languageTag) }
-
-@Composable
 fun rememberLiquidDatePickerState(
     initialDate: LocalDate = currentLocalDate(),
     selectionMode: LiquidDateSelectionMode = LiquidDateSelectionMode.Single,
@@ -117,7 +110,7 @@ fun LiquidDatePicker(
     state: LiquidDatePickerState,
     modifier: Modifier = Modifier,
     backdropState: Backdrop = emptyBackdrop(),
-    labels: LiquidDatePickerLabels = rememberLiquidDatePickerLabels(),
+    labels: LiquidDatePickerLabels = LiquidDatePickerLabels.Default,
     allowYearSelection: Boolean = true,
     showTodayAction: Boolean = state.selectionMode == LiquidDateSelectionMode.Single,
     showClearAction: Boolean = state.selectionMode == LiquidDateSelectionMode.Multiple,
@@ -725,7 +718,7 @@ fun LiquidDatePickerField(
     selectedDate: LocalDate?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    labels: LiquidDatePickerLabels = rememberLiquidDatePickerLabels(),
+    labels: LiquidDatePickerLabels = LiquidDatePickerLabels.Default,
     label: String = labels.fieldLabel,
     placeholder: String = labels.fieldPlaceholder,
     enabled: Boolean = true,
