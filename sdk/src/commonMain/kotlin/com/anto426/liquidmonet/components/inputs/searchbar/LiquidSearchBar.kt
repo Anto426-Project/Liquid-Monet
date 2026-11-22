@@ -86,12 +86,6 @@ fun LiquidSearchBar(
             label = "searchBorderColor",
         )
     val borderWidth = if (isFocused) 1.5.dp else 1.dp
-    val searchContainerColor =
-        if (isFocused) {
-            glassColors.accentContainer.copy(alpha = glassColors.neutralContainer.alpha * 1.6f)
-        } else {
-            glassColors.neutralContainer
-        }
 
     // Fluid recoil on the main capsule as the water drop separates
     val dropletSeparating = query.isNotEmpty()
@@ -130,7 +124,6 @@ fun LiquidSearchBar(
                         backdrop = effectiveBackdrop,
                         shape = shape,
                         role = LiquidGlassRole.Control,
-                        containerColor = searchContainerColor,
                     )
                     .border(width = borderWidth, color = animatedBorderColor, shape = shape),
             enabled = enabled,
@@ -139,6 +132,7 @@ fun LiquidSearchBar(
                 TextStyle(
                     color = contentColor,
                     fontSize = 15.5.sp,
+                    lineHeight = 20.sp,
                     fontWeight = FontWeight.Medium,
                 ),
             cursorBrush = SolidColor(primaryColor),
@@ -147,7 +141,8 @@ fun LiquidSearchBar(
             interactionSource = interactionSource,
             decorationBox = { innerTextField ->
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier =
+                        Modifier.fillMaxWidth().heightIn(min = 54.dp).padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start,
                 ) {
@@ -159,7 +154,7 @@ fun LiquidSearchBar(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Box(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).padding(vertical = 10.dp),
                         contentAlignment = Alignment.CenterStart,
                     ) {
                         if (query.isEmpty()) {
@@ -168,7 +163,8 @@ fun LiquidSearchBar(
                                 style =
                                     TextStyle(
                                         color = placeholderColor,
-                                        fontSize = 15.sp,
+                                        fontSize = 15.5.sp,
+                                        lineHeight = 20.sp,
                                         fontWeight = FontWeight.Normal,
                                     ),
                                 maxLines = 1,

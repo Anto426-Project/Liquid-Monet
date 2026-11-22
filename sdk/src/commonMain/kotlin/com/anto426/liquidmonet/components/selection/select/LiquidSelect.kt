@@ -99,13 +99,7 @@ fun <T> LiquidSelect(
                         shape = shape,
                         role = LiquidGlassRole.Control,
                         containerColor =
-                            if (isExpanded) {
-                                glassColors.accentContainer.copy(
-                                    alpha = glassColors.neutralContainer.alpha * 1.6f
-                                )
-                            } else {
-                                glassColors.neutralContainer
-                            },
+                            if (isExpanded) colorScheme.primary.copy(alpha = 0.08f) else null,
                         layerBlock = liquidControlLayerBlock(enabled, interactiveHighlight),
                     )
                     .border(width = selectBorderWidth, color = selectBorderColor, shape = shape)

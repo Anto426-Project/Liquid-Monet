@@ -188,12 +188,6 @@ fun LiquidTextField(
             label = "inputBorderColor",
         )
     val borderWidth = if (isFocused) 1.5.dp else 1.dp
-    val fieldContainerColor =
-        if (isFocused) {
-            glassColors.accentContainer.copy(alpha = glassColors.neutralContainer.alpha * 1.6f)
-        } else {
-            glassColors.neutralContainer
-        }
 
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
 
@@ -221,7 +215,6 @@ fun LiquidTextField(
                         backdrop = effectiveBackdrop,
                         shape = shape,
                         role = LiquidGlassRole.Control,
-                        containerColor = fieldContainerColor,
                     )
                     .border(width = borderWidth, color = animatedBorderColor, shape = shape),
             enabled = enabled,
@@ -230,6 +223,7 @@ fun LiquidTextField(
                 TextStyle(
                     color = contentColor,
                     fontSize = 15.5.sp,
+                    lineHeight = 22.sp,
                     fontWeight = FontWeight.Normal,
                 ),
             cursorBrush = SolidColor(primaryColor),
@@ -253,7 +247,8 @@ fun LiquidTextField(
                                 style =
                                     TextStyle(
                                         color = placeholderColor,
-                                        fontSize = 15.sp,
+                                        fontSize = 15.5.sp,
+                                        lineHeight = 22.sp,
                                         fontWeight = FontWeight.Normal,
                                     ),
                             )
@@ -304,7 +299,6 @@ fun LiquidTextField(
                             backdrop = effectiveBackdrop,
                             shape = shape,
                             role = LiquidGlassRole.Control,
-                            containerColor = fieldContainerColor,
                         )
                         .border(width = borderWidth, color = animatedBorderColor, shape = shape),
                 enabled = enabled,
@@ -313,6 +307,7 @@ fun LiquidTextField(
                     TextStyle(
                         color = contentColor,
                         fontSize = 15.5.sp,
+                        lineHeight = 20.sp,
                         fontWeight = FontWeight.Medium,
                     ),
                 cursorBrush = SolidColor(primaryColor),
@@ -323,9 +318,16 @@ fun LiquidTextField(
                 keyboardActions = keyboardActions,
                 interactionSource = interactionSource,
                 decorationBox = { innerTextField ->
+                    val hasClickableTrailing =
+                        effectiveTrailingIcon != null && effectiveTrailingIconClick != null
                     Row(
                         modifier =
-                            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                            Modifier.fillMaxWidth()
+                                .heightIn(min = minHeight)
+                                .padding(
+                                    start = 16.dp,
+                                    end = if (hasClickableTrailing) 4.dp else 16.dp,
+                                ),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Start,
                     ) {
@@ -342,7 +344,7 @@ fun LiquidTextField(
                         }
 
                         Box(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).padding(vertical = 10.dp),
                             contentAlignment = Alignment.CenterStart,
                         ) {
                             if (value.isEmpty()) {
@@ -351,7 +353,8 @@ fun LiquidTextField(
                                     style =
                                         TextStyle(
                                             color = placeholderColor,
-                                            fontSize = 15.sp,
+                                            fontSize = 15.5.sp,
+                                            lineHeight = 20.sp,
                                             fontWeight = FontWeight.Normal,
                                         ),
                                     maxLines = effectiveMaxLines,
@@ -361,7 +364,7 @@ fun LiquidTextField(
                         }
 
                         if (effectiveTrailingIcon != null) {
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(if (hasClickableTrailing) 4.dp else 8.dp))
                             val description =
                                 when {
                                     !isPassword -> null
@@ -376,6 +379,7 @@ fun LiquidTextField(
                                     contentDescription = description,
                                     onClick = effectiveTrailingIconClick,
                                     enabled = enabled,
+                                    size = 36.dp,
                                     iconSize = 20.dp,
                                     variant = LiquidIconButtonVariant.Ghost,
                                     contentColor = tint,

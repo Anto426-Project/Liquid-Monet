@@ -140,11 +140,12 @@ private fun LiquidRangeSliderImpl(
         val isEndPressed by endInteractionSource.collectIsPressedAsState()
         val isEndDragged by endInteractionSource.collectIsDraggedAsState()
 
+        val latestPerformance by rememberUpdatedState(performance)
         val startDragAnimation =
-            remember(animationScope, valueRange, visibilityThreshold, performance) {
+            remember(animationScope, valueRange, visibilityThreshold) {
                 DampedDragAnimation(
                     animationScope = animationScope,
-                    performance = performance,
+                    performance = { latestPerformance },
                     initialValue = currentRangeState.start,
                     valueRange = valueRange,
                     visibilityThreshold = visibilityThreshold,
@@ -157,10 +158,10 @@ private fun LiquidRangeSliderImpl(
             }
 
         val endDragAnimation =
-            remember(animationScope, valueRange, visibilityThreshold, performance) {
+            remember(animationScope, valueRange, visibilityThreshold) {
                 DampedDragAnimation(
                     animationScope = animationScope,
-                    performance = performance,
+                    performance = { latestPerformance },
                     initialValue = currentRangeState.endInclusive,
                     valueRange = valueRange,
                     visibilityThreshold = visibilityThreshold,
