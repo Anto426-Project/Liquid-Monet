@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,11 +19,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.feedback.loading.motion.LiquidLoadingMotion
@@ -41,21 +48,24 @@ import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
 import com.kyant.shapes.RoundedRectangle
 import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.sin
 
 /** Visual style variant for unified LiquidLoading. */
 enum class LiquidLoadingStyle {
-    /** Sleek 360° Monet sweep gradient ring spinner. */
+    /** Organic 360° refractive comet ring spinner with meniscus tip. */
     Circular,
-    /** Sinusoidal wavy free-floating liquid progress line. */
+    /** Fluid undulating liquid progress wave along a recessed glass channel. */
     Linear,
-    /** 3 pulsating liquid glass crystal droplets. */
+    /** 3 harmonic refractive liquid glass droplets with subtle surface-tension glide. */
     Dots,
-    /** Breathing luminous crystal orb with expanding radiant ripples. */
+    /** Breathing luminous refractive orb with dual staggered optical ripples. */
     Pulse,
-    /** Optical liquid glass skeleton shimmer placeholder. */
+    /** Optical liquid glass skeleton placeholder with diagonal caustic sweep. */
     Shimmer,
-    /** Full modal liquid glass dialog overlay with spinner and message. */
+    /** Modal liquid glass card overlay with scaled circular indicator and message. */
     Overlay,
 }
 
@@ -67,7 +77,7 @@ enum class LiquidLoadingSize {
 }
 
 /**
- * LiquidLoading / LiquidLoading - Single Unified Loading & Progress Component.
+ * LiquidLoading - Single Unified Organic Liquid Glass Loading & Progress Component.
  *
  * Configurable with a single consistent API:
  *
@@ -95,9 +105,16 @@ fun LiquidLoading(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
-    val primaryColor = if (tint.isSpecified) tint else colorScheme.primary
-    val secondaryColor = colorScheme.tertiary
+    val hasCustomTint = tint.isSpecified
+    val primaryColor = if (hasCustomTint) tint else colorScheme.primary
+    val secondaryColor =
+        if (hasCustomTint) {
+            lerp(primaryColor, colorScheme.tertiary, 0.30f)
+        } else {
+            colorScheme.tertiary
+        }
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val explicitProgressColor = if (hasCustomTint) tint else null
 
     when (style) {
         LiquidLoadingStyle.Circular -> {
@@ -109,23 +126,23 @@ fun LiquidLoading(
                 }
             val strokeWidth: Dp =
                 when (size) {
-                    LiquidLoadingSize.Small -> 2.5.dp
-                    LiquidLoadingSize.Medium -> 4.dp
-                    LiquidLoadingSize.Large -> 5.dp
+                    LiquidLoadingSize.Small -> 2.6.dp
+                    LiquidLoadingSize.Medium -> 3.8.dp
+                    LiquidLoadingSize.Large -> 4.8.dp
                 }
 
             if (message != null) {
                 Row(
                     modifier = modifier,
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     LiquidCircularProgressIndicator(
                         progress = progress,
                         modifier = Modifier.size(indicatorSize),
                         indicatorSize = indicatorSize,
                         strokeWidth = strokeWidth,
-                        progressColor = primaryColor,
+                        progressColor = explicitProgressColor,
                         backdropState = effectiveBackdrop,
                     )
                     Text(
@@ -145,7 +162,7 @@ fun LiquidLoading(
                     modifier = modifier.size(indicatorSize),
                     indicatorSize = indicatorSize,
                     strokeWidth = strokeWidth,
-                    progressColor = primaryColor,
+                    progressColor = explicitProgressColor,
                     backdropState = effectiveBackdrop,
                 )
             }
@@ -154,9 +171,9 @@ fun LiquidLoading(
         LiquidLoadingStyle.Linear -> {
             val heightDp =
                 when (size) {
-                    LiquidLoadingSize.Small -> 4.dp
-                    LiquidLoadingSize.Medium -> 6.dp
-                    LiquidLoadingSize.Large -> 8.dp
+                    LiquidLoadingSize.Small -> 6.dp
+                    LiquidLoadingSize.Medium -> 8.dp
+                    LiquidLoadingSize.Large -> 10.dp
                 }
             Column(modifier = modifier.fillMaxWidth()) {
                 if (message != null) {
@@ -170,7 +187,7 @@ fun LiquidLoading(
                 LiquidLinearProgressIndicator(
                     progress = progress,
                     height = heightDp,
-                    progressColor = primaryColor,
+                    progressColor = explicitProgressColor,
                     backdropState = effectiveBackdrop,
                 )
             }
@@ -182,8 +199,8 @@ fun LiquidLoading(
                 loadingSize = size,
                 primaryColor = primaryColor,
                 secondaryColor = secondaryColor,
+                hasCustomTint = hasCustomTint,
                 message = message,
-                backdropState = effectiveBackdrop,
             )
         }
 
@@ -192,6 +209,7 @@ fun LiquidLoading(
                 modifier = modifier,
                 loadingSize = size,
                 primaryColor = primaryColor,
+                secondaryColor = secondaryColor,
                 message = message,
                 backdropState = effectiveBackdrop,
             )
@@ -202,23 +220,212 @@ fun LiquidLoading(
                 modifier = modifier,
                 shape = shape,
                 backdropState = effectiveBackdrop,
+                tint = tint,
             )
         }
 
         LiquidLoadingStyle.Overlay -> {
             LiquidLoadingOverlay(
                 modifier = modifier,
+                progress = progress,
+                loadingSize = size,
                 message = message ?: "Caricamento in corso...",
                 primaryColor = primaryColor,
+                explicitProgressColor = explicitProgressColor,
                 backdropState = effectiveBackdrop,
             )
         }
     }
 }
 
-/** 3 Pulsating liquid glass crystal droplets. */
+/** 3 Harmonic refractive liquid glass droplets with subtle surface-tension bridge. */
 @Composable
 private fun LiquidLoadingDots(
+    modifier: Modifier = Modifier,
+    loadingSize: LiquidLoadingSize,
+    primaryColor: Color,
+    secondaryColor: Color,
+    hasCustomTint: Boolean,
+    message: String?,
+) {
+    val animate = LocalLiquidGlassPerformance.current.animateFunctionalContent
+    val isLight = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    val dotDiameter: Dp =
+        when (loadingSize) {
+            LiquidLoadingSize.Small -> 7.dp
+            LiquidLoadingSize.Medium -> 9.dp
+            LiquidLoadingSize.Large -> 12.dp
+        }
+    val spacing: Dp =
+        when (loadingSize) {
+            LiquidLoadingSize.Small -> 6.dp
+            LiquidLoadingSize.Medium -> 8.dp
+            LiquidLoadingSize.Large -> 10.dp
+        }
+
+    val infiniteTransition =
+        if (animate) {
+            rememberLiquidInfiniteTransition(label = "LiquidDropletsWaveAnim")
+        } else {
+            null
+        }
+    val wavePhase by
+        if (infiniteTransition != null) {
+            LiquidLoadingMotion.rememberDropletsWavePhase(
+                transition = infiniteTransition,
+                label = "dropletsWavePhase",
+            )
+        } else {
+            remember { mutableFloatStateOf(0.95f) }
+        }
+
+    val dropletColors =
+        remember(primaryColor, secondaryColor, hasCustomTint) {
+            if (hasCustomTint) {
+                listOf(
+                    primaryColor,
+                    lerp(primaryColor, Color.White, 0.14f),
+                    lerp(primaryColor, secondaryColor, 0.35f),
+                )
+            } else {
+                listOf(
+                    primaryColor,
+                    lerp(primaryColor, secondaryColor, 0.50f),
+                    secondaryColor,
+                )
+            }
+        }
+
+    val canvasWidth = dotDiameter * 3 + spacing * 2 + dotDiameter * 1.4f
+    val canvasHeight = dotDiameter * 2.8f
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+    ) {
+        Canvas(modifier = Modifier.size(width = canvasWidth, height = canvasHeight)) {
+            val baseDiameter = dotDiameter.toPx()
+            val baseRadius = baseDiameter / 2f
+            val gapPx = spacing.toPx()
+            val stride = baseDiameter + gapPx
+            val centerX = size.width / 2f
+            val centerY = size.height / 2f
+            val travelAmplitude = (size.height - baseDiameter * 1.45f).coerceAtLeast(baseRadius) * 0.48f
+
+            val samples =
+                List(3) { idx -> LiquidLoadingMotion.computeDropletSample(wavePhase, idx) }
+            val centers =
+                List(3) { idx ->
+                    val cx = centerX + (idx - 1) * stride
+                    val cy = centerY + (0.5f - samples[idx].lift) * 2f * travelAmplitude
+                    Offset(cx, cy)
+                }
+
+            // Subtle liquid surface-tension bridge between adjacent droplets when close in height
+            for (i in 0..1) {
+                val proximity = (1f - abs(samples[i].lift - samples[i + 1].lift)).coerceIn(0f, 1f)
+                val bridgeAlpha = (proximity * proximity) * (if (isLight) 0.16f else 0.22f)
+                if (bridgeAlpha > 0.02f) {
+                    drawLine(
+                        brush =
+                            Brush.linearGradient(
+                                colors =
+                                    listOf(
+                                        dropletColors[i].copy(alpha = bridgeAlpha),
+                                        dropletColors[i + 1].copy(alpha = bridgeAlpha),
+                                    ),
+                                start = centers[i],
+                                end = centers[i + 1],
+                            ),
+                        start = centers[i],
+                        end = centers[i + 1],
+                        strokeWidth = (baseRadius * 0.44f * proximity).coerceAtLeast(1f),
+                        cap = StrokeCap.Round,
+                    )
+                }
+            }
+
+            // Refractive liquid glass droplets
+            for (i in 0..2) {
+                val sample = samples[i]
+                val center = centers[i]
+                val dotColor = dropletColors[i]
+                val rx = baseRadius * sample.scaleX
+                val ry = baseRadius * sample.scaleY
+                val maxR = max(rx, ry)
+
+                // Soft optical ambient glow
+                val haloRadius = maxR * 1.75f
+                drawCircle(
+                    brush =
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    dotColor.copy(alpha = (0.16f + 0.16f * sample.lift)),
+                                    Color.Transparent,
+                                ),
+                            center = center,
+                            radius = haloRadius,
+                        ),
+                    radius = haloRadius,
+                    center = center,
+                )
+
+                // Translucent jewel droplet body with internal light refraction
+                val ovalTopLeft = Offset(center.x - rx, center.y - ry)
+                val ovalSize = Size(rx * 2f, ry * 2f)
+                val highlightCenter = Offset(center.x - rx * 0.28f, center.y - ry * 0.30f)
+                drawOval(
+                    brush =
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    lerp(dotColor, Color.White, if (isLight) 0.46f else 0.56f),
+                                    dotColor.copy(alpha = 0.94f),
+                                    dotColor.copy(alpha = 0.78f),
+                                ),
+                            center = highlightCenter,
+                            radius = maxR * 1.35f,
+                        ),
+                    topLeft = ovalTopLeft,
+                    size = ovalSize,
+                )
+
+                // Crisp specular glass rim
+                drawOval(
+                    color = Color.White.copy(alpha = if (isLight) 0.52f else 0.34f),
+                    topLeft = ovalTopLeft,
+                    size = ovalSize,
+                    style = Stroke(width = 0.9.dp.toPx()),
+                )
+
+                // Upper-left catchlight dot
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.82f),
+                    radius = (maxR * 0.24f).coerceAtLeast(0.8.dp.toPx()),
+                    center = Offset(center.x - rx * 0.30f, center.y - ry * 0.32f),
+                )
+            }
+        }
+        if (message != null) {
+            Text(
+                text = message,
+                style =
+                    when (loadingSize) {
+                        LiquidLoadingSize.Small -> MaterialTheme.typography.bodySmall
+                        LiquidLoadingSize.Medium -> MaterialTheme.typography.bodyMedium
+                        LiquidLoadingSize.Large -> MaterialTheme.typography.titleMedium
+                    },
+                color = LiquidGlassTheme.colors.content,
+            )
+        }
+    }
+}
+
+/** Breathing luminous refractive orb with dual staggered concentric optical ripples. */
+@Composable
+private fun LiquidLoadingPulse(
     modifier: Modifier = Modifier,
     loadingSize: LiquidLoadingSize,
     primaryColor: Color,
@@ -227,132 +434,17 @@ private fun LiquidLoadingDots(
     backdropState: Backdrop,
 ) {
     val animate = LocalLiquidGlassPerformance.current.animateFunctionalContent
-    val dotDiameter: Dp =
-        when (loadingSize) {
-            LiquidLoadingSize.Small -> 6.dp
-            LiquidLoadingSize.Medium -> 8.dp
-            LiquidLoadingSize.Large -> 10.dp
-        }
-    val spacing: Dp =
-        when (loadingSize) {
-            LiquidLoadingSize.Small -> 4.dp
-            LiquidLoadingSize.Medium -> 6.dp
-            LiquidLoadingSize.Large -> 8.dp
-        }
-
-    val infiniteTransition =
-        if (animate) {
-            rememberLiquidInfiniteTransition(label = "DotsBounceAnim")
-        } else {
-            null
-        }
-    val dot1Offset by
-        if (infiniteTransition != null) {
-            LiquidLoadingMotion.rememberDot1(
-                transition = infiniteTransition,
-                initialValue = 0f,
-                targetValue = 1f,
-                label = "dot1",
-            )
-        } else {
-            remember { mutableFloatStateOf(0.5f) }
-        }
-    val dot2Offset by
-        if (infiniteTransition != null) {
-            LiquidLoadingMotion.rememberDot2(
-                transition = infiniteTransition,
-                initialValue = 0f,
-                targetValue = 1f,
-                label = "dot2",
-            )
-        } else {
-            remember { mutableFloatStateOf(0.5f) }
-        }
-    val dot3Offset by
-        if (infiniteTransition != null) {
-            LiquidLoadingMotion.rememberDot3(
-                transition = infiniteTransition,
-                initialValue = 0f,
-                targetValue = 1f,
-                label = "dot3",
-            )
-        } else {
-            remember { mutableFloatStateOf(0.5f) }
-        }
-
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Row(
-            modifier =
-                Modifier.size(
-                    width = dotDiameter * 3 + spacing * 2,
-                    height = dotDiameter * 2.2f,
-                ),
-            horizontalArrangement = Arrangement.spacedBy(spacing),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            listOf(
-                    dot1Offset to primaryColor,
-                    dot2Offset to primaryColor,
-                    dot3Offset to secondaryColor,
-                )
-                .forEach { (phase, dotColor) ->
-                    Box(
-                        modifier =
-                            Modifier.size(dotDiameter)
-                                .graphicsLayer {
-                                    val scale = 0.85f + 0.25f * phase
-                                    scaleX = scale
-                                    scaleY = scale
-                                    translationY = -dotDiameter.toPx() * 0.45f * phase
-                                }
-                                .liquidGlass(
-                                    backdrop = backdropState,
-                                    shape = Capsule(),
-                                    role = LiquidGlassRole.Control,
-                                    containerColor = dotColor.copy(alpha = 0.08f + 0.10f * phase),
-                                )
-                    )
-                }
-        }
-        if (message != null) {
-            Text(
-                text = message,
-                style =
-                    when (loadingSize) {
-                        LiquidLoadingSize.Small -> MaterialTheme.typography.bodySmall
-                        LiquidLoadingSize.Medium -> MaterialTheme.typography.bodyMedium
-                        LiquidLoadingSize.Large -> MaterialTheme.typography.titleMedium
-                    },
-                color = LiquidGlassTheme.colors.content,
-            )
-        }
-    }
-}
-
-/** Breathing luminous crystal orb with expanding radiant ripples. */
-@Composable
-private fun LiquidLoadingPulse(
-    modifier: Modifier = Modifier,
-    loadingSize: LiquidLoadingSize,
-    primaryColor: Color,
-    message: String?,
-    backdropState: Backdrop,
-) {
-    val animate = LocalLiquidGlassPerformance.current.animateFunctionalContent
+    val isLight = MaterialTheme.colorScheme.surface.luminance() > 0.5f
     val totalSize: Dp =
         when (loadingSize) {
             LiquidLoadingSize.Small -> 32.dp
-            LiquidLoadingSize.Medium -> 48.dp
-            LiquidLoadingSize.Large -> 64.dp
+            LiquidLoadingSize.Medium -> 46.dp
+            LiquidLoadingSize.Large -> 62.dp
         }
 
     val infiniteTransition =
         if (animate) {
-            rememberLiquidInfiniteTransition(label = "PulseAnim")
+            rememberLiquidInfiniteTransition(label = "LiquidPulseAnim")
         } else {
             null
         }
@@ -360,50 +452,121 @@ private fun LiquidLoadingPulse(
         if (infiniteTransition != null) {
             LiquidLoadingMotion.rememberPulseProgress(
                 transition = infiniteTransition,
-                initialValue = 0f,
-                targetValue = 1f,
-                label = "PulseProg",
+                label = "LiquidPulseProg",
             )
         } else {
-            remember { mutableFloatStateOf(0.25f) }
+            remember { mutableFloatStateOf(0.28f) }
         }
 
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
     ) {
         Box(
             modifier = Modifier.size(totalSize),
             contentAlignment = Alignment.Center,
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val center = Offset(this.size.width / 2f, this.size.height / 2f)
-                val maxR = this.size.minDimension / 2f
-                val coreR = maxR * 0.40f
+                val center = Offset(size.width / 2f, size.height / 2f)
+                val maxR = (size.minDimension / 2f - 1.5.dp.toPx()).coerceAtLeast(2f)
+                val coreR = maxR * 0.36f
+                val maxStrokePx = 2.2.dp.toPx()
 
+                // Two staggered optical ripples for continuous fluid radiation
+                val ripplePhases = floatArrayOf(pulseProg, (pulseProg + 0.5f) % 1f)
+                for (phase in ripplePhases) {
+                    val sample = LiquidLoadingMotion.computePulseRipple(phase)
+                    val radius = coreR + (maxR - coreR) * sample.radiusFraction
+                    val rippleColor = lerp(primaryColor, secondaryColor, sample.radiusFraction * 0.45f)
+
+                    // Soft diffused ripple wash
+                    drawCircle(
+                        color = rippleColor.copy(alpha = sample.alpha * (if (isLight) 0.14f else 0.20f)),
+                        radius = radius,
+                        center = center,
+                        style = Stroke(width = maxStrokePx * sample.strokeFraction * 2.4f),
+                    )
+                    // Crisp refractive wave crest
+                    drawCircle(
+                        color = rippleColor.copy(alpha = sample.alpha * (if (isLight) 0.58f else 0.68f)),
+                        radius = radius,
+                        center = center,
+                        style = Stroke(width = maxStrokePx * sample.strokeFraction),
+                    )
+                }
+
+                // Ambient halo directly beneath the breathing core orb
+                val breathe = sin(pulseProg * 2.0 * PI).toFloat()
+                val orbAuraR = coreR * (1.55f + 0.16f * breathe)
                 drawCircle(
-                    color = primaryColor.copy(alpha = (1f - pulseProg) * 0.35f),
-                    radius = coreR + (maxR - coreR) * pulseProg,
+                    brush =
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    primaryColor.copy(alpha = if (isLight) 0.30f else 0.38f),
+                                    Color.Transparent,
+                                ),
+                            center = center,
+                            radius = orbAuraR,
+                        ),
+                    radius = orbAuraR,
                     center = center,
-                    style = Stroke(width = 2.dp.toPx()),
                 )
             }
+
+            // Breathing refractive glass core orb
+            val breatheTheta = pulseProg * 2.0 * PI
+            val breatheScale = 0.93f + 0.10f * sin(breatheTheta).toFloat()
+            val organicFlex = 0.025f * cos(breatheTheta * 2.0).toFloat()
+
             Box(
                 modifier =
-                    Modifier.size(totalSize * 0.40f)
+                    Modifier.size(totalSize * 0.38f)
                         .graphicsLayer {
-                            val scale = 0.92f + 0.12f * sin(pulseProg * 2 * PI.toFloat())
-                            scaleX = scale
-                            scaleY = scale
+                            scaleX = breatheScale * (1f + organicFlex)
+                            scaleY = breatheScale * (1f - organicFlex)
                         }
                         .liquidGlass(
                             backdrop = backdropState,
                             shape = Capsule(),
                             role = LiquidGlassRole.Control,
-                            containerColor = LiquidGlassTheme.colors.accentContainer,
+                            containerColor = primaryColor.copy(alpha = if (isLight) 0.22f else 0.28f),
                         )
-            )
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val radius = size.minDimension / 2f
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    val highlightOffset = Offset(center.x - radius * 0.28f, center.y - radius * 0.28f)
+                    drawCircle(
+                        brush =
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        lerp(primaryColor, Color.White, 0.52f),
+                                        primaryColor.copy(alpha = 0.90f),
+                                        lerp(primaryColor, secondaryColor, 0.40f)
+                                            .copy(alpha = 0.80f),
+                                    ),
+                                center = highlightOffset,
+                                radius = radius * 1.35f,
+                            ),
+                        radius = radius,
+                        center = center,
+                    )
+                    drawCircle(
+                        color = Color.White.copy(alpha = if (isLight) 0.58f else 0.38f),
+                        radius = (radius - 0.6.dp.toPx()).coerceAtLeast(1f),
+                        center = center,
+                        style = Stroke(width = 1.dp.toPx()),
+                    )
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.85f),
+                        radius = (radius * 0.24f).coerceAtLeast(1.dp.toPx()),
+                        center = Offset(center.x - radius * 0.30f, center.y - radius * 0.30f),
+                    )
+                }
+            }
         }
         if (message != null) {
             Text(
@@ -420,40 +583,87 @@ private fun LiquidLoadingPulse(
     }
 }
 
-/** Full modal liquid glass dialog overlay. */
+/** Modal liquid glass dialog overlay with scaled circular indicator and optical aura. */
 @Composable
 private fun LiquidLoadingOverlay(
     modifier: Modifier,
+    progress: Float?,
+    loadingSize: LiquidLoadingSize,
     message: String,
     primaryColor: Color,
+    explicitProgressColor: Color?,
     backdropState: Backdrop,
 ) {
+    val isLight = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    val spinnerSize: Dp =
+        when (loadingSize) {
+            LiquidLoadingSize.Small -> 32.dp
+            LiquidLoadingSize.Medium -> 44.dp
+            LiquidLoadingSize.Large -> 56.dp
+        }
+    val strokeWidth: Dp =
+        when (loadingSize) {
+            LiquidLoadingSize.Small -> 3.dp
+            LiquidLoadingSize.Medium -> 4.dp
+            LiquidLoadingSize.Large -> 4.8.dp
+        }
+
     Box(
         modifier =
             modifier
+                .widthIn(min = 148.dp, max = 280.dp)
                 .liquidGlass(
                     backdrop = backdropState,
                     shape = RoundedRectangle(28.dp),
                     role = LiquidGlassRole.Dialog,
                     containerColor = LiquidGlassTheme.colors.neutralContainer,
                 )
-                .padding(horizontal = 24.dp, vertical = 20.dp),
+                .padding(horizontal = 28.dp, vertical = 22.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            LiquidCircularProgressIndicator(
-                progress = null,
-                modifier = Modifier.size(38.dp),
-                progressColor = primaryColor,
-                backdropState = backdropState,
-            )
+            Box(
+                modifier = Modifier.size(spinnerSize + 16.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    drawCircle(
+                        brush =
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        primaryColor.copy(alpha = if (isLight) 0.14f else 0.22f),
+                                        Color.Transparent,
+                                    ),
+                                center = Offset(size.width / 2f, size.height / 2f),
+                                radius = size.minDimension / 2f,
+                            ),
+                        radius = size.minDimension / 2f,
+                        center = Offset(size.width / 2f, size.height / 2f),
+                    )
+                }
+                LiquidCircularProgressIndicator(
+                    progress = progress,
+                    modifier = Modifier.size(spinnerSize),
+                    indicatorSize = spinnerSize,
+                    strokeWidth = strokeWidth,
+                    progressColor = explicitProgressColor,
+                    backdropState = backdropState,
+                )
+            }
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style =
+                    when (loadingSize) {
+                        LiquidLoadingSize.Small -> MaterialTheme.typography.bodySmall
+                        LiquidLoadingSize.Medium -> MaterialTheme.typography.bodyMedium
+                        LiquidLoadingSize.Large -> MaterialTheme.typography.titleSmall
+                    },
+                color = LiquidGlassTheme.colors.content,
+                textAlign = TextAlign.Center,
             )
         }
     }
