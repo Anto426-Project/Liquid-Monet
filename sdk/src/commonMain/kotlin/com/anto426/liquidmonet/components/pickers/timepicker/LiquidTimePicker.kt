@@ -1,12 +1,6 @@
 package com.anto426.liquidmonet.components.pickers.timepicker
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,6 +49,7 @@ import com.anto426.liquidmonet.components.internal.LiquidHapticCue
 import com.anto426.liquidmonet.components.internal.liquidControlInteractive
 import com.anto426.liquidmonet.components.internal.performLiquidHaptic
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
+import com.anto426.liquidmonet.components.pickers.timepicker.motion.LiquidTimePickerMotion
 import com.anto426.liquidmonet.components.pickers.timepicker.state.LiquidTimePickerState
 import com.anto426.liquidmonet.components.pickers.timepicker.state.twoDigits
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
@@ -64,8 +59,6 @@ import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.icons.LiquidIcons
-import com.anto426.liquidmonet.motion.LiquidMotion
-import com.anto426.liquidmonet.motion.animateLiquidColorAsState
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
@@ -282,9 +275,9 @@ fun LiquidTimePicker(
                 val isSelected = state.minute == preset
                 val chipShape = Capsule()
                 val chipBg by
-                    animateLiquidColorAsState(
+                    LiquidTimePickerMotion.animatePresetColor(
                         targetValue = if (isSelected) scheme.primary else colors.neutralContainer,
-                        animationSpec = remember(performance) { LiquidMotion.tween(performance, 150) },
+                        performance = performance,
                         label = "timePresetBg",
                     )
                 Box(
@@ -347,15 +340,15 @@ private fun LiquidTimeDrum(
     val drumShape = RoundedRectangle(22.dp)
 
     val containerColor by
-        animateLiquidColorAsState(
+        LiquidTimePickerMotion.animateDrumColor(
             targetValue = if (isDragging) colors.selectedContainer else colors.accentContainer,
-            animationSpec = remember(performance) { LiquidMotion.tween(performance, 140) },
+            performance = performance,
             label = "timeDrumBg",
         )
     val borderColor by
-        animateLiquidColorAsState(
+        LiquidTimePickerMotion.animateDrumColor(
             targetValue = if (isDragging) colors.focusIndicator else colors.outline,
-            animationSpec = remember(performance) { LiquidMotion.tween(performance, 140) },
+            performance = performance,
             label = "timeDrumBorder",
         )
 
@@ -423,43 +416,7 @@ private fun LiquidTimeDrum(
         // Active value with directional rolling animation
         AnimatedContent(
             targetState = value,
-            transitionSpec = {
-                val enterDuration = LiquidMotion.FastDurationMillis
-                val exitDuration = 110
-                val dir = if (direction >= 0) 1 else -1
-                (slideInVertically(
-                    animationSpec =
-                        LiquidMotion.tween(
-                            performance,
-                            enterDuration,
-                            LiquidMotion.EmphasizedDecelerate,
-                        ),
-                    initialOffsetY = { fullHeight -> dir * (fullHeight / 2) },
-                ) +
-                    fadeIn(
-                        LiquidMotion.tween(
-                            performance,
-                            enterDuration,
-                            LiquidMotion.EmphasizedDecelerate,
-                        )
-                    )) togetherWith
-                    (slideOutVertically(
-                        animationSpec =
-                            LiquidMotion.tween(
-                                performance,
-                                exitDuration,
-                                LiquidMotion.EmphasizedAccelerate,
-                            ),
-                        targetOffsetY = { fullHeight -> -dir * (fullHeight / 2) },
-                    ) +
-                        fadeOut(
-                            LiquidMotion.tween(
-                                performance,
-                                exitDuration,
-                                LiquidMotion.EmphasizedAccelerate,
-                            )
-                        )) using SizeTransform(clip = false)
-            },
+            transitionSpec = LiquidTimePickerMotion.drumDigitTransition(performance, direction),
             label = "timeDrumDigit",
         ) { digit ->
             Text(
