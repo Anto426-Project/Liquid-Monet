@@ -1,14 +1,14 @@
 package com.anto426.liquidmonet.components.pickers.datepicker
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -41,8 +40,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.anto426.liquidmonet.components.buttons.button.LiquidButton
+import com.anto426.liquidmonet.components.buttons.button.LiquidButtonSize
+import com.anto426.liquidmonet.components.buttons.button.LiquidButtonVariant
 import com.anto426.liquidmonet.components.buttons.iconbutton.LiquidIconButton
 import com.anto426.liquidmonet.components.buttons.iconbutton.LiquidIconButtonVariant
+import com.anto426.liquidmonet.components.cards.card.LiquidCard
+import com.anto426.liquidmonet.components.display.badge.LiquidBadge
+import com.anto426.liquidmonet.components.display.divider.LiquidHorizontalDivider
+import com.anto426.liquidmonet.components.interaction.liquidClickable
 import com.anto426.liquidmonet.components.internal.LiquidHapticCue
 import com.anto426.liquidmonet.components.internal.liquidControlInteractive
 import com.anto426.liquidmonet.components.internal.performLiquidHaptic
@@ -96,8 +102,10 @@ fun rememberLiquidDatePickerState(
 }
 
 /**
- * Inline calendar: one coherent glass surface, directional month transitions, date filtering,
- * single or multi-date selection, and optional quick year jump.
+ * Inline calendar built from Liquid Monet primitives ([LiquidCard], [LiquidBadge], [LiquidButton],
+ * [LiquidIconButton], [LiquidHorizontalDivider], [liquidClickable], and [liquidGlass]): one
+ * coherent glass surface, directional month transitions, date filtering, single or multi-date
+ * selection, and optional quick year jump.
  */
 @Composable
 fun LiquidDatePicker(
@@ -111,15 +119,68 @@ fun LiquidDatePicker(
     todayActionLabel: String = "Oggi",
     emptySelectionLabel: String = "Nessuna data",
 ) {
+    val isInsideSharedContainer =
+        LocalLiquidGlassContainerMode.current == LiquidGlassContainerMode.Shared
+
+    if (isInsideSharedContainer) {
+        Column(
+            modifier = modifier.fillMaxWidth().padding(vertical = 2.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            LiquidDatePickerContent(
+                state = state,
+                backdropState = backdropState,
+                allowYearSelection = allowYearSelection,
+                showTodayAction = showTodayAction,
+                showClearAction = showClearAction,
+                clearActionLabel = clearActionLabel,
+                todayActionLabel = todayActionLabel,
+                emptySelectionLabel = emptySelectionLabel,
+            )
+        }
+    } else {
+        LiquidCard(
+            modifier = modifier.fillMaxWidth(),
+            backdropState = backdropState,
+            shape = RoundedRectangle(24.dp),
+            contentPadding = 16.dp,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                LiquidDatePickerContent(
+                    state = state,
+                    backdropState = backdropState,
+                    allowYearSelection = allowYearSelection,
+                    showTodayAction = showTodayAction,
+                    showClearAction = showClearAction,
+                    clearActionLabel = clearActionLabel,
+                    todayActionLabel = todayActionLabel,
+                    emptySelectionLabel = emptySelectionLabel,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LiquidDatePickerContent(
+    state: LiquidDatePickerState,
+    backdropState: Backdrop,
+    allowYearSelection: Boolean,
+    showTodayAction: Boolean,
+    showClearAction: Boolean,
+    clearActionLabel: String,
+    todayActionLabel: String,
+    emptySelectionLabel: String,
+) {
     val scheme = MaterialTheme.colorScheme
     val colors = LiquidGlassTheme.colors
     val backdrop = resolveLiquidGlassBackdrop(backdropState)
     val performance = LocalLiquidGlassPerformance.current
     val haptic = LocalHapticFeedback.current
-    val isInsideSharedContainer =
-        LocalLiquidGlassContainerMode.current == LiquidGlassContainerMode.Shared
     val today = remember { currentLocalDate() }
-    val shape = RoundedRectangle(24.dp)
 
     var isSelectingYear by remember(allowYearSelection) { mutableStateOf(false) }
     var yearPageStart by remember(state.displayedYear) {
@@ -160,39 +221,22 @@ fun LiquidDatePicker(
             }
         }
 
-    val containerModifier =
-        if (isInsideSharedContainer) {
-            modifier.fillMaxWidth().padding(vertical = 2.dp)
-        } else {
-            modifier
-                .fillMaxWidth()
-                .liquidGlass(
-                    backdrop = backdrop,
-                    shape = shape,
-                    role = LiquidGlassRole.Surface,
-                    containerColor = colors.neutralContainer,
-                )
-                .border(width = 1.dp, color = colors.outline, shape = shape)
-                .padding(14.dp)
-        }
-
-    Column(
-        modifier = containerModifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    // Selected date summary badge + quick action LiquidButton ("Pulisci" / "Oggi")
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        // Selected date summary + quick action ("Pulisci" in multi-select or "Oggi" in single)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+        LiquidBadge(
+            shape = Capsule(),
+            modifier = Modifier.weight(1f, fill = false),
+            containerColor = colors.neutralContainer,
+            contentColor = colors.content,
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+            border = BorderStroke(1.dp, colors.outline),
+            backdropState = backdrop,
         ) {
             Row(
-                modifier =
-                    Modifier.weight(1f, fill = false)
-                        .clip(Capsule())
-                        .background(colors.neutralContainer, Capsule())
-                        .border(1.dp, colors.outline, Capsule())
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
@@ -214,442 +258,429 @@ fun LiquidDatePicker(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-
-            if (showClearAction && selectedDates.isNotEmpty()) {
-                Box(
-                    modifier =
-                        Modifier.padding(start = 8.dp)
-                            .clip(Capsule())
-                            .background(scheme.primary.copy(alpha = 0.12f), Capsule())
-                            .border(
-                                width = 1.dp,
-                                color = scheme.primary.copy(alpha = 0.35f),
-                                shape = Capsule(),
-                            )
-                            .clickable(
-                                role = Role.Button,
-                                onClick = {
-                                    haptic.performLiquidHaptic(LiquidHapticCue.Selection)
-                                    state.clearSelection()
-                                },
-                            )
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "$clearActionLabel (${selectedDates.size})",
-                        style =
-                            MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontFeatureSettings = "tnum",
-                            ),
-                        color = scheme.primary,
-                        maxLines = 1,
-                    )
-                }
-            } else if (showTodayAction) {
-                val todayActionEnabled = !isAlreadyOnToday && canJumpToToday
-                Box(
-                    modifier =
-                        Modifier.padding(start = 8.dp)
-                            .clip(Capsule())
-                            .background(
-                                if (!todayActionEnabled) Color.Transparent
-                                else scheme.primary.copy(alpha = 0.12f),
-                                Capsule(),
-                            )
-                            .border(
-                                width = 1.dp,
-                                color =
-                                    if (!todayActionEnabled) colors.outline.copy(alpha = 0.5f)
-                                    else scheme.primary.copy(alpha = 0.35f),
-                                shape = Capsule(),
-                            )
-                            .clickable(
-                                enabled = todayActionEnabled,
-                                role = Role.Button,
-                                onClick = {
-                                    haptic.performLiquidHaptic(LiquidHapticCue.Selection)
-                                    isSelectingYear = false
-                                    state.goToToday(today)
-                                },
-                            )
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = todayActionLabel,
-                        style =
-                            MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                        color = if (!todayActionEnabled) colors.disabledContent else scheme.primary,
-                        maxLines = 1,
-                    )
-                }
-            }
         }
 
-        // Month / Year header with navigation arrows
+        if (showClearAction && selectedDates.isNotEmpty()) {
+            LiquidButton(
+                onClick = {
+                    haptic.performLiquidHaptic(LiquidHapticCue.Selection)
+                    state.clearSelection()
+                },
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                text = "$clearActionLabel (${selectedDates.size})",
+                variant = LiquidButtonVariant.Tonal,
+                size = LiquidButtonSize.Small,
+                minimumHeight = 32.dp,
+                textStyle =
+                    MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontFeatureSettings = "tnum",
+                    ),
+                backdropState = backdrop,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+        } else if (showTodayAction) {
+            val todayActionEnabled = !isAlreadyOnToday && canJumpToToday
+            LiquidButton(
+                onClick = {
+                    haptic.performLiquidHaptic(LiquidHapticCue.Selection)
+                    isSelectingYear = false
+                    state.goToToday(today)
+                },
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                text = todayActionLabel,
+                enabled = todayActionEnabled,
+                variant = LiquidButtonVariant.Tonal,
+                size = LiquidButtonSize.Small,
+                minimumHeight = 32.dp,
+                textStyle =
+                    MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                backdropState = backdrop,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+        }
+    }
+
+    // Month / Year header with LiquidClickable title and LiquidIconButton arrows
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier =
+                Modifier.weight(1f)
+                    .liquidClickable(
+                        shape = Capsule(),
+                        enabled = allowYearSelection,
+                        role = Role.Button,
+                        clipContent = true,
+                        onClick =
+                            if (allowYearSelection) {
+                                {
+                                    haptic.performLiquidHaptic(LiquidHapticCue.Selection)
+                                    if (!isSelectingYear) {
+                                        yearPageStart = state.displayedYear - 4
+                                    }
+                                    isSelectingYear = !isSelectingYear
+                                }
+                            } else {
+                                null
+                            },
+                    )
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Row(
-                modifier =
-                    Modifier.weight(1f)
-                        .clip(Capsule())
-                        .then(
-                            if (allowYearSelection) {
-                                Modifier.clickable(
-                                    role = Role.Button,
-                                    onClick = {
-                                        haptic.performLiquidHaptic(LiquidHapticCue.Selection)
-                                        if (!isSelectingYear) {
-                                            yearPageStart = state.displayedYear - 4
-                                        }
-                                        isSelectingYear = !isSelectingYear
-                                    },
-                                )
-                            } else {
-                                Modifier
-                            }
-                        )
-                        .padding(horizontal = 6.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                AnimatedContent(
-                    targetState =
-                        if (isSelectingYear) "$yearPageStart – ${yearPageStart + 11}"
-                        else state.monthName,
-                    transitionSpec = LiquidDatePickerMotion.contentTransition(performance),
-                    label = "calendarMonthHeader",
-                ) { title ->
-                    Text(
-                        text = title,
-                        style =
-                            MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontFeatureSettings = "tnum",
-                            ),
-                        color = colors.content,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                if (allowYearSelection) {
-                    Icon(
-                        imageVector = LiquidIcons.KeyboardArrowDown,
-                        contentDescription =
-                            if (isSelectingYear) "Chiudi selezione anno" else "Seleziona anno",
-                        tint = colors.secondaryContent,
-                        modifier =
-                            Modifier.size(18.dp).graphicsLayer { rotationZ = chevronRotation },
-                    )
-                }
+            AnimatedContent(
+                targetState =
+                    if (isSelectingYear) "$yearPageStart – ${yearPageStart + 11}"
+                    else state.monthName,
+                transitionSpec = LiquidDatePickerMotion.contentTransition(performance),
+                label = "calendarMonthHeader",
+            ) { title ->
+                Text(
+                    text = title,
+                    style =
+                        MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontFeatureSettings = "tnum",
+                        ),
+                    color = colors.content,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
-
-            LiquidIconButton(
-                icon = LiquidIcons.ChevronLeft,
-                enabled = isSelectingYear || state.canNavigatePreviousMonth,
-                onClick = {
-                    haptic.performLiquidHaptic(LiquidHapticCue.Selection)
-                    if (isSelectingYear) {
-                        yearPageStart = (yearPageStart - 12).coerceAtLeast(1900)
-                    } else {
-                        state.previousMonth()
-                    }
-                },
-                contentDescription = if (isSelectingYear) "Anni precedenti" else "Mese precedente",
-                variant = LiquidIconButtonVariant.Ghost,
-                size = 38.dp,
-            )
-            LiquidIconButton(
-                icon = LiquidIcons.ChevronRight,
-                enabled = isSelectingYear || state.canNavigateNextMonth,
-                onClick = {
-                    haptic.performLiquidHaptic(LiquidHapticCue.Selection)
-                    if (isSelectingYear) {
-                        yearPageStart = (yearPageStart + 12).coerceAtMost(2188)
-                    } else {
-                        state.nextMonth()
-                    }
-                },
-                contentDescription = if (isSelectingYear) "Anni successivi" else "Mese successivo",
-                variant = LiquidIconButtonVariant.Ghost,
-                size = 38.dp,
-            )
+            if (allowYearSelection) {
+                Icon(
+                    imageVector = LiquidIcons.KeyboardArrowDown,
+                    contentDescription =
+                        if (isSelectingYear) "Chiudi selezione anno" else "Seleziona anno",
+                    tint = colors.secondaryContent,
+                    modifier = Modifier.size(18.dp).graphicsLayer { rotationZ = chevronRotation },
+                )
+            }
         }
 
-        // Body: either 4x3 year picker or 6x7 day grid (kept at matching height to prevent dialog jumps)
-        AnimatedContent(
-            targetState = isSelectingYear,
-            transitionSpec = LiquidDatePickerMotion.contentTransition(performance),
-            label = "calendarMode",
-        ) { selectingYear ->
-            if (selectingYear) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    repeat(4) { row ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            repeat(3) { col ->
-                                val year = yearPageStart + row * 3 + col
-                                val isSelectedYear = year == state.displayedYear
-                                val isCurrentYear = year == today.year
-                                val selectableMonthInYear =
-                                    (1..12).firstOrNull { month ->
-                                        state.filter.isSelectableMonth(year, month)
-                                    }
-                                val isYearSelectable = selectableMonthInYear != null
-                                val yearShape = RoundedRectangle(14.dp)
-                                val bgColor by
-                                    LiquidDatePickerMotion.animateColor(
-                                        targetValue =
-                                            when {
-                                                isSelectedYear -> scheme.primary
-                                                isCurrentYear -> scheme.primary.copy(alpha = 0.12f)
-                                                else -> colors.neutralContainer
-                                            },
-                                        performance = performance,
-                                        label = "yearCellBg",
-                                    )
-                                Box(
-                                    modifier =
-                                        Modifier.weight(1f)
-                                            .height(54.dp)
-                                            .graphicsLayer {
-                                                alpha = if (isYearSelectable) 1f else 0.32f
-                                            }
-                                            .semantics { this.selected = isSelectedYear }
-                                            .clip(yearShape)
-                                            .background(bgColor, yearShape)
-                                            .border(
-                                                width =
-                                                    if (isCurrentYear && !isSelectedYear) 1.5.dp
-                                                    else 1.dp,
-                                                color =
-                                                    when {
-                                                        isSelectedYear -> Color.Transparent
-                                                        isCurrentYear -> scheme.primary
-                                                        else -> colors.outline.copy(alpha = 0.6f)
-                                                    },
-                                                shape = yearShape,
-                                            )
-                                            .clickable(
-                                                enabled = isYearSelectable,
-                                                role = Role.RadioButton,
-                                                onClick = {
-                                                    haptic.performLiquidHaptic(
-                                                        LiquidHapticCue.Selection
-                                                    )
-                                                    val targetMonth =
-                                                        if (
-                                                            state.filter.isSelectableMonth(
-                                                                year,
-                                                                state.displayedMonth,
-                                                            )
-                                                        ) {
-                                                            state.displayedMonth
-                                                        } else {
-                                                            selectableMonthInYear ?: state.displayedMonth
-                                                        }
-                                                    state.showMonth(year, targetMonth)
-                                                    isSelectingYear = false
-                                                },
-                                            ),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        text = year.toString(),
-                                        style =
-                                            MaterialTheme.typography.titleSmall.copy(
-                                                fontWeight =
-                                                    if (isSelectedYear || isCurrentYear)
-                                                        FontWeight.SemiBold
-                                                    else FontWeight.Medium,
-                                                fontFeatureSettings = "tnum",
-                                            ),
-                                        color =
-                                            when {
-                                                isSelectedYear -> scheme.onPrimary
-                                                isCurrentYear -> scheme.primary
-                                                else -> colors.content
-                                            },
-                                    )
+        LiquidIconButton(
+            icon = LiquidIcons.ChevronLeft,
+            enabled = isSelectingYear || state.canNavigatePreviousMonth,
+            onClick = {
+                haptic.performLiquidHaptic(LiquidHapticCue.Selection)
+                if (isSelectingYear) {
+                    yearPageStart = (yearPageStart - 12).coerceAtLeast(1900)
+                } else {
+                    state.previousMonth()
+                }
+            },
+            contentDescription = if (isSelectingYear) "Anni precedenti" else "Mese precedente",
+            variant = LiquidIconButtonVariant.Ghost,
+            size = 38.dp,
+            backdropState = backdrop,
+        )
+        LiquidIconButton(
+            icon = LiquidIcons.ChevronRight,
+            enabled = isSelectingYear || state.canNavigateNextMonth,
+            onClick = {
+                haptic.performLiquidHaptic(LiquidHapticCue.Selection)
+                if (isSelectingYear) {
+                    yearPageStart = (yearPageStart + 12).coerceAtMost(2188)
+                } else {
+                    state.nextMonth()
+                }
+            },
+            contentDescription = if (isSelectingYear) "Anni successivi" else "Mese successivo",
+            variant = LiquidIconButtonVariant.Ghost,
+            size = 38.dp,
+            backdropState = backdrop,
+        )
+    }
+
+    LiquidHorizontalDivider(color = colors.outline.copy(alpha = 0.45f))
+
+    // Body: either 4x3 year picker or 6x7 day grid (kept at matching height to prevent dialog jumps)
+    AnimatedContent(
+        targetState = isSelectingYear,
+        transitionSpec = LiquidDatePickerMotion.contentTransition(performance),
+        label = "calendarMode",
+    ) { selectingYear ->
+        if (selectingYear) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                repeat(4) { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        repeat(3) { col ->
+                            val year = yearPageStart + row * 3 + col
+                            val isSelectedYear = year == state.displayedYear
+                            val isCurrentYear = year == today.year
+                            val selectableMonthInYear =
+                                (1..12).firstOrNull { month ->
+                                    state.filter.isSelectableMonth(year, month)
                                 }
+                            val isYearSelectable = selectableMonthInYear != null
+                            val yearShape = RoundedRectangle(14.dp)
+                            val bgColor by
+                                LiquidDatePickerMotion.animateColor(
+                                    targetValue =
+                                        when {
+                                            isSelectedYear -> scheme.primary
+                                            isCurrentYear -> colors.accentContainer
+                                            else -> colors.neutralContainer
+                                        },
+                                    performance = performance,
+                                    label = "yearCellBg",
+                                )
+                            Box(
+                                modifier =
+                                    Modifier.weight(1f)
+                                        .height(54.dp)
+                                        .graphicsLayer {
+                                            alpha = if (isYearSelectable) 1f else 0.32f
+                                        }
+                                        .semantics { this.selected = isSelectedYear }
+                                        .liquidGlass(
+                                            backdrop = backdrop,
+                                            shape = yearShape,
+                                            role = LiquidGlassRole.Control,
+                                            containerColor = bgColor,
+                                        )
+                                        .border(
+                                            width =
+                                                if (isCurrentYear && !isSelectedYear) 1.5.dp
+                                                else 1.dp,
+                                            color =
+                                                when {
+                                                    isSelectedYear -> Color.Transparent
+                                                    isCurrentYear -> scheme.primary
+                                                    else -> colors.outline.copy(alpha = 0.6f)
+                                                },
+                                            shape = yearShape,
+                                        )
+                                        .liquidClickable(
+                                            shape = yearShape,
+                                            enabled = isYearSelectable,
+                                            role = Role.RadioButton,
+                                            clipContent = true,
+                                            onClick = {
+                                                haptic.performLiquidHaptic(
+                                                    LiquidHapticCue.Selection
+                                                )
+                                                val targetMonth =
+                                                    if (
+                                                        state.filter.isSelectableMonth(
+                                                            year,
+                                                            state.displayedMonth,
+                                                        )
+                                                    ) {
+                                                        state.displayedMonth
+                                                    } else {
+                                                        selectableMonthInYear
+                                                            ?: state.displayedMonth
+                                                    }
+                                                state.showMonth(year, targetMonth)
+                                                isSelectingYear = false
+                                            },
+                                        ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = year.toString(),
+                                    style =
+                                        MaterialTheme.typography.titleSmall.copy(
+                                            fontWeight =
+                                                if (isSelectedYear || isCurrentYear)
+                                                    FontWeight.SemiBold
+                                                else FontWeight.Medium,
+                                            fontFeatureSettings = "tnum",
+                                        ),
+                                    color =
+                                        when {
+                                            isSelectedYear -> scheme.onPrimary
+                                            isCurrentYear -> scheme.primary
+                                            else -> colors.content
+                                        },
+                                )
                             }
                         }
                     }
                 }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth()) {
-                        listOf("L", "M", "M", "G", "V", "S", "D").forEachIndexed { index, day ->
-                            Text(
-                                text = day,
-                                modifier = Modifier.weight(1f),
-                                style =
-                                    MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    ),
-                                color =
-                                    if (index >= 5) scheme.primary.copy(alpha = 0.78f)
-                                    else colors.secondaryContent,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.fillMaxWidth()) {
+                    listOf("L", "M", "M", "G", "V", "S", "D").forEachIndexed { index, day ->
+                        Text(
+                            text = day,
+                            modifier = Modifier.weight(1f),
+                            style =
+                                MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                            color =
+                                if (index >= 5) scheme.primary.copy(alpha = 0.78f)
+                                else colors.secondaryContent,
+                            textAlign = TextAlign.Center,
+                        )
                     }
+                }
 
-                    val monthKey = state.displayedYear * 12 + (state.displayedMonth - 1)
-                    val dayRole =
-                        if (state.selectionMode == LiquidDateSelectionMode.Multiple) Role.Checkbox
-                        else Role.RadioButton
-                    AnimatedContent(
-                        targetState = monthKey,
-                        transitionSpec = LiquidDatePickerMotion.monthGridTransition(performance),
-                        label = "calendarMonthGrid",
-                    ) { key ->
-                        val gridYear = key / 12
-                        val gridMonth = (key % 12) + 1
-                        val gridFirstDayOffset =
-                            remember(gridYear, gridMonth) {
-                                LocalDate(gridYear, gridMonth, 1).dayOfWeek.ordinal
-                            }
-                        val gridDaysInMonth =
-                            remember(gridYear, gridMonth) {
-                                daysInCalendarMonth(gridYear, gridMonth)
-                            }
+                val monthKey = state.displayedYear * 12 + (state.displayedMonth - 1)
+                val dayRole =
+                    if (state.selectionMode == LiquidDateSelectionMode.Multiple) Role.Checkbox
+                    else Role.RadioButton
+                AnimatedContent(
+                    targetState = monthKey,
+                    transitionSpec = LiquidDatePickerMotion.monthGridTransition(performance),
+                    label = "calendarMonthGrid",
+                ) { key ->
+                    val gridYear = key / 12
+                    val gridMonth = (key % 12) + 1
+                    val gridFirstDayOffset =
+                        remember(gridYear, gridMonth) {
+                            LocalDate(gridYear, gridMonth, 1).dayOfWeek.ordinal
+                        }
+                    val gridDaysInMonth =
+                        remember(gridYear, gridMonth) {
+                            daysInCalendarMonth(gridYear, gridMonth)
+                        }
 
-                        // Six stable rows keep navigation from resizing the surrounding dialog.
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            repeat(6) { row ->
-                                Row(Modifier.fillMaxWidth()) {
-                                    repeat(7) { column ->
-                                        val day = row * 7 + column - gridFirstDayOffset + 1
-                                        Box(
-                                            modifier = Modifier.weight(1f).height(40.dp),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            if (day in 1..gridDaysInMonth) {
-                                                val cellDate = LocalDate(gridYear, gridMonth, day)
-                                                val isSelected = state.isDateSelected(cellDate)
-                                                val isSelectable = state.isDateSelectable(cellDate)
-                                                val isMarked = state.isDateMarked(cellDate)
-                                                val cellStateDescription =
-                                                    state.filter.dateStateDescription(cellDate)
-                                                val isToday = cellDate == today
-                                                val cellShape = Capsule()
-                                                val background by
-                                                    LiquidDatePickerMotion.animateColor(
-                                                        targetValue =
-                                                            when {
-                                                                isSelected -> scheme.primary
-                                                                isToday ->
-                                                                    scheme.primary.copy(alpha = 0.12f)
-                                                                isMarked -> colors.neutralContainer
-                                                                else -> Color.Transparent
-                                                            },
-                                                        performance = performance,
-                                                        label = "calendarDayColor",
-                                                    )
-                                                Box(
-                                                    modifier =
-                                                        Modifier.size(38.dp)
-                                                            .graphicsLayer {
-                                                                alpha =
-                                                                    when {
-                                                                        isSelectable || isSelected -> 1f
-                                                                        isMarked -> 0.72f
-                                                                        else -> 0.30f
-                                                                    }
-                                                            }
-                                                            .semantics {
-                                                                this.selected = isSelected
-                                                                if (cellStateDescription != null) {
-                                                                    stateDescription =
-                                                                        cellStateDescription
+                    // Six stable rows keep navigation from resizing the surrounding dialog.
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        repeat(6) { row ->
+                            Row(Modifier.fillMaxWidth()) {
+                                repeat(7) { column ->
+                                    val day = row * 7 + column - gridFirstDayOffset + 1
+                                    Box(
+                                        modifier = Modifier.weight(1f).height(40.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        if (day in 1..gridDaysInMonth) {
+                                            val cellDate = LocalDate(gridYear, gridMonth, day)
+                                            val isSelected = state.isDateSelected(cellDate)
+                                            val isSelectable = state.isDateSelectable(cellDate)
+                                            val isMarked = state.isDateMarked(cellDate)
+                                            val cellStateDescription =
+                                                state.filter.dateStateDescription(cellDate)
+                                            val isToday = cellDate == today
+                                            val cellShape = Capsule()
+                                            val hasGlassSurface = isSelected || isToday || isMarked
+                                            val background by
+                                                LiquidDatePickerMotion.animateColor(
+                                                    targetValue =
+                                                        when {
+                                                            isSelected -> scheme.primary
+                                                            isToday -> colors.accentContainer
+                                                            isMarked -> colors.neutralContainer
+                                                            else -> Color.Transparent
+                                                        },
+                                                    performance = performance,
+                                                    label = "calendarDayColor",
+                                                )
+                                            Box(
+                                                modifier =
+                                                    Modifier.size(38.dp)
+                                                        .graphicsLayer {
+                                                            alpha =
+                                                                when {
+                                                                    isSelectable || isSelected -> 1f
+                                                                    isMarked -> 0.72f
+                                                                    else -> 0.30f
                                                                 }
+                                                        }
+                                                        .semantics {
+                                                            this.selected = isSelected
+                                                            if (cellStateDescription != null) {
+                                                                stateDescription =
+                                                                    cellStateDescription
                                                             }
-                                                            .clip(cellShape)
-                                                            .background(background, cellShape)
-                                                            .border(
-                                                                width =
-                                                                    if (isToday && !isSelected) 1.5.dp
-                                                                    else 0.dp,
-                                                                color =
-                                                                    if (isToday && !isSelected)
-                                                                        scheme.primary
-                                                                    else Color.Transparent,
-                                                                shape = cellShape,
-                                                            )
-                                                            .clickable(
-                                                                enabled = isSelectable,
-                                                                interactionSource =
-                                                                    remember {
-                                                                        MutableInteractionSource()
-                                                                    },
-                                                                indication = null,
-                                                                role = dayRole,
-                                                                onClick = {
-                                                                    haptic.performLiquidHaptic(
-                                                                        LiquidHapticCue.Selection
-                                                                    )
-                                                                    if (
-                                                                        state.displayedYear ==
-                                                                            gridYear &&
-                                                                            state.displayedMonth ==
-                                                                                gridMonth
-                                                                    ) {
-                                                                        state.selectDay(day)
-                                                                    } else {
-                                                                        state.showMonth(
-                                                                            gridYear,
-                                                                            gridMonth,
-                                                                        )
-                                                                        state.selectDay(day)
-                                                                    }
-                                                                },
-                                                            ),
-                                                    contentAlignment = Alignment.Center,
-                                                ) {
-                                                    Text(
-                                                        text = day.toString(),
-                                                        style =
-                                                            MaterialTheme.typography.bodyMedium.copy(
-                                                                fontWeight =
-                                                                    if (isSelected || isToday)
-                                                                        FontWeight.SemiBold
-                                                                    else FontWeight.Normal,
-                                                                fontFeatureSettings = "tnum",
-                                                            ),
-                                                        color =
-                                                            when {
-                                                                isSelected -> scheme.onPrimary
-                                                                isToday -> scheme.primary
-                                                                else -> colors.content
-                                                            },
-                                                    )
-                                                    if (isMarked) {
-                                                        Box(
-                                                            modifier =
-                                                                Modifier.align(Alignment.BottomCenter)
-                                                                    .padding(bottom = 4.dp)
-                                                                    .size(4.dp)
-                                                                    .background(
-                                                                        if (isSelected)
-                                                                            scheme.onPrimary
-                                                                        else scheme.primary,
-                                                                        CircleShape,
-                                                                    )
+                                                        }
+                                                        .then(
+                                                            if (hasGlassSurface) {
+                                                                Modifier.liquidGlass(
+                                                                    backdrop = backdrop,
+                                                                    shape = cellShape,
+                                                                    role = LiquidGlassRole.Control,
+                                                                    containerColor = background,
+                                                                )
+                                                            } else {
+                                                                Modifier.background(
+                                                                    background,
+                                                                    cellShape,
+                                                                )
+                                                            }
                                                         )
-                                                    }
+                                                        .border(
+                                                            width =
+                                                                if (isToday && !isSelected) 1.5.dp
+                                                                else 0.dp,
+                                                            color =
+                                                                if (isToday && !isSelected)
+                                                                    scheme.primary
+                                                                else Color.Transparent,
+                                                            shape = cellShape,
+                                                        )
+                                                        .liquidClickable(
+                                                            shape = cellShape,
+                                                            enabled = isSelectable,
+                                                            role = dayRole,
+                                                            clipContent = true,
+                                                            onClick = {
+                                                                haptic.performLiquidHaptic(
+                                                                    LiquidHapticCue.Selection
+                                                                )
+                                                                if (
+                                                                    state.displayedYear ==
+                                                                        gridYear &&
+                                                                        state.displayedMonth ==
+                                                                            gridMonth
+                                                                ) {
+                                                                    state.selectDay(day)
+                                                                } else {
+                                                                    state.showMonth(
+                                                                        gridYear,
+                                                                        gridMonth,
+                                                                    )
+                                                                    state.selectDay(day)
+                                                                }
+                                                            },
+                                                        ),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Text(
+                                                    text = day.toString(),
+                                                    style =
+                                                        MaterialTheme.typography.bodyMedium.copy(
+                                                            fontWeight =
+                                                                if (isSelected || isToday)
+                                                                    FontWeight.SemiBold
+                                                                else FontWeight.Normal,
+                                                            fontFeatureSettings = "tnum",
+                                                        ),
+                                                    color =
+                                                        when {
+                                                            isSelected -> scheme.onPrimary
+                                                            isToday -> scheme.primary
+                                                            else -> colors.content
+                                                        },
+                                                )
+                                                if (isMarked) {
+                                                    Box(
+                                                        modifier =
+                                                            Modifier.align(Alignment.BottomCenter)
+                                                                .padding(bottom = 4.dp)
+                                                                .size(4.dp)
+                                                                .background(
+                                                                    if (isSelected)
+                                                                        scheme.onPrimary
+                                                                    else scheme.primary,
+                                                                    CircleShape,
+                                                                )
+                                                    )
                                                 }
                                             }
                                         }
