@@ -48,10 +48,10 @@ fun LiquidSectionEntrance(
     val enabled = LiquidSectionEntranceMotion.motionEnabled(performance, animation)
     val windowSize = LocalWindowInfo.current.containerSize
     val viewport = viewportBoundsInWindow ?: Rect(0f, 0f, windowSize.width.toFloat(), windowSize.height.toFloat())
-    val distance = with(LocalDensity.current) { 24.dp.toPx() }
+    val distance = with(LocalDensity.current) { 18.dp.toPx() }
     val threshold = with(LocalDensity.current) { 32.dp.toPx() }
     var revealed by remember { mutableStateOf(false) }
-    var pendingBounds by remember { mutableStateOf<Pair<Rect, IntSize>?>(null) }
+    val pendingBounds = remember { PendingSectionBounds() }
     val progress = LiquidSectionEntranceMotion.progress(performance, animation, revealed, delayMillis, replayKey)
 
     fun revealIfVisible(bounds: Rect, size: IntSize) {
@@ -59,31 +59,42 @@ fun LiquidSectionEntrance(
             val visible = bounds.intersect(viewport)
             if (visible.width >= size.width * .5f && visible.height >= minOf(threshold, size.height * .25f)) {
                 revealed = true
-                pendingBounds = null
+                pendingBounds.bounds = null
+                pendingBounds.size = null
             }
         }
     }
 
     LaunchedEffect(viewport, threshold) {
-        pendingBounds?.let { (bounds, size) -> revealIfVisible(bounds, size) }
+        val bounds = pendingBounds.bounds
+        val size = pendingBounds.size
+        if (bounds != null && size != null) revealIfVisible(bounds, size)
     }
 
-    Box(
-        modifier = modifier.onGloballyPositioned { coordinates ->
-            if (!revealed) {
-                val bounds = coordinates.boundsInWindow()
-                pendingBounds = bounds to coordinates.size
-                revealIfVisible(bounds, coordinates.size)
+    val visibilityModifier =
+        if (!revealed) {
+            Modifier.onGloballyPositioned { coordinates ->
+                if (!revealed) {
+                    val bounds = coordinates.boundsInWindow()
+                    pendingBounds.bounds = bounds
+                    pendingBounds.size = coordinates.size
+                    revealIfVisible(bounds, coordinates.size)
+                }
             }
-        }.graphicsLayer {
+        } else {
+            Modifier
+        }
+
+    Box(
+        modifier = modifier.then(visibilityModifier).graphicsLayer {
             val fraction = if (!enabled) 1f else if (!revealed) 0f else progress.value.coerceIn(0f, 1f)
-            alpha = fraction
+            alpha = if (!enabled) 1f else (fraction * 1.25f).coerceIn(0f, 1f)
             translationY = when (animation) {
                 LiquidScreenEntranceAnimation.FadeUp -> distance * (1f - fraction)
                 LiquidScreenEntranceAnimation.FadeDown -> -distance * (1f - fraction)
                 else -> 0f
             }
-            val scale = if (animation == LiquidScreenEntranceAnimation.Scale) .94f + .06f * fraction else 1f
+            val scale = if (animation == LiquidScreenEntranceAnimation.Scale) .95f + .05f * fraction else 1f
             scaleX = scale
             scaleY = scale
             transformOrigin = TransformOrigin.Center
@@ -91,4 +102,9 @@ fun LiquidSectionEntrance(
         },
         propagateMinConstraints = true,
     ) { content() }
+}
+
+private class PendingSectionBounds {
+    var bounds: Rect? = null
+    var size: IntSize? = null
 }

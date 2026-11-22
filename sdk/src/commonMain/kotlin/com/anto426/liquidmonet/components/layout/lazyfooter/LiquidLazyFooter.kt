@@ -185,6 +185,7 @@ fun LiquidLazyFooter(
             LiquidAnimatedSwitcher(
                 targetState = renderedState,
                 transition = LiquidSwitcherTransition.LiquidMorph,
+                contentAlignment = Alignment.Center,
                 label = "LiquidLazyFooterState",
             ) { currentState ->
                 LiquidLazyFooterContent(

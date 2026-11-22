@@ -35,15 +35,27 @@ internal object LiquidScreenEntranceMotion {
         animation: LiquidScreenEntranceAnimation,
         delayMillis: Int,
     ): LiquidScreenEntranceTransitions {
-        val distancePx = with(LocalDensity.current) { 24.dp.roundToPx() }
-        return remember(performance, animation, delayMillis, distancePx) {
+        val enterDistancePx = with(LocalDensity.current) { 18.dp.roundToPx() }
+        val exitDistancePx = with(LocalDensity.current) { 12.dp.roundToPx() }
+        return remember(performance, animation, delayMillis, enterDistancePx, exitDistancePx) {
             if (!motionEnabled(performance, animation)) {
                 LiquidScreenEntranceTransitions(EnterTransition.None, ExitTransition.None)
             } else {
                 val fadeEnter = fadeIn(
-                    animationSpec = LiquidMotion.tween(performance, 280, delayMillis = delayMillis)
+                    animationSpec = LiquidMotion.tween(
+                        performance = performance,
+                        durationMillis = 240,
+                        delayMillis = delayMillis,
+                        easing = LiquidMotion.EmphasizedDecelerate,
+                    )
                 )
-                val fadeExit = fadeOut(animationSpec = LiquidMotion.tween(performance, 140))
+                val fadeExit = fadeOut(
+                    animationSpec = LiquidMotion.tween(
+                        performance = performance,
+                        durationMillis = 130,
+                        easing = LiquidMotion.EmphasizedAccelerate,
+                    )
+                )
                 when (animation) {
                     LiquidScreenEntranceAnimation.None ->
                         LiquidScreenEntranceTransitions(EnterTransition.None, ExitTransition.None)
@@ -54,24 +66,42 @@ internal object LiquidScreenEntranceMotion {
                         val direction = if (animation == LiquidScreenEntranceAnimation.FadeUp) 1 else -1
                         LiquidScreenEntranceTransitions(
                             slideInVertically(
-                                animationSpec = LiquidMotion.tween(performance, 320, delayMillis = delayMillis),
-                                initialOffsetY = { direction * distancePx },
+                                animationSpec = LiquidMotion.tween(
+                                    performance = performance,
+                                    durationMillis = 300,
+                                    delayMillis = delayMillis,
+                                    easing = LiquidMotion.EmphasizedDecelerate,
+                                ),
+                                initialOffsetY = { direction * enterDistancePx },
                             ) + fadeEnter,
                             slideOutVertically(
-                                animationSpec = LiquidMotion.tween(performance, 140),
-                                targetOffsetY = { direction * distancePx },
+                                animationSpec = LiquidMotion.tween(
+                                    performance = performance,
+                                    durationMillis = 140,
+                                    easing = LiquidMotion.EmphasizedAccelerate,
+                                ),
+                                targetOffsetY = { direction * exitDistancePx },
                             ) + fadeExit,
                         )
                     }
                     LiquidScreenEntranceAnimation.Scale ->
                         LiquidScreenEntranceTransitions(
                             scaleIn(
-                                animationSpec = LiquidMotion.tween(performance, 320, delayMillis = delayMillis),
-                                initialScale = 0.94f,
+                                animationSpec = LiquidMotion.tween(
+                                    performance = performance,
+                                    durationMillis = 300,
+                                    delayMillis = delayMillis,
+                                    easing = LiquidMotion.EmphasizedDecelerate,
+                                ),
+                                initialScale = 0.95f,
                             ) + fadeEnter,
                             scaleOut(
-                                animationSpec = LiquidMotion.tween(performance, 140),
-                                targetScale = 0.94f,
+                                animationSpec = LiquidMotion.tween(
+                                    performance = performance,
+                                    durationMillis = 140,
+                                    easing = LiquidMotion.EmphasizedAccelerate,
+                                ),
+                                targetScale = 0.96f,
                             ) + fadeExit,
                         )
                 }

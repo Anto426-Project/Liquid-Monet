@@ -30,7 +30,7 @@ internal object LiquidSectionEntranceMotion {
                 progress.snapTo(0f)
                 progress.animateTo(
                     1f,
-                    LiquidMotion.tween(performance, durationMillis = 320, delayMillis = delayMillis, easing = LiquidMotion.EmphasizedDecelerate),
+                    LiquidMotion.tween(performance, durationMillis = 300, delayMillis = delayMillis, easing = LiquidMotion.EmphasizedDecelerate),
                 )
             }
         }

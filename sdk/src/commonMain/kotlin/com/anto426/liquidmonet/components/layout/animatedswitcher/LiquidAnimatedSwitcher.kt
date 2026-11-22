@@ -66,6 +66,23 @@ enum class LiquidSwitcherTransition {
 }
 
 /**
+ * Motion scope for [LiquidAnimatedSwitcher].
+ *
+ * Separates full-viewport screen-to-screen navigation from in-screen tab and inline switchers so
+ * local content swaps keep crisp, lightweight motion instead of inheriting heavy page transitions.
+ */
+enum class LiquidSwitcherMode {
+    /** Full-viewport screen-to-screen navigation transitions using the chosen [LiquidSwitcherTransition]. */
+    Screen,
+
+    /** Dedicated directional horizontal micro-glide tuned for in-screen tab bars. */
+    Tab,
+
+    /** Dedicated lightweight fade-and-settle transition tuned for inline filters and state swaps. */
+    Inline,
+}
+
+/**
  * Changes arbitrary content with the same adaptive motion used by Liquid Monet navigation.
  *
  * [isForward] is optional for naturally ordered states: numbers and mutually comparable values are
@@ -77,11 +94,12 @@ fun <T> LiquidAnimatedSwitcher(
     targetState: T,
     modifier: Modifier = Modifier,
     transition: LiquidSwitcherTransition = LiquidSwitcherTransition.LiquidMorph,
+    mode: LiquidSwitcherMode = LiquidSwitcherMode.Screen,
     isForward: ((initialState: T, targetState: T) -> Boolean)? = null,
     onSwipeForward: (() -> Unit)? = null,
     onSwipeBackward: (() -> Unit)? = null,
     swipeThreshold: Dp = 48.dp,
-    contentAlignment: Alignment = Alignment.Center,
+    contentAlignment: Alignment = Alignment.TopStart,
     label: String = "LiquidAnimatedSwitcher",
     onPredictiveBack: (() -> Unit)? = null,
     content: @Composable AnimatedContentScope.(targetState: T) -> Unit,
@@ -96,7 +114,13 @@ fun <T> LiquidAnimatedSwitcher(
     val scope = rememberCoroutineScope()
     val forwardAction by rememberUpdatedState(onSwipeForward)
     val backwardAction by rememberUpdatedState(onSwipeBackward)
-    val predictiveBack = rememberLiquidPredictiveBackState(onPredictiveBack)
+    val hasSwipeGestures = onSwipeForward != null || onSwipeBackward != null
+    val predictiveBack =
+        if (onPredictiveBack != null) {
+            rememberLiquidPredictiveBackState(onPredictiveBack)
+        } else {
+            null
+        }
     val thresholdPx = with(density) { swipeThreshold.toPx() }
     var rawDragOffsetPx by remember { mutableFloatStateOf(0f) }
     var dragOffsetPx by remember { mutableFloatStateOf(0f) }
@@ -122,7 +146,7 @@ fun <T> LiquidAnimatedSwitcher(
     }
 
     val touchModifier =
-        if (onSwipeForward != null || onSwipeBackward != null) {
+        if (hasSwipeGestures) {
             Modifier.semantics {
                     customActions = buildList {
                         if (forwardAction != null) {
@@ -181,27 +205,34 @@ fun <T> LiquidAnimatedSwitcher(
             Modifier
         }
 
+    val gestureLayerModifier =
+        if (hasSwipeGestures || predictiveBack != null) {
+            Modifier.graphicsLayer {
+                val axisSize = size.width.coerceAtLeast(1f)
+                val drag = if (motionEnabled && hasSwipeGestures) dragOffsetPx else 0f
+                val backProgress =
+                    if (motionEnabled && predictiveBack != null) predictiveBack.progress else 0f
+                val backEdge = predictiveBack?.edgeDirection ?: 1f
+                val deformation = (abs(drag) / axisSize).coerceIn(0f, 0.16f)
+                transformOrigin = TransformOrigin.Center
+                translationX = drag * 0.36f + axisSize * 0.14f * backProgress * backEdge
+                scaleX = (1f + deformation * 0.18f) * (1f - backProgress * 0.03f)
+                scaleY = (1f - deformation * 0.10f) * (1f - backProgress * 0.03f)
+                alpha = 1f - backProgress * 0.06f
+                clip = false
+            }
+        } else {
+            Modifier
+        }
+
     AnimatedContent(
         targetState = targetState,
-        modifier =
-            modifier.then(touchModifier).graphicsLayer {
-                val axisSize = size.width.coerceAtLeast(1f)
-                val drag = if (motionEnabled) dragOffsetPx else 0f
-                val backProgress = if (motionEnabled) predictiveBack.progress else 0f
-                val deformation = (abs(drag) / axisSize).coerceIn(0f, 0.22f)
-                transformOrigin = TransformOrigin.Center
-                translationX =
-                    drag * 0.42f +
-                        axisSize * 0.16f * backProgress * predictiveBack.edgeDirection
-                scaleX = (1f + deformation * 0.28f) * (1f - backProgress * 0.025f)
-                scaleY = (1f - deformation * 0.16f) * (1f - backProgress * 0.025f)
-                alpha = 1f - backProgress * 0.08f
-                clip = false
-            },
+        modifier = modifier.then(touchModifier).then(gestureLayerModifier),
         transitionSpec =
             LiquidAnimatedSwitcherMotion.contentTransition(
                 performance,
                 transition = transition,
+                mode = mode,
                 isForward = isForward,
                 isLtr = isLtr,
             ),
