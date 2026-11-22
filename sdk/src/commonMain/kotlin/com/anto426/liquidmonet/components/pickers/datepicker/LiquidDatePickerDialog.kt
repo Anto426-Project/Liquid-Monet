@@ -7,6 +7,7 @@ import com.anto426.liquidmonet.components.buttons.button.LiquidButton
 import com.anto426.liquidmonet.components.buttons.button.LiquidButtonVariant
 import com.anto426.liquidmonet.components.feedback.dialog.LiquidDialog
 import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerFilter
+import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerLabels
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
 import kotlin.time.Clock
@@ -23,6 +24,7 @@ fun LiquidDatePickerDialog(
     modifier: Modifier = Modifier,
     initialDate: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     filter: LiquidDatePickerFilter = LiquidDatePickerFilter.All,
+    labels: LiquidDatePickerLabels = rememberLiquidDatePickerLabels(),
     backdropState: Backdrop = emptyBackdrop(),
 ) {
     if (!isOpen) return
@@ -31,12 +33,12 @@ fun LiquidDatePickerDialog(
 
     LiquidDialog(
         onDismissRequest = onDismissRequest,
-        title = "Seleziona Data",
+        title = labels.dialogTitle,
         modifier = modifier,
         backdropState = backdropState,
         confirmButton = {
             LiquidButton(
-                text = "Conferma",
+                text = labels.confirmAction,
                 variant = LiquidButtonVariant.Primary,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
@@ -47,7 +49,7 @@ fun LiquidDatePickerDialog(
         },
         dismissButton = {
             LiquidButton(
-                text = "Annulla",
+                text = labels.cancelAction,
                 variant = LiquidButtonVariant.Secondary,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onDismissRequest,
@@ -56,6 +58,7 @@ fun LiquidDatePickerDialog(
     ) {
         LiquidDatePicker(
             state = state,
+            labels = labels,
             backdropState = backdropState,
         )
     }

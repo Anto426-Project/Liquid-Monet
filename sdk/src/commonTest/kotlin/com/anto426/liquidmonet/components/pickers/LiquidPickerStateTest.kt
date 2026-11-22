@@ -1,6 +1,7 @@
 package com.anto426.liquidmonet.components.pickers
 
 import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerFilter
+import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerLabels
 import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerState
 import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDateSelectionMode
 import com.anto426.liquidmonet.components.pickers.timepicker.state.LiquidTimePickerState
@@ -112,5 +113,23 @@ class LiquidPickerStateTest {
         assertEquals(2026, state.displayedYear)
         assertEquals(12, state.displayedMonth)
         assertFalse(state.canNavigateNextMonth)
+    }
+
+    @Test
+    fun datePickerLabelsResolveSupportedLanguagesWithoutHardcodedFallbackLeakage() {
+        val en = LiquidDatePickerLabels.forLanguage("en-US")
+        val it = LiquidDatePickerLabels.forLanguage("it_IT")
+        val de = LiquidDatePickerLabels.forLanguage("de")
+        val unknown = LiquidDatePickerLabels.forLanguage("sv")
+
+        assertEquals("November", en.monthNames[10])
+        assertEquals("3 dates", en.selectedCountFormat(3))
+        assertEquals("No date selected", en.emptySelection)
+
+        assertEquals("Novembre", it.monthNames[10])
+        assertEquals("3 date", it.selectedCountFormat(3))
+
+        assertEquals("März", de.monthNames[2])
+        assertEquals(en, unknown)
     }
 }

@@ -36,6 +36,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,12 +56,10 @@ import com.anto426.liquidmonet.components.internal.performLiquidHaptic
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.components.pickers.datepicker.motion.LiquidDatePickerMotion
 import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerFilter
+import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerLabels
 import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerState
 import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDateSelectionMode
 import com.anto426.liquidmonet.components.pickers.datepicker.state.currentLocalDate
-import com.anto426.liquidmonet.components.pickers.datepicker.state.monthNames
-import com.anto426.liquidmonet.components.pickers.datepicker.state.shortMonthNames
-import com.anto426.liquidmonet.components.pickers.datepicker.state.shortWeekdayNames
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LocalLiquidGlassContainerMode
@@ -75,6 +74,12 @@ import com.kyant.shapes.Capsule
 import com.kyant.shapes.RoundedRectangle
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
+
+@Composable
+fun rememberLiquidDatePickerLabels(
+    languageTag: String = Locale.current.language
+): LiquidDatePickerLabels =
+    remember(languageTag) { LiquidDatePickerLabels.forLanguage(languageTag) }
 
 @Composable
 fun rememberLiquidDatePickerState(
@@ -105,19 +110,20 @@ fun rememberLiquidDatePickerState(
  * Inline calendar built from Liquid Monet primitives ([LiquidCard], [LiquidBadge], [LiquidButton],
  * [LiquidIconButton], [LiquidHorizontalDivider], [liquidClickable], and [liquidGlass]): one
  * coherent glass surface, directional month transitions, date filtering, single or multi-date
- * selection, and optional quick year jump.
+ * selection, localized labels, and optional quick year jump.
  */
 @Composable
 fun LiquidDatePicker(
     state: LiquidDatePickerState,
     modifier: Modifier = Modifier,
     backdropState: Backdrop = emptyBackdrop(),
+    labels: LiquidDatePickerLabels = rememberLiquidDatePickerLabels(),
     allowYearSelection: Boolean = true,
     showTodayAction: Boolean = state.selectionMode == LiquidDateSelectionMode.Single,
     showClearAction: Boolean = state.selectionMode == LiquidDateSelectionMode.Multiple,
-    clearActionLabel: String = "Pulisci",
-    todayActionLabel: String = "Oggi",
-    emptySelectionLabel: String = "Nessuna data",
+    clearActionLabel: String = labels.clearAction,
+    todayActionLabel: String = labels.todayAction,
+    emptySelectionLabel: String = labels.emptySelection,
 ) {
     val isInsideSharedContainer =
         LocalLiquidGlassContainerMode.current == LiquidGlassContainerMode.Shared
@@ -130,6 +136,7 @@ fun LiquidDatePicker(
             LiquidDatePickerContent(
                 state = state,
                 backdropState = backdropState,
+                labels = labels,
                 allowYearSelection = allowYearSelection,
                 showTodayAction = showTodayAction,
                 showClearAction = showClearAction,
@@ -152,6 +159,7 @@ fun LiquidDatePicker(
                 LiquidDatePickerContent(
                     state = state,
                     backdropState = backdropState,
+                    labels = labels,
                     allowYearSelection = allowYearSelection,
                     showTodayAction = showTodayAction,
                     showClearAction = showClearAction,
@@ -168,6 +176,7 @@ fun LiquidDatePicker(
 private fun LiquidDatePickerContent(
     state: LiquidDatePickerState,
     backdropState: Backdrop,
+    labels: LiquidDatePickerLabels,
     allowYearSelection: Boolean,
     showTodayAction: Boolean,
     showClearAction: Boolean,
@@ -204,24 +213,24 @@ private fun LiquidDatePickerContent(
 
     val selectedDates = state.selectedDates
     val selectedSummary =
-        remember(selectedDates, emptySelectionLabel) {
+        remember(selectedDates, emptySelectionLabel, labels) {
             when (selectedDates.size) {
                 0 -> emptySelectionLabel
                 1 -> {
                     val date = selectedDates.first()
-                    val weekday = shortWeekdayNames[date.dayOfWeek.ordinal]
-                    val month = shortMonthNames[date.month.number - 1]
+                    val weekday = labels.shortWeekdayNames[date.dayOfWeek.ordinal]
+                    val month = labels.shortMonthNames[date.month.number - 1]
                     "$weekday ${date.day} $month ${date.year}"
                 }
                 2 ->
                     selectedDates.sorted().joinToString(", ") { date ->
-                        "${date.day} ${shortMonthNames[date.month.number - 1]}"
+                        "${date.day} ${labels.shortMonthNames[date.month.number - 1]}"
                     }
-                else -> "${selectedDates.size} date"
+                else -> labels.selectedCountFormat(selectedDates.size)
             }
         }
 
-    // Selected date summary badge + quick action LiquidButton ("Pulisci" / "Oggi")
+    // Selected date summary badge + quick action LiquidButton
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -335,7 +344,7 @@ private fun LiquidDatePickerContent(
             AnimatedContent(
                 targetState =
                     if (isSelectingYear) "$yearPageStart – ${yearPageStart + 11}"
-                    else state.monthName,
+                    else state.formatMonthName(labels),
                 transitionSpec = LiquidDatePickerMotion.contentTransition(performance),
                 label = "calendarMonthHeader",
             ) { title ->
@@ -355,7 +364,8 @@ private fun LiquidDatePickerContent(
                 Icon(
                     imageVector = LiquidIcons.KeyboardArrowDown,
                     contentDescription =
-                        if (isSelectingYear) "Chiudi selezione anno" else "Seleziona anno",
+                        if (isSelectingYear) labels.closeYearSelectionDescription
+                        else labels.selectYearDescription,
                     tint = colors.secondaryContent,
                     modifier = Modifier.size(18.dp).graphicsLayer { rotationZ = chevronRotation },
                 )
@@ -373,7 +383,9 @@ private fun LiquidDatePickerContent(
                     state.previousMonth()
                 }
             },
-            contentDescription = if (isSelectingYear) "Anni precedenti" else "Mese precedente",
+            contentDescription =
+                if (isSelectingYear) labels.previousYearsDescription
+                else labels.previousMonthDescription,
             variant = LiquidIconButtonVariant.Ghost,
             size = 38.dp,
             backdropState = backdrop,
@@ -389,7 +401,9 @@ private fun LiquidDatePickerContent(
                     state.nextMonth()
                 }
             },
-            contentDescription = if (isSelectingYear) "Anni successivi" else "Mese successivo",
+            contentDescription =
+                if (isSelectingYear) labels.nextYearsDescription
+                else labels.nextMonthDescription,
             variant = LiquidIconButtonVariant.Ghost,
             size = 38.dp,
             backdropState = backdrop,
@@ -513,7 +527,7 @@ private fun LiquidDatePickerContent(
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth()) {
-                    listOf("L", "M", "M", "G", "V", "S", "D").forEachIndexed { index, day ->
+                    labels.weekdayInitials.forEachIndexed { index, day ->
                         Text(
                             text = day,
                             modifier = Modifier.weight(1f),
@@ -711,8 +725,9 @@ fun LiquidDatePickerField(
     selectedDate: LocalDate?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "Seleziona Data",
-    placeholder: String = "GG/MM/AAAA",
+    labels: LiquidDatePickerLabels = rememberLiquidDatePickerLabels(),
+    label: String = labels.fieldLabel,
+    placeholder: String = labels.fieldPlaceholder,
     enabled: Boolean = true,
     backdropState: Backdrop = emptyBackdrop(),
 ) {
@@ -728,11 +743,11 @@ fun LiquidDatePickerField(
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val useCompactMonth = maxWidth < 215.dp
         val formattedDate =
-            remember(selectedDate, useCompactMonth) {
+            remember(selectedDate, useCompactMonth, labels) {
                 selectedDate?.let { date ->
                     val month =
-                        if (useCompactMonth) shortMonthNames[date.month.number - 1]
-                        else monthNames[date.month.number - 1]
+                        if (useCompactMonth) labels.shortMonthNames[date.month.number - 1]
+                        else labels.monthNames[date.month.number - 1]
                     "${date.day} $month ${date.year}"
                 }
             }
