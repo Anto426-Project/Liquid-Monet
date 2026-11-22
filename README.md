@@ -20,7 +20,7 @@ SDK 2.0 groups each component with its state and motion: see [API migration](doc
   - `LiquidDialog`, `LiquidSheet`, `LiquidToast` & `LiquidSnackbar`
   - `LiquidCard`, `LiquidButton`, `LiquidFloatingActionButton`, `LiquidSwitch`, `LiquidSlider` & `LiquidRangeSlider`
   - `LiquidLoading`, `LiquidLinearProgressIndicator` & `LiquidCircularProgressIndicator`
-  - `LiquidMediaController`, `LiquidControlCenterTile`, `LiquidChip` & `LiquidShimmerBox`
+  - `LiquidMediaController`, `LiquidStatusCard`, `LiquidChip` & `LiquidShimmerBox`
   - `LiquidAnimatedSwitcher`, `LiquidChipSelectionGroup` & `LiquidLazyFooter`
   - Nine screen-transition presets and five entrance styles via `LiquidScreenEntrance` / `LiquidSectionEntrance`
   - one `LiquidTextField` API with `LiquidTextFieldType` for text, email, phone, number, password and text area
