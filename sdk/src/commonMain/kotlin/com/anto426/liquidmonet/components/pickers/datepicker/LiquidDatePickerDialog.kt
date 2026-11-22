@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import com.anto426.liquidmonet.components.buttons.button.LiquidButton
 import com.anto426.liquidmonet.components.buttons.button.LiquidButtonVariant
 import com.anto426.liquidmonet.components.feedback.dialog.LiquidDialog
+import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerFilter
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
 import kotlin.time.Clock
@@ -21,11 +22,12 @@ fun LiquidDatePickerDialog(
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     initialDate: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+    filter: LiquidDatePickerFilter = LiquidDatePickerFilter.All,
     backdropState: Backdrop = emptyBackdrop(),
 ) {
     if (!isOpen) return
 
-    val state = rememberLiquidDatePickerState(initialDate)
+    val state = rememberLiquidDatePickerState(initialDate = initialDate, filter = filter)
 
     LiquidDialog(
         onDismissRequest = onDismissRequest,

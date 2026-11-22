@@ -1,6 +1,8 @@
 package com.anto426.liquidmonet.components.pickers
 
+import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerFilter
 import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDatePickerState
+import com.anto426.liquidmonet.components.pickers.datepicker.state.LiquidDateSelectionMode
 import com.anto426.liquidmonet.components.pickers.timepicker.state.LiquidTimePickerState
 import kotlin.test.*
 import kotlinx.datetime.LocalDate
@@ -64,5 +66,51 @@ class LiquidPickerStateTest {
         assertEquals(2026, state.displayedYear)
         assertEquals(11, state.displayedMonth)
         assertEquals(target, state.selectedDate)
+    }
+
+    @Test
+    fun dateFilterRestrictsSelectionAndMonthNavigation() {
+        val blocked = LocalDate(2026, 11, 25)
+        val filter =
+            LiquidDatePickerFilter.range(
+                minDate = LocalDate(2026, 11, 22),
+                maxDate = LocalDate(2026, 12, 5),
+                isSelectable = { it != blocked },
+                isMarked = { it == blocked },
+            )
+        val state =
+            LiquidDatePickerState(
+                initialDate = LocalDate(2026, 11, 22),
+                selectionMode = LiquidDateSelectionMode.Multiple,
+                initialFilter = filter,
+            )
+
+        assertFalse(state.canNavigatePreviousMonth)
+        assertTrue(state.canNavigateNextMonth)
+        assertFalse(state.selectDate(LocalDate(2026, 11, 21)))
+        assertFalse(state.selectDate(blocked))
+        assertTrue(state.isDateMarked(blocked))
+
+        assertTrue(state.selectDate(LocalDate(2026, 11, 23)))
+        assertTrue(state.selectDate(LocalDate(2026, 11, 24)))
+        assertEquals(setOf(LocalDate(2026, 11, 23), LocalDate(2026, 11, 24)), state.selectedDates)
+
+        // Toggle off an already-selected date in multi-select mode.
+        assertTrue(state.selectDate(LocalDate(2026, 11, 23)))
+        assertEquals(setOf(LocalDate(2026, 11, 24)), state.selectedDates)
+
+        // Updating the filter prunes newly disallowed dates automatically.
+        state.updateFilter(
+            LiquidDatePickerFilter.range(
+                minDate = LocalDate(2026, 11, 25),
+                maxDate = LocalDate(2026, 12, 5),
+            )
+        )
+        assertTrue(state.selectedDates.isEmpty())
+
+        state.nextMonth()
+        assertEquals(2026, state.displayedYear)
+        assertEquals(12, state.displayedMonth)
+        assertFalse(state.canNavigateNextMonth)
     }
 }
