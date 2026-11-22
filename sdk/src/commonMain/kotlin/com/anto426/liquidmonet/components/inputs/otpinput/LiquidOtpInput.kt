@@ -6,8 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -87,7 +86,6 @@ fun LiquidOtpInput(
     val performance = LocalLiquidGlassPerformance.current
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
-    val cellShape = remember { RoundedRectangle(16.dp) }
     val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
 
     var isFocused by remember { mutableStateOf(false) }
@@ -190,19 +188,24 @@ fun LiquidOtpInput(
         cursorBrush = SolidColor(Color.Transparent),
         enabled = enabled,
         decorationBox = {
-            BoxWithConstraints {
+            BoxWithConstraints(contentAlignment = Alignment.Center) {
                 val density = LocalDensity.current
-                val effectiveCellWidth = maxOf(cellWidth, with(density) { 24.sp.toDp() } + 16.dp)
-                val effectiveCellHeight = maxOf(cellHeight, with(density) { 32.sp.toDp() } + 24.dp)
-                val capacity = if (constraints.hasBoundedWidth) {
-                    ((maxWidth + spacing) / (effectiveCellWidth + spacing)).toInt().coerceAtLeast(1)
-                } else length
-                val rows = (length + capacity - 1) / capacity
-                val columns = (length + rows - 1) / rows
+                val layout = resolveLiquidOtpLayout(
+                    length = length,
+                    availableWidth = if (constraints.hasBoundedWidth) maxWidth else null,
+                    preferredCellWidth = cellWidth,
+                    preferredCellHeight = cellHeight,
+                    preferredSpacing = spacing,
+                    fontScale = density.fontScale,
+                )
+                val cellShape = remember(layout.cornerRadius) { RoundedRectangle(layout.cornerRadius) }
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(spacing, Alignment.CenterHorizontally),
-                    verticalArrangement = Arrangement.spacedBy(spacing),
-                    maxItemsInEachRow = columns,
+                    modifier = Modifier
+                        .padding(vertical = 3.dp)
+                        .graphicsLayer(clip = false),
+                    horizontalArrangement = Arrangement.spacedBy(layout.spacing, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(layout.spacing),
+                    maxItemsInEachRow = layout.columns,
                 ) {
                     for (i in 0 until length) {
                         val currentOtp = textFieldValue.text
@@ -268,7 +271,7 @@ fun LiquidOtpInput(
 
                         Box(
                             modifier =
-                                Modifier.width(effectiveCellWidth).heightIn(min = effectiveCellHeight)
+                                Modifier.size(width = layout.cellWidth, height = layout.cellHeight)
                                     .graphicsLayer {
                                         scaleX = cellScale
                                         scaleY = cellScale
@@ -295,6 +298,8 @@ fun LiquidOtpInput(
                             ) { digit ->
                                 Text(
                                     text = digit,
+                                    maxLines = 1,
+                                    softWrap = false,
                                     style =
                                         TextStyle(
                                             color =
@@ -303,7 +308,7 @@ fun LiquidOtpInput(
                                                 } else {
                                                     colorScheme.onSurface
                                                 },
-                                            fontSize = 22.sp,
+                                            fontSize = layout.digitFontSizeSp.sp,
                                             fontWeight = FontWeight.Bold,
                                             textAlign = TextAlign.Center,
                                         ),
@@ -314,5 +319,113 @@ fun LiquidOtpInput(
                 }
             }
         },
+    )
+}
+
+internal data class LiquidOtpLayoutMetrics(
+    val cellWidth: Dp,
+    val cellHeight: Dp,
+    val spacing: Dp,
+    val cornerRadius: Dp,
+    val digitFontSizeSp: Float,
+    val columns: Int,
+)
+
+internal fun resolveLiquidOtpLayout(
+    length: Int,
+    availableWidth: Dp?,
+    preferredCellWidth: Dp,
+    preferredCellHeight: Dp,
+    preferredSpacing: Dp,
+    fontScale: Float = 1f,
+): LiquidOtpLayoutMetrics {
+    val safeFontScale = fontScale.coerceAtLeast(1f)
+    val minSingleRowCellWidth = 30.dp
+    val minSingleRowSpacing = minOf(preferredSpacing, 4.dp)
+    // Keep slight horizontal margin so the 1.06x active scale on edge cells never clips.
+    val activeScaleMargin = 4.dp
+
+    val resolvedSpacing: Dp
+    val resolvedWidth: Dp
+    val resolvedHeight: Dp
+    val columns: Int
+
+    if (availableWidth == null) {
+        resolvedSpacing = preferredSpacing
+        resolvedWidth = preferredCellWidth
+        resolvedHeight = preferredCellHeight
+        columns = length
+    } else {
+        val usableWidth = (availableWidth - activeScaleMargin).coerceAtLeast(0.dp)
+        val gapCount = (length - 1).coerceAtLeast(0)
+        val desiredTotalWidth = preferredCellWidth * length + preferredSpacing * gapCount
+
+        if (desiredTotalWidth <= usableWidth || length == 1) {
+            resolvedSpacing = preferredSpacing
+            resolvedWidth = if (length == 1) {
+                minOf(preferredCellWidth, usableWidth.coerceAtLeast(minSingleRowCellWidth))
+            } else {
+                preferredCellWidth
+            }
+            resolvedHeight = preferredCellHeight
+            columns = length
+        } else {
+            // Shrink spacing and cell width proportionally first so 4-8 digit PIN/OTP fields
+            // stay on one crisp horizontal row even on compact 320-360dp devices.
+            val shrinkFactor = if (desiredTotalWidth > 0.dp) {
+                (usableWidth / desiredTotalWidth).coerceIn(0f, 1f)
+            } else {
+                1f
+            }
+            val proportionalSpacing =
+                (preferredSpacing * shrinkFactor).coerceIn(minSingleRowSpacing, preferredSpacing)
+            val proportionalCellWidth = (usableWidth - proportionalSpacing * gapCount) / length
+
+            if (proportionalCellWidth >= minSingleRowCellWidth) {
+                resolvedSpacing = proportionalSpacing
+                resolvedWidth = minOf(preferredCellWidth, proportionalCellWidth)
+                val widthRatio = (resolvedWidth / preferredCellWidth).coerceIn(0.76f, 1f)
+                resolvedHeight = (preferredCellHeight * widthRatio).coerceAtLeast(42.dp)
+                columns = length
+            } else {
+                val tightCellWidth = (usableWidth - minSingleRowSpacing * gapCount) / length
+                if (tightCellWidth >= minSingleRowCellWidth) {
+                    resolvedSpacing = minSingleRowSpacing
+                    resolvedWidth = minOf(preferredCellWidth, tightCellWidth)
+                    val widthRatio = (resolvedWidth / preferredCellWidth).coerceIn(0.76f, 1f)
+                    resolvedHeight = (preferredCellHeight * widthRatio).coerceAtLeast(42.dp)
+                    columns = length
+                } else {
+                    // Wrap only when single-row cells would become narrower than 30dp.
+                    val wrapSpacing = minOf(preferredSpacing, 6.dp)
+                    val minWrapWidth = minOf(preferredCellWidth, 36.dp)
+                    val capacity = ((usableWidth + wrapSpacing) / (minWrapWidth + wrapSpacing))
+                        .toInt()
+                        .coerceAtLeast(1)
+                    val rows = (length + capacity - 1) / capacity
+                    columns = (length + rows - 1) / rows
+                    val rowGapCount = (columns - 1).coerceAtLeast(0)
+                    val rowCellWidth = ((usableWidth - wrapSpacing * rowGapCount) / columns)
+                        .coerceIn(minSingleRowCellWidth, preferredCellWidth)
+                    resolvedSpacing = wrapSpacing
+                    resolvedWidth = rowCellWidth
+                    val widthRatio = (resolvedWidth / preferredCellWidth).coerceIn(0.76f, 1f)
+                    resolvedHeight = (preferredCellHeight * widthRatio).coerceAtLeast(42.dp)
+                }
+            }
+        }
+    }
+
+    val cornerRadius = (resolvedWidth * 0.34f).coerceIn(10.dp, 16.dp)
+    val maxGlyphDp = minOf(resolvedWidth * 0.56f, resolvedHeight * 0.48f)
+    val digitFontSizeSp = minOf(22f, maxGlyphDp.value / safeFontScale).coerceIn(14f, 22f)
+
+    return LiquidOtpLayoutMetrics(
+        cellWidth = resolvedWidth,
+        cellHeight = resolvedHeight,
+        spacing = resolvedSpacing,
+        cornerRadius = cornerRadius,
+        digitFontSizeSp = digitFontSizeSp,
+        columns = columns,
     )
 }
