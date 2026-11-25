@@ -284,6 +284,7 @@ private fun LiquidTopBarTitle(
     ) {
         Text(
             text = title,
+            modifier = Modifier.weight(1f, fill = false),
             style =
                 MaterialTheme.typography.titleLarge.copy(
                     fontSize = currentSize.sp,
@@ -307,6 +308,9 @@ private fun LiquidTopBarTitle(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Clip,
                 )
             }
         }
