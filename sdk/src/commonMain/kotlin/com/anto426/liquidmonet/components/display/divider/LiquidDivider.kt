@@ -6,14 +6,22 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
-import com.anto426.liquidmonet.theme.LiquidGlassTheme
+
+@Composable
+private fun defaultLiquidDividerColor(): Color {
+    val colorScheme = MaterialTheme.colorScheme
+    val isLight = colorScheme.surface.luminance() > 0.5f
+    return colorScheme.onSurface.copy(alpha = if (isLight) 0.10f else 0.12f)
+}
 
 /** LiquidHorizontalDivider - Subtle Liquid Glass Divider Line with Specular Gradient. */
 @Composable
@@ -23,7 +31,7 @@ fun LiquidHorizontalDivider(
     color: Color? = null,
 ) {
     LiquidInputNormalization.positive(thickness, "LiquidHorizontalDivider thickness")
-    val baseColor = color ?: LiquidGlassTheme.colors.outline
+    val baseColor = color ?: defaultLiquidDividerColor()
 
     Box(
         modifier =
@@ -53,7 +61,7 @@ fun LiquidVerticalDivider(
     color: Color? = null,
 ) {
     LiquidInputNormalization.positive(thickness, "LiquidVerticalDivider thickness")
-    val baseColor = color ?: LiquidGlassTheme.colors.outline
+    val baseColor = color ?: defaultLiquidDividerColor()
 
     Box(
         modifier =

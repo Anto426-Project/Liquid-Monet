@@ -403,7 +403,7 @@ private fun LiquidDatePickerContent(
         )
     }
 
-    LiquidHorizontalDivider(color = colors.outline.copy(alpha = 0.45f))
+    LiquidHorizontalDivider()
 
     // Body: either 4x3 year picker or 6x7 day grid (kept at matching height to prevent dialog jumps)
     AnimatedContent(
