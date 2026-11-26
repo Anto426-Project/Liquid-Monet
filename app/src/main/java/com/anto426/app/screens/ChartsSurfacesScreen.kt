@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.cards.card.LiquidCard
@@ -26,8 +27,12 @@ import com.anto426.liquidmonet.components.cards.statuscard.LiquidStatusType
 import com.anto426.liquidmonet.components.charts.barchart.LiquidBarChart
 import com.anto426.liquidmonet.components.charts.donutchart.LiquidDonutChart
 import com.anto426.liquidmonet.components.charts.linechart.LiquidLineChart
+import com.anto426.liquidmonet.components.charts.model.LiquidBarChartStyle
 import com.anto426.liquidmonet.components.charts.model.LiquidChartEntry
-import com.anto426.liquidmonet.components.charts.model.LiquidChartStyle
+import com.anto426.liquidmonet.components.charts.model.LiquidDonutChartStyle
+import com.anto426.liquidmonet.components.charts.model.LiquidLineChartStyle
+import com.anto426.liquidmonet.components.charts.model.LiquidLineSeries
+import com.anto426.liquidmonet.components.charts.model.LiquidLineStyle
 import com.anto426.liquidmonet.components.charts.model.LiquidPieEntry
 import com.anto426.liquidmonet.components.display.divider.LiquidHorizontalDivider
 import com.anto426.liquidmonet.components.display.iconcontainer.liquidIconContainer
@@ -49,7 +54,9 @@ fun ChartsSurfacesScreen(
     var smoothCurves by remember { mutableStateOf(true) }
     var showGrid by remember { mutableStateOf(true) }
     var showArea by remember { mutableStateOf(true) }
+    var showLineSelection by remember { mutableStateOf(true) }
     var barDatasetIndex by remember { mutableIntStateOf(0) }
+    var donutRoundCap by remember { mutableStateOf(true) }
     var selectedDonutLabel by remember { mutableStateOf<String?>(null) }
 
     val lineEntries = remember(lineDatasetIndex) {
@@ -116,6 +123,28 @@ fun ChartsSurfacesScreen(
         }
     }
 
+    val lineSeries = remember(lineDatasetIndex, showArea, lineEntries, weightedEntries, arithmeticEntries) {
+        listOf(
+            LiquidLineSeries(
+                label = if (lineDatasetIndex == 0) "Voto" else "Indice",
+                entries = lineEntries,
+                lineStyle = LiquidLineStyle.Solid,
+                showArea = showArea,
+                showPoints = true,
+            ),
+            LiquidLineSeries(
+                label = "Ponderata",
+                entries = weightedEntries,
+                lineStyle = LiquidLineStyle.Dashed,
+            ),
+            LiquidLineSeries(
+                label = "Aritmetica",
+                entries = arithmeticEntries,
+                lineStyle = LiquidLineStyle.Dotted,
+            ),
+        )
+    }
+
     val barEntries = remember(barDatasetIndex) {
         if (barDatasetIndex == 0) {
             listOf(
@@ -145,122 +174,134 @@ fun ChartsSurfacesScreen(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+        verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
-        // 1. Multi-series Line Chart
+        // 1. Containerless Multi-series Line Chart
         DemoAnimatedSection(order = 0) {
             LiquidSectionHeader(
                 title = "LiquidLineChart Multi-Serie",
-                subtitle = "Trascina il dito sul grafico per ispezionare i singoli punti e attiva/disattiva le serie dalla legenda.",
+                subtitle = "Grafico senza contenitore: serie illimitate, stili personalizzabili e scrubbing fluido.",
             )
-            LiquidCard(backdropState = backdropState) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        LiquidChip(
-                            label = "Carriera (18-30)",
-                            selected = lineDatasetIndex == 0,
-                            onClick = { lineDatasetIndex = 0 },
-                            backdropState = backdropState,
-                        )
-                        LiquidChip(
-                            label = "Rendimenti (0-100)",
-                            selected = lineDatasetIndex == 1,
-                            onClick = { lineDatasetIndex = 1 },
-                            backdropState = backdropState,
-                        )
-                        LiquidChip(
-                            label = "Curve morbide",
-                            selected = smoothCurves,
-                            onClick = { smoothCurves = !smoothCurves },
-                            backdropState = backdropState,
-                        )
-                        LiquidChip(
-                            label = "Griglia",
-                            selected = showGrid,
-                            onClick = { showGrid = !showGrid },
-                            backdropState = backdropState,
-                        )
-                        LiquidChip(
-                            label = "Area",
-                            selected = showArea,
-                            onClick = { showArea = !showArea },
-                            backdropState = backdropState,
-                        )
-                    }
-                    LiquidLineChart(
-                        entries = lineEntries,
-                        weightedAverageEntries = weightedEntries,
-                        arithmeticAverageEntries = arithmeticEntries,
-                        primarySeriesLabel = if (lineDatasetIndex == 0) "Voto" else "Indice",
-                        secondarySeriesLabel = "Ponderata",
-                        tertiarySeriesLabel = "Aritmetica",
-                        style = LiquidChartStyle(
-                            showGridLines = showGrid,
-                            showRefractiveArea = showArea,
-                            smoothCurves = smoothCurves,
-                        ),
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    LiquidChip(
+                        label = "Carriera (18-30)",
+                        selected = lineDatasetIndex == 0,
+                        onClick = { lineDatasetIndex = 0 },
+                        backdropState = backdropState,
+                    )
+                    LiquidChip(
+                        label = "Rendimenti (0-100)",
+                        selected = lineDatasetIndex == 1,
+                        onClick = { lineDatasetIndex = 1 },
+                        backdropState = backdropState,
+                    )
+                    LiquidChip(
+                        label = "Curve morbide",
+                        selected = smoothCurves,
+                        onClick = { smoothCurves = !smoothCurves },
+                        backdropState = backdropState,
+                    )
+                    LiquidChip(
+                        label = "Griglia",
+                        selected = showGrid,
+                        onClick = { showGrid = !showGrid },
+                        backdropState = backdropState,
+                    )
+                    LiquidChip(
+                        label = "Area",
+                        selected = showArea,
+                        onClick = { showArea = !showArea },
+                        backdropState = backdropState,
+                    )
+                    LiquidChip(
+                        label = "Dettaglio",
+                        selected = showLineSelection,
+                        onClick = { showLineSelection = !showLineSelection },
                         backdropState = backdropState,
                     )
                 }
+                LiquidLineChart(
+                    series = lineSeries,
+                    showLegend = true,
+                    showSelection = showLineSelection,
+                    style = LiquidLineChartStyle(
+                        showGridLines = showGrid,
+                        showYAxis = showGrid,
+                        smoothCurves = smoothCurves,
+                        dashedGridLines = true,
+                    ),
+                )
             }
         }
 
-        // 2. Bar Chart
+        // 2. Containerless Bar Chart
         DemoAnimatedSection(order = 1) {
             LiquidSectionHeader(
                 title = "LiquidBarChart",
-                subtitle = "Confronto per categoria con scrub continuo e selezione interattiva.",
+                subtitle = "Confronto per categoria senza contenitore, con stile barre e selezione personalizzabili.",
             )
-            LiquidCard(backdropState = backdropState) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        LiquidChip(
-                            label = "Distribuzione CFU",
-                            selected = barDatasetIndex == 0,
-                            onClick = { barDatasetIndex = 0 },
-                            backdropState = backdropState,
-                        )
-                        LiquidChip(
-                            label = "Trimestri",
-                            selected = barDatasetIndex == 1,
-                            onClick = { barDatasetIndex = 1 },
-                            backdropState = backdropState,
-                        )
-                    }
-                    LiquidBarChart(
-                        entries = barEntries,
-                        valueSuffix = if (barDatasetIndex == 0) "esami" else "pt",
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LiquidChip(
+                        label = "Distribuzione CFU",
+                        selected = barDatasetIndex == 0,
+                        onClick = { barDatasetIndex = 0 },
+                        backdropState = backdropState,
+                    )
+                    LiquidChip(
+                        label = "Trimestri",
+                        selected = barDatasetIndex == 1,
+                        onClick = { barDatasetIndex = 1 },
                         backdropState = backdropState,
                     )
                 }
+                LiquidBarChart(
+                    entries = barEntries,
+                    valueSuffix = if (barDatasetIndex == 0) "esami" else "pt",
+                    showSelection = true,
+                    style = LiquidBarChartStyle(
+                        barWidth = 24.dp,
+                        dashedGridLines = true,
+                    ),
+                )
             }
         }
 
-        // 3. Donut Chart
+        // 3. Containerless Donut Chart
         DemoAnimatedSection(order = 2) {
             LiquidSectionHeader(
                 title = "LiquidDonutChart",
-                subtitle = "Tocca uno spicchio o una voce in legenda per evidenziare la quota.",
+                subtitle = "Anello trasparente senza badge centrale o card, con legenda essenziale e cap arrotondati.",
             )
-            LiquidCard(backdropState = backdropState) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    LiquidDonutChart(
-                        entries = donutEntries,
-                        centerLabel = selectedDonutLabel ?: "Totale",
-                        centerValue = if (selectedDonutLabel == null) "22" else {
-                            donutEntries.firstOrNull { it.label == selectedDonutLabel }?.value?.toInt()?.toString() ?: "22"
-                        },
-                        onEntrySelected = { entry -> selectedDonutLabel = entry?.label },
-                        backdropState = backdropState,
-                    )
-                }
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                LiquidChip(
+                    label = if (donutRoundCap) "Estremità arrotondate" else "Estremità nette",
+                    selected = donutRoundCap,
+                    onClick = { donutRoundCap = !donutRoundCap },
+                    backdropState = backdropState,
+                )
+                LiquidDonutChart(
+                    entries = donutEntries,
+                    centerLabel = selectedDonutLabel ?: "Totale",
+                    centerValue = if (selectedDonutLabel == null) "22" else {
+                        donutEntries.firstOrNull { it.label == selectedDonutLabel }?.value?.toInt()?.toString() ?: "22"
+                    },
+                    showLegend = true,
+                    style = LiquidDonutChartStyle(
+                        strokeWidth = 20.dp,
+                        strokeCap = if (donutRoundCap) StrokeCap.Round else StrokeCap.Butt,
+                        sliceGapDegrees = if (donutRoundCap) 6f else 3f,
+                    ),
+                    onEntrySelected = { entry -> selectedDonutLabel = entry?.label },
+                )
             }
         }
 

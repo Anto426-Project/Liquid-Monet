@@ -1,10 +1,10 @@
 package com.anto426.app
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
@@ -19,7 +19,10 @@ import com.anto426.liquidmonet.components.buttons.button.LiquidButton
 import com.anto426.liquidmonet.components.charts.barchart.LiquidBarChart
 import com.anto426.liquidmonet.components.charts.donutchart.LiquidDonutChart
 import com.anto426.liquidmonet.components.charts.linechart.LiquidLineChart
+import com.anto426.liquidmonet.components.charts.model.LiquidBarChartStyle
 import com.anto426.liquidmonet.components.charts.model.LiquidChartEntry
+import com.anto426.liquidmonet.components.charts.model.LiquidLineSeries
+import com.anto426.liquidmonet.components.charts.model.LiquidLineStyle
 import com.anto426.liquidmonet.components.charts.model.LiquidPieEntry
 import com.anto426.liquidmonet.glass.LiquidGlassScene
 import org.junit.Assert.assertEquals
@@ -33,15 +36,22 @@ class LiquidChartControlsTest {
     @Test
     fun lineLegendTogglesSeriesIndependently() {
         val values = listOf(LiquidChartEntry("First", 24f), LiquidChartEntry("Last", 28f))
+        val weightedValues = listOf(LiquidChartEntry("First", 22f), LiquidChartEntry("Last", 25f))
         compose.setContent {
             MaterialTheme {
                 LiquidGlassScene {
                     LiquidLineChart(
-                        entries = values,
-                        modifier = Modifier.width(148.dp),
-                        weightedAverageEntries = listOf(LiquidChartEntry("First", 22f), LiquidChartEntry("Last", 25f)),
-                        primarySeriesLabel = "Grades",
-                        secondarySeriesLabel = "Weighted",
+                        series = listOf(
+                            LiquidLineSeries(label = "Grades", entries = values, showArea = true),
+                            LiquidLineSeries(
+                                label = "Weighted",
+                                entries = weightedValues,
+                                lineStyle = LiquidLineStyle.Dashed,
+                            ),
+                        ),
+                        modifier = Modifier.width(120.dp),
+                        showLegend = true,
+                        showSelection = true,
                     )
                 }
             }
@@ -61,7 +71,14 @@ class LiquidChartControlsTest {
         val changes = mutableListOf<LiquidPieEntry?>()
         compose.setContent {
             MaterialTheme {
-                LiquidGlassScene { LiquidDonutChart(entries, centerLabel = "Credits", onEntrySelected = { changes += it }) }
+                LiquidGlassScene {
+                    LiquidDonutChart(
+                        entries = entries,
+                        centerLabel = "Credits",
+                        showLegend = true,
+                        onEntrySelected = { changes += it },
+                    )
+                }
             }
         }
 
@@ -84,8 +101,9 @@ class LiquidChartControlsTest {
                     LiquidBarChart(
                         entries = entries,
                         modifier = Modifier.testTag("bars"),
-                        showXAxisLabels = false,
-                        onEntrySelected = { changes += it },
+                        style = LiquidBarChartStyle(showXAxisLabels = false),
+                        showSelection = true,
+                        onEntrySelected = { _, entry -> changes += entry },
                     )
                 }
             }
@@ -112,8 +130,7 @@ class LiquidChartControlsTest {
                     Column(Modifier.height(320.dp).verticalScroll(scroll)) {
                         LiquidLineChart(
                             entries = entries,
-                            showLegend = false,
-                            onEntrySelected = { changes += it },
+                            onEntrySelected = { _, entry -> changes += entry },
                         )
                         Spacer(Modifier.height(400.dp))
                     }

@@ -1,15 +1,16 @@
 package com.anto426.liquidmonet.components.charts.internal
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,17 +21,19 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -42,11 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
-import com.anto426.liquidmonet.components.display.badge.LiquidBadge
-import com.anto426.liquidmonet.components.display.sectionheader.LiquidSectionHeader
-import com.anto426.liquidmonet.components.display.sectionheader.LiquidSectionHeaderSize
-import com.anto426.liquidmonet.components.interaction.liquidClickable
-import com.kyant.backdrop.Backdrop
+import com.anto426.liquidmonet.components.charts.model.LiquidLineStyle
 import com.kyant.shapes.Capsule
 import com.kyant.shapes.RoundedRectangle
 import kotlin.math.roundToInt
@@ -61,9 +60,15 @@ internal enum class LiquidChartMark {
     }
 }
 
+internal fun LiquidLineStyle.toMark(): LiquidChartMark = when (this) {
+    LiquidLineStyle.Solid -> LiquidChartMark.Solid
+    LiquidLineStyle.Dashed -> LiquidChartMark.Dashed
+    LiquidLineStyle.Dotted -> LiquidChartMark.Dotted
+}
+
 @Composable
-private fun LiquidChartSwatch(color: Color, mark: LiquidChartMark) {
-    Canvas(Modifier.size(18.dp, 12.dp)) {
+internal fun LiquidChartSwatch(color: Color, mark: LiquidChartMark) {
+    Canvas(Modifier.size(16.dp, 12.dp)) {
         if (mark == LiquidChartMark.Dot) {
             drawCircle(color = color, radius = 4.dp.toPx())
         } else {
@@ -82,64 +87,109 @@ private fun LiquidChartSwatch(color: Color, mark: LiquidChartMark) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun LiquidChartLegend(
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     FlowRow(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         content()
     }
 }
 
+/** Frameless interactive legend toggle chip (no glass container). */
 @Composable
-internal fun LiquidChartLegendItem(
+internal fun LiquidChartLegendChip(
     label: String,
     color: Color,
     selected: Boolean,
-    backdrop: Backdrop,
-    modifier: Modifier = Modifier,
     mark: LiquidChartMark = LiquidChartMark.Dot,
-    value: String? = null,
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val shape = if (value == null) Capsule() else RoundedRectangle(14.dp)
-    LiquidBadge(
-        modifier = modifier
-            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+    val shape = remember { Capsule() }
+    val fill = if (selected) color.copy(alpha = 0.14f) else scheme.onSurface.copy(alpha = 0.05f)
+    val borderColor = if (selected) color.copy(alpha = 0.36f) else Color.Transparent
+
+    Row(
+        modifier = Modifier
+            .defaultMinSize(minHeight = 32.dp)
+            .clip(shape)
+            .background(fill)
+            .border(1.dp, borderColor, shape)
             .semantics { this.selected = selected }
-            .liquidClickable(shape = shape, onClick = onClick),
-        shape = shape,
-        containerColor = if (selected) color.copy(alpha = 0.15f) else scheme.surfaceVariant.copy(alpha = 0.40f),
-        contentColor = scheme.onSurface,
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-        border = if (selected) BorderStroke(1.dp, scheme.outline) else null,
-        backdropState = backdrop,
-    ) {
-        Row(
-            modifier = if (value == null) Modifier else Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            LiquidChartSwatch(color, mark)
-            Text(
-                text = label,
-                modifier = if (value == null) Modifier else Modifier.weight(1f),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                maxLines = if (value == null) 2 else Int.MAX_VALUE,
-                overflow = TextOverflow.Ellipsis,
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Checkbox,
+                onClick = onClick,
             )
-            if (value != null) {
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
-                    textAlign = TextAlign.End,
-                )
-            }
-        }
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LiquidChartSwatch(if (selected) color else color.copy(alpha = 0.40f), mark)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (selected) scheme.onSurface else scheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** Frameless legend row for part-to-whole charts (no glass container). */
+@Composable
+internal fun LiquidChartLegendRow(
+    label: String,
+    value: String,
+    color: Color,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val shape = remember { RoundedRectangle(12.dp) }
+    val background = if (selected) color.copy(alpha = 0.12f) else Color.Transparent
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 36.dp)
+            .clip(shape)
+            .background(background)
+            .semantics { this.selected = selected }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LiquidChartSwatch(color, LiquidChartMark.Dot)
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = scheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) color else scheme.onSurfaceVariant,
+            textAlign = TextAlign.End,
+            maxLines = 1,
+        )
     }
 }
 
@@ -148,47 +198,58 @@ internal fun LiquidChartSeriesValue(label: String, value: String, color: Color, 
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
         LiquidChartSwatch(color, mark)
         Text(
-            text = "$label  $value",
+            text = if (label.isBlank()) value else "$label  $value",
             style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = "tnum"),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
 
+/** Frameless selection readout (zero glass badge container). */
 @Composable
-internal fun LiquidChartSelection(
+internal fun LiquidChartSelectionReadout(
     label: String,
     value: String,
     color: Color,
-    backdrop: Backdrop,
     description: String? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val valueBadge: @Composable () -> Unit = {
-        LiquidBadge(
-            shape = Capsule(),
-            text = value,
-            containerColor = color.copy(alpha = 0.16f),
-            contentColor = scheme.onSurface,
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-            textStyle = MaterialTheme.typography.labelLarge.copy(
-                fontWeight = FontWeight.Bold,
-                fontFeatureSettings = "tnum",
-            ),
-            backdropState = backdrop,
-        )
-    }
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val stack = maxWidth < 200.dp || LocalDensity.current.fontScale > 1.4f
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            LiquidSectionHeader(
-                title = label,
-                subtitle = description,
-                subtitleColor = scheme.onSurfaceVariant,
-                size = LiquidSectionHeaderSize.Small,
-                trailingContent = if (stack) null else valueBadge,
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                modifier = Modifier.weight(1f).padding(end = 12.dp),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = scheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            if (stack) valueBadge()
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.Bold,
+                color = color,
+                maxLines = 1,
+            )
+        }
+        if (!description.isNullOrBlank()) {
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -213,7 +274,7 @@ internal fun LiquidChartAxis(ticks: List<String>, height: Dp, verticalInset: Dp)
         val width = constraints.constrainWidth(labels.maxOf { it.width })
         val plotHeight = constraints.maxHeight
         val inset = verticalInset.roundToPx()
-        val gap = (plotHeight - 2 * inset).coerceAtLeast(0) / (labels.size - 1)
+        val gap = (plotHeight - 2 * inset).coerceAtLeast(0) / (labels.size - 1).coerceAtLeast(1)
         layout(width, plotHeight) {
             labels.forEachIndexed { index, label ->
                 val y = (inset + index * gap - label.height / 2).coerceIn(0, plotHeight - label.height)

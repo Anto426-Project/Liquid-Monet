@@ -1,8 +1,14 @@
 package com.anto426.liquidmonet.components.charts
 
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.unit.dp
+import com.anto426.liquidmonet.components.charts.model.LiquidBarChartStyle
+import com.anto426.liquidmonet.components.charts.model.LiquidDonutChartStyle
+import com.anto426.liquidmonet.components.charts.model.LiquidLineChartStyle
 import com.anto426.liquidmonet.components.charts.model.formatLiquidChartValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class LiquidChartFormattingTest {
 
@@ -33,5 +39,14 @@ class LiquidChartFormattingTest {
         assertEquals("-28", formatLiquidChartValue(-28.0f))
         assertEquals("-0.5", formatLiquidChartValue(-0.5f))
         assertEquals("-2.33", formatLiquidChartValue(-2.333f))
+    }
+
+    @Test
+    fun chartStyleValidatorsRejectInvalidBounds() {
+        assertFailsWith<IllegalArgumentException> { LiquidLineChartStyle(gridLineCount = 1) }
+        assertFailsWith<IllegalArgumentException> { LiquidLineChartStyle(areaTopAlpha = 1.5f) }
+        assertFailsWith<IllegalArgumentException> { LiquidBarChartStyle(barWidth = 0.dp) }
+        assertFailsWith<IllegalArgumentException> { LiquidDonutChartStyle(sliceGapDegrees = -1f) }
+        assertEquals(StrokeCap.Round, LiquidDonutChartStyle(strokeCap = StrokeCap.Round).strokeCap)
     }
 }
