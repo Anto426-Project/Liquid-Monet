@@ -24,6 +24,8 @@ import androidx.compose.ui.semantics.collapse
 import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.cards.accordion.motion.LiquidAccordionMotion
 import com.anto426.liquidmonet.components.cards.card.LiquidCard
@@ -45,8 +47,11 @@ import com.kyant.shapes.RoundedRectangle
 data class LiquidExpandableCardStyle(
     val shape: Shape = RoundedRectangle(24.dp),
     val colors: LiquidCardColors? = null,
+    val headerMinHeight: Dp = 72.dp,
     val headerPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
     val contentPadding: PaddingValues = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+    val collapsedTitleMaxLines: Int = 1,
+    val collapsedSubtitleMaxLines: Int = 1,
     val showDivider: Boolean = true,
     val clipContent: Boolean = true,
 )
@@ -135,7 +140,7 @@ fun LiquidExpandableCard(
         Column(Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth()
-                    .defaultMinSize(minHeight = 48.dp)
+                    .defaultMinSize(minHeight = style.headerMinHeight)
                     .semantics {
                         if (isExpanded) {
                             collapse {
@@ -175,6 +180,8 @@ fun LiquidExpandableCard(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                        maxLines = if (isExpanded) Int.MAX_VALUE else style.collapsedTitleMaxLines,
+                        overflow = TextOverflow.Ellipsis,
                     )
                     if (!subtitle.isNullOrBlank()) {
                         Text(
@@ -182,6 +189,8 @@ fun LiquidExpandableCard(
                             style = MaterialTheme.typography.bodySmall,
                             color = if (style.colors != null) LocalContentColor.current
                             else MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = if (isExpanded) Int.MAX_VALUE else style.collapsedSubtitleMaxLines,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
