@@ -1,6 +1,7 @@
 package com.anto426.liquidmonet.icons
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
@@ -1297,6 +1298,379 @@ object LiquidIcons {
                 lineToRelative(4.0f, -4.0f)
                 lineToRelative(-4.0f, -4.0f)
                 verticalLineToRelative(3.0f)
+                close()
+            }.build()
+    }
+
+    val Sparkles: ImageVector by lazy {
+        ImageVector.Builder("Sparkles", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black)) {
+                moveTo(9.5f, 3f)
+                lineTo(11.4f, 8.6f)
+                lineTo(17f, 10.5f)
+                lineTo(11.4f, 12.4f)
+                lineTo(9.5f, 18f)
+                lineTo(7.6f, 12.4f)
+                lineTo(2f, 10.5f)
+                lineTo(7.6f, 8.6f)
+                close()
+                moveTo(18.5f, 2f)
+                lineTo(19.6f, 4.9f)
+                lineTo(22.5f, 6f)
+                lineTo(19.6f, 7.1f)
+                lineTo(18.5f, 10f)
+                lineTo(17.4f, 7.1f)
+                lineTo(14.5f, 6f)
+                lineTo(17.4f, 4.9f)
+                close()
+                moveTo(18.5f, 14f)
+                lineTo(19.4f, 16.6f)
+                lineTo(22f, 17.5f)
+                lineTo(19.4f, 18.4f)
+                lineTo(18.5f, 21f)
+                lineTo(17.6f, 18.4f)
+                lineTo(15f, 17.5f)
+                lineTo(17.6f, 16.6f)
+                close()
+            }.build()
+    }
+
+    val AutoMode: ImageVector by lazy {
+        ImageVector.Builder("AutoMode", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd) {
+                moveTo(12f, 2f)
+                curveTo(6.48f, 2f, 2f, 6.48f, 2f, 12f)
+                curveTo(2f, 17.52f, 6.48f, 22f, 12f, 22f)
+                curveTo(17.52f, 22f, 22f, 17.52f, 22f, 12f)
+                curveTo(22f, 6.48f, 17.52f, 2f, 12f, 2f)
+                close()
+                moveTo(12f, 4f)
+                lineTo(12f, 20f)
+                curveTo(7.58f, 20f, 4f, 16.42f, 4f, 12f)
+                curveTo(4f, 7.58f, 7.58f, 4f, 12f, 4f)
+                close()
+            }.build()
+    }
+
+    val LightMode: ImageVector by lazy {
+        ImageVector.Builder("LightMode", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black)) {
+                moveTo(12f, 7f)
+                curveTo(9.24f, 7f, 7f, 9.24f, 7f, 12f)
+                curveTo(7f, 14.76f, 9.24f, 17f, 12f, 17f)
+                curveTo(14.76f, 17f, 17f, 14.76f, 17f, 12f)
+                curveTo(17f, 9.24f, 14.76f, 7f, 12f, 7f)
+                close()
+                moveTo(11f, 2f); lineTo(13f, 2f); lineTo(13f, 5f); lineTo(11f, 5f); close()
+                moveTo(11f, 19f); lineTo(13f, 19f); lineTo(13f, 22f); lineTo(11f, 22f); close()
+                moveTo(2f, 11f); lineTo(5f, 11f); lineTo(5f, 13f); lineTo(2f, 13f); close()
+                moveTo(19f, 11f); lineTo(22f, 11f); lineTo(22f, 13f); lineTo(19f, 13f); close()
+                moveTo(4.93f, 6.34f); lineTo(6.34f, 4.93f); lineTo(8.46f, 7.05f); lineTo(7.05f, 8.46f); close()
+                moveTo(15.54f, 16.95f); lineTo(16.95f, 15.54f); lineTo(19.07f, 17.66f); lineTo(17.66f, 19.07f); close()
+                moveTo(17.66f, 4.93f); lineTo(19.07f, 6.34f); lineTo(16.95f, 8.46f); lineTo(15.54f, 7.05f); close()
+                moveTo(7.05f, 15.54f); lineTo(8.46f, 16.95f); lineTo(6.34f, 19.07f); lineTo(4.93f, 17.66f); close()
+            }.build()
+    }
+
+    val DarkMode: ImageVector by lazy {
+        ImageVector.Builder("DarkMode", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black)) {
+                moveTo(12.3f, 3f)
+                curveTo(10.64f, 4.58f, 9.75f, 6.91f, 10.12f, 9.39f)
+                curveTo(10.67f, 13.06f, 13.68f, 15.86f, 17.39f, 16.15f)
+                curveTo(18.78f, 16.26f, 20.1f, 15.96f, 21.22f, 15.36f)
+                curveTo(19.86f, 18.69f, 16.59f, 21.02f, 12.78f, 21f)
+                curveTo(7.69f, 20.98f, 3.63f, 16.75f, 3.85f, 11.67f)
+                curveTo(4.06f, 6.89f, 7.77f, 3.16f, 12.3f, 3f)
+                close()
+            }.build()
+    }
+
+    val Wallpaper: ImageVector by lazy {
+        ImageVector.Builder("Wallpaper", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd) {
+                moveTo(5f, 3f); lineTo(19f, 3f)
+                curveTo(20.1f, 3f, 21f, 3.9f, 21f, 5f)
+                lineTo(21f, 19f)
+                curveTo(21f, 20.1f, 20.1f, 21f, 19f, 21f)
+                lineTo(5f, 21f)
+                curveTo(3.9f, 21f, 3f, 20.1f, 3f, 19f)
+                lineTo(3f, 5f)
+                curveTo(3f, 3.9f, 3.9f, 3f, 5f, 3f)
+                close()
+                moveTo(6f, 17f); lineTo(18f, 17f); lineTo(14.2f, 12f); lineTo(11.2f, 15.8f); lineTo(9.1f, 13.2f); close()
+                moveTo(8.5f, 7f)
+                curveTo(7.67f, 7f, 7f, 7.67f, 7f, 8.5f)
+                curveTo(7f, 9.33f, 7.67f, 10f, 8.5f, 10f)
+                curveTo(9.33f, 10f, 10f, 9.33f, 10f, 8.5f)
+                curveTo(10f, 7.67f, 9.33f, 7f, 8.5f, 7f)
+                close()
+            }.build()
+    }
+
+    val SlowMotion: ImageVector by lazy {
+        ImageVector.Builder("SlowMotion", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black)) {
+                moveTo(4f, 7f); lineTo(14f, 7f); lineTo(14f, 9f); lineTo(4f, 9f); close()
+                moveTo(16f, 6f); lineTo(18f, 6f); lineTo(18f, 10f); lineTo(16f, 10f); close()
+                moveTo(19f, 7f); lineTo(21f, 7f); lineTo(21f, 9f); lineTo(19f, 9f); close()
+                moveTo(4f, 15f); lineTo(8f, 15f); lineTo(8f, 17f); lineTo(4f, 17f); close()
+                moveTo(9f, 14f); lineTo(11f, 14f); lineTo(11f, 18f); lineTo(9f, 18f); close()
+                moveTo(12f, 15f); lineTo(21f, 15f); lineTo(21f, 17f); lineTo(12f, 17f); close()
+            }.build()
+    }
+
+    val PageTransition: ImageVector by lazy {
+        ImageVector.Builder("PageTransition", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black)) {
+                moveTo(4f, 6f); lineTo(12f, 6f)
+                curveTo(13.1f, 6f, 14f, 6.9f, 14f, 8f)
+                lineTo(14f, 18f)
+                curveTo(14f, 19.1f, 13.1f, 20f, 12f, 20f)
+                lineTo(4f, 20f)
+                curveTo(2.9f, 20f, 2f, 19.1f, 2f, 18f)
+                lineTo(2f, 8f)
+                curveTo(2f, 6.9f, 2.9f, 6f, 4f, 6f)
+                close()
+                moveTo(16f, 4f); lineTo(20f, 4f)
+                curveTo(21.1f, 4f, 22f, 4.9f, 22f, 6f)
+                lineTo(22f, 16f)
+                curveTo(22f, 17.1f, 21.1f, 18f, 20f, 18f)
+                lineTo(16f, 18f)
+                close()
+            }.build()
+    }
+
+    val NavigationBar: ImageVector by lazy {
+        ImageVector.Builder("NavigationBar", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd) {
+                moveTo(4f, 3f); lineTo(20f, 3f)
+                curveTo(21.1f, 3f, 22f, 3.9f, 22f, 5f)
+                lineTo(22f, 19f)
+                curveTo(22f, 20.1f, 21.1f, 21f, 20f, 21f)
+                lineTo(4f, 21f)
+                curveTo(2.9f, 21f, 2f, 20.1f, 2f, 19f)
+                lineTo(2f, 5f)
+                curveTo(2f, 3.9f, 2.9f, 3f, 4f, 3f)
+                close()
+                moveTo(4f, 5f); lineTo(4f, 15f); lineTo(20f, 15f); lineTo(20f, 5f); close()
+                moveTo(6f, 17.2f); lineTo(10f, 17.2f); lineTo(10f, 18.8f); lineTo(6f, 18.8f); close()
+                moveTo(14f, 17.2f); lineTo(18f, 17.2f); lineTo(18f, 18.8f); lineTo(14f, 18.8f); close()
+            }.build()
+    }
+
+    val ElementEntrance: ImageVector by lazy {
+        ImageVector.Builder("ElementEntrance", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black)) {
+                moveTo(4f, 5f); lineTo(20f, 5f); lineTo(20f, 8f); lineTo(4f, 8f); close()
+                moveTo(4f, 10.5f); lineTo(17f, 10.5f); lineTo(17f, 13.5f); lineTo(4f, 13.5f); close()
+                moveTo(4f, 16f); lineTo(14f, 16f); lineTo(14f, 19f); lineTo(4f, 19f); close()
+            }.build()
+    }
+
+    val Smartphone: ImageVector by lazy {
+        ImageVector.Builder("Smartphone", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd) {
+                moveTo(7f, 1.5f)
+                lineTo(17f, 1.5f)
+                curveTo(18.1f, 1.5f, 19f, 2.4f, 19f, 3.5f)
+                lineTo(19f, 20.5f)
+                curveTo(19f, 21.6f, 18.1f, 22.5f, 17f, 22.5f)
+                lineTo(7f, 22.5f)
+                curveTo(5.9f, 22.5f, 5f, 21.6f, 5f, 20.5f)
+                lineTo(5f, 3.5f)
+                curveTo(5f, 2.4f, 5.9f, 1.5f, 7f, 1.5f)
+                close()
+                moveTo(7f, 5f)
+                lineTo(7f, 18.5f)
+                lineTo(17f, 18.5f)
+                lineTo(17f, 5f)
+                close()
+            }.build()
+    }
+
+    val Computer: ImageVector by lazy {
+        ImageVector.Builder("Computer", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd) {
+                moveTo(20f, 18f)
+                curveTo(21.1f, 18f, 22f, 17.1f, 22f, 16f)
+                lineTo(22f, 6f)
+                curveTo(22f, 4.9f, 21.1f, 4f, 20f, 4f)
+                lineTo(4f, 4f)
+                curveTo(2.9f, 4f, 2f, 4.9f, 2f, 6f)
+                lineTo(2f, 16f)
+                curveTo(2f, 17.1f, 2.9f, 18f, 4f, 18f)
+                lineTo(0f, 18f)
+                curveTo(0f, 19.1f, 0.9f, 20f, 2f, 20f)
+                lineTo(22f, 20f)
+                curveTo(23.1f, 20f, 24f, 19.1f, 24f, 18f)
+                close()
+                moveTo(4f, 6f)
+                lineTo(20f, 6f)
+                lineTo(20f, 16f)
+                lineTo(4f, 16f)
+                close()
+            }.build()
+    }
+
+    val Tablet: ImageVector by lazy {
+        ImageVector.Builder("Tablet", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd) {
+                moveTo(18.5f, 2f)
+                lineTo(5.5f, 2f)
+                curveTo(4.12f, 2f, 3f, 3.12f, 3f, 4.5f)
+                lineTo(3f, 19.5f)
+                curveTo(3f, 20.88f, 4.12f, 22f, 5.5f, 22f)
+                lineTo(18.5f, 22f)
+                curveTo(19.88f, 22f, 21f, 20.88f, 21f, 19.5f)
+                lineTo(21f, 4.5f)
+                curveTo(21f, 3.12f, 19.88f, 2f, 18.5f, 2f)
+                close()
+                moveTo(18.5f, 18f)
+                lineTo(5.5f, 18f)
+                lineTo(5.5f, 5.5f)
+                lineTo(18.5f, 5.5f)
+                close()
+            }.build()
+    }
+
+    val FlashOn: ImageVector by lazy {
+        ImageVector.Builder("FlashOn", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black)) {
+                moveTo(7f, 2f)
+                verticalLineToRelative(11f)
+                horizontalLineToRelative(3f)
+                verticalLineToRelative(9f)
+                lineToRelative(7f, -12f)
+                horizontalLineToRelative(-4f)
+                lineToRelative(4f, -8f)
+                close()
+            }.build()
+    }
+
+    val FlashOff: ImageVector by lazy {
+        ImageVector.Builder("FlashOff", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black)) {
+                moveTo(3.27f, 3f)
+                lineTo(2f, 4.27f)
+                lineToRelative(5f, 5f)
+                verticalLineTo(13f)
+                horizontalLineToRelative(3f)
+                verticalLineToRelative(9f)
+                lineToRelative(3.58f, -6.14f)
+                lineTo(17.73f, 20f)
+                lineTo(19f, 18.73f)
+                lineTo(3.27f, 3f)
+                close()
+                moveTo(17f, 10f)
+                horizontalLineToRelative(-4f)
+                lineToRelative(4f, -8f)
+                horizontalLineTo(7f)
+                verticalLineToRelative(2.18f)
+                lineToRelative(8.46f, 8.46f)
+                lineTo(17f, 10f)
+                close()
+            }.build()
+    }
+
+    val Camera: ImageVector by lazy {
+        ImageVector.Builder("Camera", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black)) {
+                moveTo(12f, 9f)
+                curveToRelative(-1.66f, 0f, -3f, 1.34f, -3f, 3f)
+                reflectiveCurveToRelative(1.34f, 3f, 3f, 3f)
+                reflectiveCurveToRelative(3f, -1.34f, 3f, -3f)
+                reflectiveCurveToRelative(-1.34f, -3f, -3f, -3f)
+                close()
+                moveTo(9f, 2f)
+                lineTo(7.17f, 4f)
+                horizontalLineTo(4f)
+                curveToRelative(-1.1f, 0f, -2f, 0.9f, -2f, 2f)
+                verticalLineToRelative(12f)
+                curveToRelative(0f, 1.1f, 0.9f, 2f, 2f, 2f)
+                horizontalLineToRelative(16f)
+                curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
+                verticalLineTo(6f)
+                curveToRelative(0f, -1.1f, -0.9f, -2f, -2f, -2f)
+                horizontalLineToRelative(-3.17f)
+                lineTo(15f, 2f)
+                horizontalLineTo(9f)
+                close()
+                moveTo(12f, 17f)
+                curveToRelative(-2.76f, 0f, -5f, -2.24f, -5f, -5f)
+                reflectiveCurveToRelative(2.24f, -5f, 5f, -5f)
+                reflectiveCurveToRelative(5f, 2.24f, 5f, 5f)
+                reflectiveCurveToRelative(-2.24f, 5f, -5f, 5f)
+                close()
+            }.build()
+    }
+
+    val Globe: ImageVector by lazy {
+        ImageVector.Builder("Globe", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd) {
+                moveTo(12f, 2f)
+                curveTo(6.48f, 2f, 2f, 6.48f, 2f, 12f)
+                curveTo(2f, 17.52f, 6.48f, 22f, 12f, 22f)
+                curveTo(17.52f, 22f, 22f, 17.52f, 22f, 12f)
+                curveTo(22f, 6.48f, 17.52f, 2f, 12f, 2f)
+                close()
+                moveTo(11f, 4.08f)
+                lineTo(11f, 8f)
+                lineTo(6.5f, 8f)
+                curveTo(7.55f, 5.95f, 9.16f, 4.49f, 11f, 4.08f)
+                close()
+                moveTo(13f, 4.08f)
+                curveTo(14.84f, 4.49f, 16.45f, 5.95f, 17.5f, 8f)
+                lineTo(13f, 8f)
+                close()
+                moveTo(4.08f, 11f)
+                curveTo(4.19f, 9.93f, 4.53f, 8.93f, 5.06f, 8.05f)
+                lineTo(5.55f, 9.5f)
+                lineTo(11f, 9.5f)
+                lineTo(11f, 11f)
+                close()
+                moveTo(13f, 9.5f)
+                lineTo(18.45f, 9.5f)
+                lineTo(18.94f, 8.05f)
+                curveTo(19.47f, 8.93f, 19.81f, 9.93f, 19.92f, 11f)
+                lineTo(13f, 11f)
+                close()
+                moveTo(4.08f, 13f)
+                lineTo(11f, 13f)
+                lineTo(11f, 14.5f)
+                lineTo(5.55f, 14.5f)
+                lineTo(5.06f, 15.95f)
+                curveTo(4.53f, 15.07f, 4.19f, 14.07f, 4.08f, 13f)
+                close()
+                moveTo(13f, 13f)
+                lineTo(19.92f, 13f)
+                curveTo(19.81f, 14.07f, 19.47f, 15.07f, 18.94f, 15.95f)
+                lineTo(18.45f, 14.5f)
+                lineTo(13f, 14.5f)
+                close()
+                moveTo(11f, 16f)
+                lineTo(11f, 19.92f)
+                curveTo(9.16f, 19.51f, 7.55f, 18.05f, 6.5f, 16f)
+                close()
+                moveTo(13f, 16f)
+                lineTo(17.5f, 16f)
+                curveTo(16.45f, 18.05f, 14.84f, 19.51f, 13f, 19.92f)
+                close()
+            }.build()
+    }
+
+    val SpeechBubble: ImageVector by lazy {
+        ImageVector.Builder("SpeechBubble", 24.dp, 24.dp, 24f, 24f)
+            .path(fill = SolidColor(Color.Black)) {
+                moveTo(20f, 2f)
+                lineTo(4f, 2f)
+                curveTo(2.9f, 2f, 2f, 2.9f, 2f, 4f)
+                lineTo(2f, 22f)
+                lineTo(6f, 18f)
+                lineTo(20f, 18f)
+                curveTo(21.1f, 18f, 22f, 17.1f, 22f, 16f)
+                lineTo(22f, 4f)
+                curveTo(22f, 2.9f, 21.1f, 2f, 20f, 2f)
                 close()
             }.build()
     }
