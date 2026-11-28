@@ -33,7 +33,9 @@ import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.buttons.iconbutton.LiquidIconButton
 import com.anto426.liquidmonet.components.buttons.iconbutton.LiquidIconButtonVariant
 import com.anto426.liquidmonet.components.feedback.snackbar.motion.LiquidSnackbarMotion
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
 import com.anto426.liquidmonet.glass.LiquidGlassRole
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
@@ -68,7 +70,8 @@ fun LiquidSnackbar(
     actionLabel: String? = null,
     onActionClick: (() -> Unit)? = null,
     onDismiss: (() -> Unit)? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
 ) {
     val performance = LocalLiquidGlassPerformance.current
     val offsetX = remember { LiquidFloatMotion(0f) }
@@ -95,7 +98,7 @@ fun LiquidSnackbar(
         }
 
     val shape = RoundedRectangle(16.dp)
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
 
     AnimatedVisibility(
         visible = visible,
@@ -143,6 +146,7 @@ fun LiquidSnackbar(
                         role = LiquidGlassRole.Menu,
                         containerColor =
                             accentColor.copy(alpha = glassColors.neutralContainer.alpha),
+                        backdropPolicy = backdropPolicy,
                     )
                     .defaultMinSize(minHeight = 56.dp)
                     .padding(start = 12.dp, top = 8.dp, end = 8.dp, bottom = 8.dp)

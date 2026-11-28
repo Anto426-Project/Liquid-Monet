@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.util.lerp
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LiquidGlassStyleManager
 import com.anto426.liquidmonet.glass.internal.liquidGlassDynamic
@@ -72,6 +73,7 @@ internal fun LiquidGlassBottomTabs(
     backdrop: Backdrop,
     tabsCount: Int,
     modifier: Modifier = Modifier,
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
     minimumContentHeight: Dp = 0.dp,
     content: @Composable RowScope.() -> Unit,
 ) {
@@ -85,7 +87,7 @@ internal fun LiquidGlassBottomTabs(
             themedSurface = colorScheme.surface,
         )
     val lightTint = rememberUpdatedState(if (isLightSurface) accentColor else Color.Unspecified)
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val performance = LocalLiquidGlassPerformance.current
     val navPerformance = remember(performance) { performance.asBalancedFrostedIfEssential() }
     val useEssentialFallback =
@@ -240,6 +242,7 @@ internal fun LiquidGlassBottomTabs(
                         containerColor = if (useEssentialFallback) null else containerColor,
                         preset = LiquidGlassPresets.Navigation,
                         performance = navPerformance,
+                        backdropPolicy = backdropPolicy,
                         layerBlock = {
                             val growth =
                                 if (motionEnabled) 16.dp.toPx() / size.width.coerceAtLeast(1f)

@@ -35,11 +35,11 @@ import com.anto426.liquidmonet.components.display.divider.LiquidHorizontalDivide
 import com.anto426.liquidmonet.components.display.iconcontainer.liquidIconContainer
 import com.anto426.liquidmonet.components.interaction.liquidClickable
 import com.anto426.liquidmonet.components.layout.expandablecontent.LiquidExpandableContent
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.RoundedRectangle
 
 /** Surface, spacing and child clipping for an expandable [LiquidCard]. */
@@ -56,51 +56,6 @@ data class LiquidExpandableCardStyle(
     val clipContent: Boolean = true,
 )
 
-/** An expandable card with a text header and independently interactive body. */
-@Composable
-fun LiquidAccordionItem(
-    title: String,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    leadingIcon: ImageVector? = null,
-    isExpanded: Boolean = false,
-    onExpandedChange: (Boolean) -> Unit = {},
-    backdropState: Backdrop = emptyBackdrop(),
-    content: @Composable () -> Unit,
-) = LiquidExpandableCard(
-    title = title,
-    modifier = modifier,
-    subtitle = subtitle,
-    leadingIcon = leadingIcon,
-    isExpanded = isExpanded,
-    onExpandedChange = onExpandedChange,
-    backdropState = backdropState,
-    content = content,
-)
-
-/** An expandable card using the default Liquid Card surface and spacing. */
-@Composable
-fun LiquidExpandableCard(
-    title: String,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    leadingIcon: ImageVector? = null,
-    isExpanded: Boolean = false,
-    onExpandedChange: (Boolean) -> Unit = {},
-    backdropState: Backdrop = emptyBackdrop(),
-    content: @Composable () -> Unit,
-) = LiquidExpandableCard(
-    title = title,
-    style = LiquidExpandableCardStyle(),
-    modifier = modifier,
-    subtitle = subtitle,
-    leadingIcon = leadingIcon,
-    isExpanded = isExpanded,
-    onExpandedChange = onExpandedChange,
-    backdropState = backdropState,
-    content = content,
-)
-
 /**
  * The header owns the expand action and uses the same press and drag physics as Liquid controls.
  * Controls in [content] own their interactions. [style] controls the same surface and clipping
@@ -109,13 +64,13 @@ fun LiquidExpandableCard(
 @Composable
 fun LiquidExpandableCard(
     title: String,
-    style: LiquidExpandableCardStyle,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     leadingIcon: ImageVector? = null,
     isExpanded: Boolean = false,
     onExpandedChange: (Boolean) -> Unit = {},
-    backdropState: Backdrop = emptyBackdrop(),
+    style: LiquidExpandableCardStyle = LiquidExpandableCardStyle(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
     content: @Composable () -> Unit,
 ) {
     val performance = LocalLiquidGlassPerformance.current
@@ -131,7 +86,7 @@ fun LiquidExpandableCard(
             scaleY = 1f + deformation * 0.022f
             transformOrigin = TransformOrigin(0.5f, 0f)
         },
-        backdropState = backdropState,
+        backdrop = backdrop,
         shape = style.shape,
         colors = style.colors ?: LiquidCardDefaults.colors(),
         contentPadding = PaddingValues(0.dp),

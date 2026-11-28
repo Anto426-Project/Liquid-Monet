@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.selection.radiobutton
+﻿package com.anto426.liquidmonet.components.selection.radiobutton
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,7 +36,7 @@ fun LiquidRadioButton(
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val interactiveHighlight = rememberLiquidControlHighlight()
     val hapticFeedback = LocalHapticFeedback.current
@@ -72,7 +72,7 @@ fun LiquidRadioButton(
             label = "radioLiquidDot",
         )
 
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     Box(
         modifier =

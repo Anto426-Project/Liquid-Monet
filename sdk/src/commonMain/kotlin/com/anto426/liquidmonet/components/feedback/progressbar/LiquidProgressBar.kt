@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.feedback.progressbar
+﻿package com.anto426.liquidmonet.components.feedback.progressbar
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.defaultMinSize
@@ -49,7 +49,7 @@ fun LiquidLinearProgressIndicator(
     height: Dp = 8.dp,
     trackColor: Color? = null,
     progressColor: Color? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     LiquidInputNormalization.positive(height, "LiquidLinearProgressIndicator height")
     val performance = LocalLiquidGlassPerformance.current
@@ -74,9 +74,9 @@ fun LiquidLinearProgressIndicator(
             modifier.progressSemantics()
         }
 
-    // Keep backdropState for API compatibility; the fluid ribbon renders directly without an
+    // Keep backdrop for API compatibility; the fluid ribbon renders directly without an
     // outer glass capsule so it remains lightweight and avoids nested-glass artifacts.
-    @Suppress("UNUSED_EXPRESSION") backdropState
+    @Suppress("UNUSED_EXPRESSION") backdrop
 
     val infiniteTransition =
         if (animateIndicator) {
@@ -511,7 +511,7 @@ fun LiquidCircularProgressIndicator(
     trackColor: Color? = null,
     progressColor: Color? = null,
     color: Color? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     LiquidInputNormalization.positive(
         indicatorSize,
@@ -539,9 +539,9 @@ fun LiquidCircularProgressIndicator(
             modifier.progressSemantics()
         }
 
-    // Keep backdropState for API compatibility; rendering bare fluid geometry prevents nested
+    // Keep backdrop for API compatibility; rendering bare fluid geometry prevents nested
     // glass pills inside buttons, cards, and modal overlays.
-    @Suppress("UNUSED_EXPRESSION") backdropState
+    @Suppress("UNUSED_EXPRESSION") backdrop
 
     val infiniteTransition =
         if (normalizedProgress == null && performance.animateFunctionalContent) {

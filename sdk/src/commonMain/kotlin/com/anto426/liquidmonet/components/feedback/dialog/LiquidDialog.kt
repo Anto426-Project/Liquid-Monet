@@ -39,18 +39,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anto426.liquidmonet.components.feedback.dialog.motion.LiquidDialogMotion
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
+import com.anto426.liquidmonet.glass.LiquidGlassLegibility
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LocalLiquidGlassContainerMode
+import com.anto426.liquidmonet.glass.LocalLiquidGlassLegibility
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassModalOverlayState
+import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.motion.rememberLiquidPredictiveBackState
 import com.anto426.liquidmonet.theme.LiquidGlassDefaults
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.RoundedRectangle
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -61,7 +65,9 @@ fun LiquidDialog(
     title: String,
     modifier: Modifier = Modifier,
     text: String? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
+    legibility: LiquidGlassLegibility = LocalLiquidGlassLegibility.current,
     confirmButton: (@Composable () -> Unit)? = null,
     dismissButton: (@Composable () -> Unit)? = null,
     scrimColor: Color? = null,
@@ -69,7 +75,6 @@ fun LiquidDialog(
     content: (@Composable () -> Unit)? = null,
 ) {
     val modalOverlayState = LocalLiquidGlassModalOverlayState.current
-    val effectiveBackdrop = LocalLiquidGlassContentBackdrop.current ?: backdropState
     val dialogContent: @Composable () -> Unit =
         content
             ?: {
@@ -87,17 +92,21 @@ fun LiquidDialog(
                 )
             }
     val hostedContent: @Composable () -> Unit = {
-        LiquidDialogLayer(
-            onDismissRequest = onDismissRequest,
-            title = title,
-            modifier = modifier,
-            backdropState = effectiveBackdrop,
-            confirmButton = confirmButton,
-            dismissButton = dismissButton,
-            scrimColor = scrimColor,
-            containerColor = containerColor,
-            content = dialogContent,
-        )
+        CompositionLocalProvider(LocalLiquidGlassLegibility provides legibility) {
+            LiquidDialogLayer(
+                onDismissRequest = onDismissRequest,
+                title = title,
+                modifier = modifier,
+                backdrop = backdrop,
+                backdropPolicy = backdropPolicy,
+                legibility = legibility,
+                confirmButton = confirmButton,
+                dismissButton = dismissButton,
+                scrimColor = scrimColor,
+                containerColor = containerColor,
+                content = dialogContent,
+            )
+        }
     }
 
     if (modalOverlayState == null) {
@@ -118,7 +127,9 @@ private fun LiquidDialogLayer(
     onDismissRequest: () -> Unit,
     title: String,
     modifier: Modifier = Modifier,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
+    backdropPolicy: LiquidGlassBackdropPolicy,
+    legibility: LiquidGlassLegibility,
     confirmButton: (@Composable () -> Unit)? = null,
     dismissButton: (@Composable () -> Unit)? = null,
     scrimColor: Color? = null,
@@ -126,7 +137,7 @@ private fun LiquidDialogLayer(
     content: @Composable () -> Unit,
 ) {
     val performance = LocalLiquidGlassPerformance.current
-    val effectiveBackdrop = LocalLiquidGlassContentBackdrop.current ?: backdropState
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val dimColor = scrimColor ?: LiquidGlassTheme.colors.scrim
 
     val visibilityState = remember {
@@ -191,6 +202,8 @@ private fun LiquidDialogLayer(
                 LiquidDialogPanel(
                     title = title,
                     backdrop = effectiveBackdrop,
+                    backdropPolicy = backdropPolicy,
+                    legibility = legibility,
                     modifier =
                         modifier.clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -212,6 +225,8 @@ private fun LiquidDialogLayer(
 private fun LiquidDialogPanel(
     title: String,
     backdrop: Backdrop,
+    backdropPolicy: LiquidGlassBackdropPolicy,
+    legibility: LiquidGlassLegibility,
     modifier: Modifier = Modifier,
     containerColor: Color? = null,
     confirmButton: (@Composable () -> Unit)? = null,
@@ -236,6 +251,8 @@ private fun LiquidDialogPanel(
                     shape = shape,
                     role = LiquidGlassRole.Dialog,
                     containerColor = containerColor,
+                    backdropPolicy = backdropPolicy,
+                    legibility = legibility,
                 )
                 .padding(horizontal = 20.dp, vertical = 22.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

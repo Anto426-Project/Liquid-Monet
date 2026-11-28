@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.pickers.timepicker
+﻿package com.anto426.liquidmonet.components.pickers.timepicker
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
@@ -80,13 +80,13 @@ fun rememberLiquidTimePickerState(
 fun LiquidTimePicker(
     state: LiquidTimePickerState,
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val scheme = MaterialTheme.colorScheme
     val colors = LiquidGlassTheme.colors
     val performance = LocalLiquidGlassPerformance.current
     val haptic = LocalHapticFeedback.current
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val isInsideSharedContainer =
         LocalLiquidGlassContainerMode.current == LiquidGlassContainerMode.Shared
 
@@ -179,7 +179,7 @@ fun LiquidTimePicker(
                         contentDescription = "Aumenta ore",
                         variant = LiquidIconButtonVariant.Ghost,
                         size = 40.dp,
-                        backdropState = effectiveBackdrop,
+                        backdrop = effectiveBackdrop,
                     )
                 }
                 Spacer(modifier = Modifier.width(colonWidth))
@@ -190,7 +190,7 @@ fun LiquidTimePicker(
                         contentDescription = "Aumenta minuti",
                         variant = LiquidIconButtonVariant.Ghost,
                         size = 40.dp,
-                        backdropState = effectiveBackdrop,
+                        backdrop = effectiveBackdrop,
                     )
                 }
             }
@@ -206,7 +206,7 @@ fun LiquidTimePicker(
                     direction = hourDirection,
                     width = drumWidth,
                     height = drumHeight,
-                    backdropState = effectiveBackdrop,
+                    backdrop = effectiveBackdrop,
                     onStep = stepHour,
                 )
 
@@ -231,7 +231,7 @@ fun LiquidTimePicker(
                     direction = minuteDirection,
                     width = drumWidth,
                     height = drumHeight,
-                    backdropState = effectiveBackdrop,
+                    backdrop = effectiveBackdrop,
                     onStep = stepMinute,
                 )
             }
@@ -248,7 +248,7 @@ fun LiquidTimePicker(
                         contentDescription = "Diminuisci ore",
                         variant = LiquidIconButtonVariant.Ghost,
                         size = 40.dp,
-                        backdropState = effectiveBackdrop,
+                        backdrop = effectiveBackdrop,
                     )
                 }
                 Spacer(modifier = Modifier.width(colonWidth))
@@ -259,7 +259,7 @@ fun LiquidTimePicker(
                         contentDescription = "Diminuisci minuti",
                         variant = LiquidIconButtonVariant.Ghost,
                         size = 40.dp,
-                        backdropState = effectiveBackdrop,
+                        backdrop = effectiveBackdrop,
                     )
                 }
             }
@@ -327,7 +327,7 @@ private fun LiquidTimeDrum(
     direction: Int,
     width: Dp,
     height: Dp,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
     onStep: (Int) -> Unit,
 ) {
     val colors = LiquidGlassTheme.colors
@@ -359,7 +359,7 @@ private fun LiquidTimeDrum(
         modifier =
             Modifier.size(width = width, height = height)
                 .liquidGlass(
-                    backdrop = backdropState,
+                    backdrop = backdrop,
                     shape = drumShape,
                     role = LiquidGlassRole.Control,
                     containerColor = containerColor,
@@ -456,7 +456,7 @@ fun LiquidTimePickerField(
     label: String = "Seleziona Ora",
     placeholder: String = "HH:MM",
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val formattedTime =
         remember(selectedHour, selectedMinute) {
@@ -468,7 +468,7 @@ fun LiquidTimePickerField(
     val interactiveHighlight = rememberLiquidControlHighlight()
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val shape = RoundedRectangle(20.dp)
     val borderColor =
         if (enabled) glassColors.outline

@@ -20,46 +20,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.isSpecified
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextStyle
-import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.components.buttons.button.motion.LiquidButtonMotion
 import com.anto426.liquidmonet.components.feedback.progressbar.LiquidCircularProgressIndicator
 import com.anto426.liquidmonet.components.internal.LiquidControlDefaults
 import com.anto426.liquidmonet.components.internal.LiquidGlassButton
+import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 
 /**
- * LiquidButton / LiquidButton - Single Unified Liquid Glass Button Component.
- *
- * Fully configurable through its styling parameters:
- *
- * @param variant Visual style ([LiquidButtonVariant.Primary], [LiquidButtonVariant.Secondary],
- *   [LiquidButtonVariant.Tonal], [LiquidButtonVariant.Glass], [LiquidButtonVariant.Outlined],
- *   [LiquidButtonVariant.Text]).
- * @param size Button dimension scale ([LiquidButtonSize.Small], [LiquidButtonSize.Medium],
- *   [LiquidButtonSize.Large]).
- * @param enabled Whether the button is enabled and interactive.
- * @param isLoading When true, replaces content with a smooth progress indicator.
- * @param leadingIcon Optional leading icon composable.
- * @param trailingIcon Optional trailing icon composable.
- * @param shape Corner shape (defaults to Capsule).
- * @param tint Custom color tint override (harmonized with Monet by default).
- * @param backdropState Optical glass backdrop reference.
+ * LiquidButton - Single canonical Liquid Glass button component.
  */
 @Composable
 fun LiquidButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     text: String? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
     enabled: Boolean = true,
     isLoading: Boolean = false,
     variant: LiquidButtonVariant = LiquidButtonVariant.Primary,
@@ -68,56 +53,45 @@ fun LiquidButton(
     tint: Color = Color.Unspecified,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
-    content: @Composable RowScope.() -> Unit = {
-        if (text != null) Text(text, Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)
-    },
-) {
-    val padding = when (size) {
-        LiquidButtonSize.Small -> PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-        LiquidButtonSize.Medium -> PaddingValues(horizontal = 20.dp, vertical = 10.dp)
-        LiquidButtonSize.Large -> PaddingValues(horizontal = 24.dp, vertical = 12.dp)
-    }
-    LiquidButton(
-        onClick = onClick, contentPadding = padding, modifier = modifier, text = text,
-        backdropState = backdropState, enabled = enabled, isLoading = isLoading,
-        variant = variant, size = size, shape = shape, tint = tint,
-        leadingIcon = leadingIcon, trailingIcon = trailingIcon, content = content,
-    )
-}
-
-/** Custom button padding, minimum height, colors, border and typography; size remains content-driven. */
-@Composable
-fun LiquidButton(
-    onClick: () -> Unit,
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-    text: String? = null,
-    backdropState: Backdrop = emptyBackdrop(),
-    enabled: Boolean = true,
-    isLoading: Boolean = false,
-    variant: LiquidButtonVariant = LiquidButtonVariant.Primary,
-    size: LiquidButtonSize = LiquidButtonSize.Medium,
-    shape: Shape = LiquidControlDefaults.shape,
-    tint: Color = Color.Unspecified,
-    leadingIcon: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null,
-    minimumHeight: Dp = when (size) {
-        LiquidButtonSize.Small -> 40.dp
-        LiquidButtonSize.Medium -> 48.dp
-        LiquidButtonSize.Large -> 56.dp
-    },
+    contentPadding: PaddingValues =
+        when (size) {
+            LiquidButtonSize.Small -> PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            LiquidButtonSize.Medium -> PaddingValues(horizontal = 20.dp, vertical = 10.dp)
+            LiquidButtonSize.Large -> PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+        },
+    minimumHeight: Dp =
+        when (size) {
+            LiquidButtonSize.Small -> 40.dp
+            LiquidButtonSize.Medium -> 48.dp
+            LiquidButtonSize.Large -> 56.dp
+        },
     containerColor: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
-    textStyle: TextStyle = when (size) {
-        LiquidButtonSize.Small -> MaterialTheme.typography.labelMedium
-        LiquidButtonSize.Medium -> MaterialTheme.typography.labelLarge
-        LiquidButtonSize.Large -> MaterialTheme.typography.titleSmall
-    },
-    border: BorderStroke? = if (variant == LiquidButtonVariant.Outlined) {
-        BorderStroke(1.dp, if (enabled) LiquidGlassTheme.colors.focusIndicator else LiquidGlassTheme.colors.outline.copy(alpha = 0.45f))
-    } else null,
+    textStyle: TextStyle =
+        when (size) {
+            LiquidButtonSize.Small -> MaterialTheme.typography.labelMedium
+            LiquidButtonSize.Medium -> MaterialTheme.typography.labelLarge
+            LiquidButtonSize.Large -> MaterialTheme.typography.titleSmall
+        },
+    border: BorderStroke? =
+        if (variant == LiquidButtonVariant.Outlined) {
+            BorderStroke(
+                1.dp,
+                if (enabled) LiquidGlassTheme.colors.focusIndicator
+                else LiquidGlassTheme.colors.outline.copy(alpha = 0.45f),
+            )
+        } else {
+            null
+        },
     content: @Composable RowScope.() -> Unit = {
-        if (text != null) Text(text, Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)
+        if (text != null) {
+            Text(
+                text = text,
+                modifier = Modifier.weight(1f, fill = false),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     },
 ) {
     LiquidInputNormalization.positive(minimumHeight, "LiquidButton minimumHeight")
@@ -142,16 +116,17 @@ fun LiquidButton(
             else -> Color.Transparent
         }
     val targetContentColor =
-        (if (contentColor.isSpecified) contentColor else when (variant) {
-            LiquidButtonVariant.Outlined,
-            LiquidButtonVariant.Text -> colorScheme.primary
-            LiquidButtonVariant.Primary,
-            LiquidButtonVariant.Secondary,
-            LiquidButtonVariant.Tonal,
-            LiquidButtonVariant.Glass -> glassColors.content
-        }).let { contentColor ->
-            if (enabled) contentColor else glassColors.disabledContent
-        }
+        (if (contentColor.isSpecified) contentColor
+            else
+                when (variant) {
+                    LiquidButtonVariant.Outlined,
+                    LiquidButtonVariant.Text -> colorScheme.primary
+                    LiquidButtonVariant.Primary,
+                    LiquidButtonVariant.Secondary,
+                    LiquidButtonVariant.Tonal,
+                    LiquidButtonVariant.Glass -> glassColors.content
+                })
+            .let { resolved -> if (enabled) resolved else glassColors.disabledContent }
 
     val animatedContentColor by
         LiquidButtonMotion.animateColor(
@@ -167,7 +142,7 @@ fun LiquidButton(
             label = "buttonTint",
         )
 
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     LiquidGlassButton(
         onClick = onClick,
         backdrop = effectiveBackdrop,
@@ -201,13 +176,9 @@ fun LiquidButton(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            if (leadingIcon != null) {
-                                leadingIcon()
-                            }
+                            if (leadingIcon != null) leadingIcon()
                             content()
-                            if (trailingIcon != null) {
-                                trailingIcon()
-                            }
+                            if (trailingIcon != null) trailingIcon()
                         }
                     }
                 }

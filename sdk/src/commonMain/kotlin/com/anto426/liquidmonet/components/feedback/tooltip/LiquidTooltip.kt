@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.feedback.tooltip
+﻿package com.anto426.liquidmonet.components.feedback.tooltip
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -37,7 +37,7 @@ import kotlinx.coroutines.delay
 fun LiquidTooltipBox(
     tooltip: String,
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     content: @Composable () -> Unit,
 ) {
     val performance = LocalLiquidGlassPerformance.current
@@ -46,7 +46,7 @@ fun LiquidTooltipBox(
     val colorScheme = MaterialTheme.colorScheme
     val contentColor = colorScheme.onSurface
     val shape = Capsule()
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     Box(
         modifier =

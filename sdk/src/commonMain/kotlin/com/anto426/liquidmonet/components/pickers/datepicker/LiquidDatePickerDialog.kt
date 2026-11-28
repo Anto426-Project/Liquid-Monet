@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.pickers.datepicker
+﻿package com.anto426.liquidmonet.components.pickers.datepicker
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -25,7 +25,7 @@ fun LiquidDatePickerDialog(
     initialDate: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     filter: LiquidDatePickerFilter = LiquidDatePickerFilter.All,
     labels: LiquidDatePickerLabels = LiquidDatePickerLabels.Default,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     if (!isOpen) return
 
@@ -35,7 +35,7 @@ fun LiquidDatePickerDialog(
         onDismissRequest = onDismissRequest,
         title = labels.dialogTitle,
         modifier = modifier,
-        backdropState = backdropState,
+        backdrop = backdrop,
         confirmButton = {
             LiquidButton(
                 text = labels.confirmAction,
@@ -59,7 +59,7 @@ fun LiquidDatePickerDialog(
         LiquidDatePicker(
             state = state,
             labels = labels,
-            backdropState = backdropState,
+            backdrop = backdrop,
         )
     }
 }

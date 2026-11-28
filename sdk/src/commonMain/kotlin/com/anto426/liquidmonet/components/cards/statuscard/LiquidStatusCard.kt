@@ -1,8 +1,9 @@
-package com.anto426.liquidmonet.components.cards.statuscard
+﻿package com.anto426.liquidmonet.components.cards.statuscard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -55,7 +56,7 @@ fun LiquidStatusCard(
     onAction: (() -> Unit)? = null,
     titleMaxLines: Int = Int.MAX_VALUE,
     descriptionMaxLines: Int = Int.MAX_VALUE,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val glassColors = LiquidGlassTheme.colors
     val statusColor =
@@ -68,13 +69,13 @@ fun LiquidStatusCard(
 
     val contentColor = glassColors.content
     val iconHighlight = rememberLiquidControlHighlight()
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     LiquidCard(
         modifier = modifier.fillMaxWidth(),
-        backdropState = effectiveBackdrop,
+        backdrop = effectiveBackdrop,
         shape = RoundedRectangle(22.dp),
-        contentPadding = 14.dp,
+        contentPadding = PaddingValues(14.dp),
         onClick = onClick,
     ) {
         val podBackdrop = resolveLiquidGlassBackdrop(effectiveBackdrop)
@@ -149,7 +150,7 @@ fun LiquidStatusCard(
                     LiquidButton(
                         text = actionLabel,
                         onClick = onAction,
-                        backdropState = effectiveBackdrop,
+                        backdrop = effectiveBackdrop,
                         modifier = Modifier.padding(top = 8.dp),
                     )
                 }

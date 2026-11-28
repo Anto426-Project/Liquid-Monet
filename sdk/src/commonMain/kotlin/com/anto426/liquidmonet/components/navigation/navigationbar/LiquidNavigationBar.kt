@@ -28,11 +28,12 @@ import androidx.compose.ui.unit.sp
 import com.anto426.liquidmonet.components.internal.LiquidGlassBottomTab
 import com.anto426.liquidmonet.components.internal.LiquidGlassBottomTabs
 import com.anto426.liquidmonet.components.navigation.navigationbar.motion.LiquidNavigationBarMotion
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
 
 data class LiquidNavigationItem(
@@ -53,11 +54,12 @@ fun LiquidNavigationBar(
     onItemSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
     visible: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
 ) {
     if (items.isEmpty()) return
     val normalizedSelectedIndex = selectedIndex.coerceIn(items.indices)
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val contentColor = LiquidGlassTheme.colors.content
     val reserveBadgeSpace = items.any { !it.badge.isNullOrEmpty() }
     val badgeHeight = with(LocalDensity.current) { 20.sp.toDp() } + 2.dp
@@ -71,6 +73,7 @@ fun LiquidNavigationBar(
             selectedTabIndex = { normalizedSelectedIndex },
             onTabSelected = onItemSelected,
             backdrop = effectiveBackdrop,
+            backdropPolicy = backdropPolicy,
             tabsCount = items.size,
             minimumContentHeight = minimumHeight,
         ) {

@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.selection.stepper
+﻿package com.anto426.liquidmonet.components.selection.stepper
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -42,7 +42,7 @@ fun LiquidStepper(
     step: Int = 1,
     unit: String? = null,
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     require(maxValue >= minValue) { "LiquidStepper maxValue must not be less than minValue." }
     require(step > 0) { "LiquidStepper step must be greater than zero." }
@@ -51,7 +51,7 @@ fun LiquidStepper(
     val canIncrement = safeValue.toLong() + step.toLong() <= maxValue.toLong()
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     Row(
         modifier =
@@ -76,7 +76,7 @@ fun LiquidStepper(
                 )
                 if (unit != null) {
                     Text(
-                        text = "Unità: $unit",
+                        text = "Unit\u00E0: $unit",
                         style = MaterialTheme.typography.labelSmall,
                         color = glassColors.secondaryContent,
                     )
@@ -100,7 +100,7 @@ fun LiquidStepper(
                         }
                     },
                     enabled = enabled && canDecrement,
-                    backdropState = effectiveBackdrop,
+                    backdrop = effectiveBackdrop,
                 )
 
                 Box(
@@ -126,7 +126,7 @@ fun LiquidStepper(
                         }
                     },
                     enabled = enabled && canIncrement,
-                    backdropState = effectiveBackdrop,
+                    backdrop = effectiveBackdrop,
                 )
             }
         }

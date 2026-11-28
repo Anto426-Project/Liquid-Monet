@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.navigation.pagination
+﻿package com.anto426.liquidmonet.components.navigation.pagination
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -53,7 +53,7 @@ fun LiquidPageIndicator(
     onPageSelected: ((Int) -> Unit)? = null,
     dotSize: Dp = 8.dp,
     dotSpacing: Dp = 10.dp,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     LiquidInputNormalization.positive(pageCount, "LiquidPageIndicator pageCount")
     LiquidInputNormalization.positive(dotSize, "LiquidPageIndicator dotSize")
@@ -82,7 +82,7 @@ fun LiquidPageIndicator(
             Modifier.width(width)
                 .height(44.dp)
                 .liquidGlass(
-                    resolveLiquidGlassBackdrop(backdropState),
+                    resolveLiquidGlassBackdrop(backdrop),
                     Capsule(),
                     role = LiquidGlassRole.Navigation,
                     containerColor = colors.neutralContainer,
@@ -178,7 +178,7 @@ fun LiquidPagination(
     totalPages: Int,
     onPageChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     LiquidInputNormalization.positive(totalPages, "LiquidPagination totalPages")
     val page = currentPage.coerceIn(1, totalPages)
@@ -189,7 +189,7 @@ fun LiquidPagination(
         modifier
             .heightIn(min = 52.dp)
             .liquidGlass(
-                resolveLiquidGlassBackdrop(backdropState),
+                resolveLiquidGlassBackdrop(backdrop),
                 Capsule(),
                 role = LiquidGlassRole.Navigation,
                 containerColor = colors.neutralContainer,

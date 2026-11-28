@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.feedback.loading
+﻿package com.anto426.liquidmonet.components.feedback.loading
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -55,7 +55,7 @@ import kotlin.math.sin
 
 /** Visual style variant for unified LiquidLoading. */
 enum class LiquidLoadingStyle {
-    /** Organic 360° refractive comet ring spinner with meniscus tip. */
+    /** Organic 360Â° refractive comet ring spinner with meniscus tip. */
     Circular,
     /** Fluid undulating liquid progress wave along a recessed glass channel. */
     Linear,
@@ -90,7 +90,7 @@ enum class LiquidLoadingSize {
  *   [LiquidLoadingSize.Large]).
  * @param message Optional text message displayed alongside/beneath the indicator.
  * @param tint Custom color tint (harmonized with Monet theme by default).
- * @param backdropState Optical glass backdrop reference.
+ * @param backdrop Optical glass backdrop reference.
  */
 @Composable
 fun LiquidLoading(
@@ -101,7 +101,7 @@ fun LiquidLoading(
     message: String? = null,
     tint: Color = Color.Unspecified,
     shape: Shape = RoundedRectangle(16.dp),
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
@@ -113,7 +113,7 @@ fun LiquidLoading(
         } else {
             colorScheme.tertiary
         }
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val explicitProgressColor = if (hasCustomTint) tint else null
 
     when (style) {
@@ -143,7 +143,7 @@ fun LiquidLoading(
                         indicatorSize = indicatorSize,
                         strokeWidth = strokeWidth,
                         progressColor = explicitProgressColor,
-                        backdropState = effectiveBackdrop,
+                        backdrop = effectiveBackdrop,
                     )
                     Text(
                         text = message,
@@ -163,7 +163,7 @@ fun LiquidLoading(
                     indicatorSize = indicatorSize,
                     strokeWidth = strokeWidth,
                     progressColor = explicitProgressColor,
-                    backdropState = effectiveBackdrop,
+                    backdrop = effectiveBackdrop,
                 )
             }
         }
@@ -188,7 +188,7 @@ fun LiquidLoading(
                     progress = progress,
                     height = heightDp,
                     progressColor = explicitProgressColor,
-                    backdropState = effectiveBackdrop,
+                    backdrop = effectiveBackdrop,
                 )
             }
         }
@@ -211,7 +211,7 @@ fun LiquidLoading(
                 primaryColor = primaryColor,
                 secondaryColor = secondaryColor,
                 message = message,
-                backdropState = effectiveBackdrop,
+                backdrop = effectiveBackdrop,
             )
         }
 
@@ -219,7 +219,7 @@ fun LiquidLoading(
             LiquidShimmerBox(
                 modifier = modifier,
                 shape = shape,
-                backdropState = effectiveBackdrop,
+                backdrop = effectiveBackdrop,
                 tint = tint,
             )
         }
@@ -232,7 +232,7 @@ fun LiquidLoading(
                 message = message ?: "Caricamento in corso...",
                 primaryColor = primaryColor,
                 explicitProgressColor = explicitProgressColor,
-                backdropState = effectiveBackdrop,
+                backdrop = effectiveBackdrop,
             )
         }
     }
@@ -431,7 +431,7 @@ private fun LiquidLoadingPulse(
     primaryColor: Color,
     secondaryColor: Color,
     message: String?,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
 ) {
     val animate = LocalLiquidGlassPerformance.current.animateFunctionalContent
     val isLight = MaterialTheme.colorScheme.surface.luminance() > 0.5f
@@ -528,7 +528,7 @@ private fun LiquidLoadingPulse(
                             scaleY = breatheScale * (1f - organicFlex)
                         }
                         .liquidGlass(
-                            backdrop = backdropState,
+                            backdrop = backdrop,
                             shape = Capsule(),
                             role = LiquidGlassRole.Control,
                             containerColor = primaryColor.copy(alpha = if (isLight) 0.22f else 0.28f),
@@ -592,7 +592,7 @@ private fun LiquidLoadingOverlay(
     message: String,
     primaryColor: Color,
     explicitProgressColor: Color?,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
 ) {
     val isLight = MaterialTheme.colorScheme.surface.luminance() > 0.5f
     val spinnerSize: Dp =
@@ -613,7 +613,7 @@ private fun LiquidLoadingOverlay(
             modifier
                 .widthIn(min = 148.dp, max = 280.dp)
                 .liquidGlass(
-                    backdrop = backdropState,
+                    backdrop = backdrop,
                     shape = RoundedRectangle(28.dp),
                     role = LiquidGlassRole.Dialog,
                     containerColor = LiquidGlassTheme.colors.neutralContainer,
@@ -651,7 +651,7 @@ private fun LiquidLoadingOverlay(
                     indicatorSize = spinnerSize,
                     strokeWidth = strokeWidth,
                     progressColor = explicitProgressColor,
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
             }
             Text(

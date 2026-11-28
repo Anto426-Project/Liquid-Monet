@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.selection.select
+﻿package com.anto426.liquidmonet.components.selection.select
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -64,7 +64,7 @@ fun <T> LiquidSelect(
     leadingIcon: ImageVector? = null,
     shape: Shape = RoundedRectangle(18.dp),
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val performance = LocalLiquidGlassPerformance.current
     var isExpanded by remember { mutableStateOf(false) }
@@ -72,7 +72,7 @@ fun <T> LiquidSelect(
     val interactiveHighlight = rememberLiquidControlHighlight()
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val selectBorderColor =
         when {
             isExpanded -> glassColors.focusIndicator
@@ -171,7 +171,7 @@ fun <T> LiquidSelect(
             onDismissRequest = { isExpanded = false },
             anchorState = anchorState,
             offset = DpOffset(0.dp, 6.dp),
-            backdropState = effectiveBackdrop,
+            backdrop = effectiveBackdrop,
         ) {
             items.forEach { item ->
                 LiquidMenuItem(

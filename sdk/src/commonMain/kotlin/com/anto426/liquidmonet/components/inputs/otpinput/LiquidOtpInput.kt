@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.inputs.otpinput
+﻿package com.anto426.liquidmonet.components.inputs.otpinput
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.border
@@ -73,7 +73,7 @@ fun LiquidOtpInput(
     cellHeight: Dp = 56.dp,
     spacing: Dp = 10.dp,
     onComplete: ((String) -> Unit)? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     require(length > 0) { "LiquidOtpInput length must be greater than zero." }
     require(cellWidth > 0.dp && cellHeight > 0.dp && spacing >= 0.dp) {
@@ -86,7 +86,7 @@ fun LiquidOtpInput(
     val performance = LocalLiquidGlassPerformance.current
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     var isFocused by remember { mutableStateOf(false) }
     val normalizedOtp =
@@ -210,7 +210,7 @@ fun LiquidOtpInput(
                     for (i in 0 until length) {
                         val currentOtp = textFieldValue.text
                         val rawChar = currentOtp.getOrNull(i)?.toString() ?: ""
-                        val displayChar = if (obscureText && rawChar.isNotEmpty()) "•" else rawChar
+                        val displayChar = if (obscureText && rawChar.isNotEmpty()) "\u2022" else rawChar
                         val isCurrent =
                             isFocused &&
                                 (currentOtp.length == i ||

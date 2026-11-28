@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.cards.preferenceitem
+﻿package com.anto426.liquidmonet.components.cards.preferenceitem
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -56,7 +56,7 @@ fun LiquidPreferenceGroup(
     subtitle: String? = null,
     size: LiquidSectionHeaderSize = LiquidSectionHeaderSize.Small,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -71,7 +71,7 @@ fun LiquidPreferenceGroup(
         }
         LiquidCard(
             modifier = Modifier.fillMaxWidth(),
-            backdropState = backdropState,
+            backdrop = backdrop,
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -92,7 +92,7 @@ fun LiquidPreferenceItem(
     icon: ImageVector? = null,
     leadingContent: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     trailingContent: (@Composable RowScope.() -> Unit)? = null,
 ) {
     val isInteractive = onClick != null
@@ -112,7 +112,7 @@ fun LiquidPreferenceItem(
             label = "preferenceIconContainer",
         )
 
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     Row(
         modifier =
@@ -202,7 +202,7 @@ fun <T> LiquidPreferenceDropdown(
     itemLabel: (T) -> String = { it.toString() },
     itemSubtitle: ((T) -> String?)? = null,
     itemIcon: ((T) -> ImageVector?)? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val performance = LocalLiquidGlassPerformance.current
     var isExpanded by remember { mutableStateOf(false) }
@@ -223,7 +223,7 @@ fun <T> LiquidPreferenceDropdown(
             subtitle = displaySubtitle,
             icon = icon ?: itemIcon?.invoke(selectedItem),
             onClick = if (enabled) ({ isExpanded = !isExpanded }) else null,
-            backdropState = backdropState,
+            backdrop = backdrop,
             trailingContent = {
                 Icon(
                     imageVector = LiquidIcons.KeyboardArrowDown,
@@ -239,7 +239,7 @@ fun <T> LiquidPreferenceDropdown(
             onDismissRequest = { isExpanded = false },
             anchorState = anchorState,
             offset = DpOffset(0.dp, 4.dp),
-            backdropState = backdropState,
+            backdrop = backdrop,
         ) {
             items.forEach { item ->
                 LiquidMenuItem(

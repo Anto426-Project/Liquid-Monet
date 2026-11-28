@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.display.swipetodismiss
+﻿package com.anto426.liquidmonet.components.display.swipetodismiss
 
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -68,7 +68,7 @@ fun LiquidSwipeToDismissBox(
     threshold: Dp = 95.dp,
     maxDrag: Dp = 150.dp,
     shape: Shape = RoundedRectangle(20.dp),
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     content: @Composable () -> Unit,
 ) {
     LiquidInputNormalization.positive(threshold, "LiquidSwipeToDismissBox threshold")
@@ -76,7 +76,7 @@ fun LiquidSwipeToDismissBox(
     require(maxDrag >= threshold) {
         "LiquidSwipeToDismissBox maxDrag must be greater than or equal to threshold."
     }
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val performance = LocalLiquidGlassPerformance.current
     val resolvedRightActionColor =
         if (rightActionColor.isSpecified) rightActionColor else LiquidGlassTheme.colors.error

@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.selection.switch
+﻿package com.anto426.liquidmonet.components.selection.switch
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -13,9 +13,9 @@ fun LiquidSwitch(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     LiquidGlassToggle(
         checked = checked,
         onCheckedChange = onCheckedChange,

@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.buttons.floatingactionbutton
+﻿package com.anto426.liquidmonet.components.buttons.floatingactionbutton
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +45,7 @@ fun LiquidFloatingActionButton(
     visible: Boolean = true,
     expanded: Boolean = true,
     label: (@Composable () -> Unit)? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     enabled: Boolean = true,
     containerColor: Color? = null,
     shape: Shape = RoundedRectangle(16.dp),
@@ -56,7 +56,7 @@ fun LiquidFloatingActionButton(
     val interactiveHighlight = rememberLiquidControlHighlight()
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     val fabOffsetY by
         LiquidFloatingActionButtonMotion.animateDpPrimary(

@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.navigation.breadcrumbs
+﻿package com.anto426.liquidmonet.components.navigation.breadcrumbs
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -47,10 +47,10 @@ data class LiquidBreadcrumbItem(
 fun LiquidBreadcrumbs(
     items: List<LiquidBreadcrumbItem>,
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     Row(
         modifier =

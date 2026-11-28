@@ -45,19 +45,23 @@ import androidx.compose.ui.unit.sp
 import com.anto426.liquidmonet.components.feedback.sheet.motion.LiquidSheetMotion
 import com.anto426.liquidmonet.components.internal.LiquidHapticCue
 import com.anto426.liquidmonet.components.internal.performLiquidHaptic
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
+import com.anto426.liquidmonet.glass.LiquidGlassLegibility
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LocalLiquidGlassContainerMode
+import com.anto426.liquidmonet.glass.LocalLiquidGlassLegibility
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassModalOverlayState
+import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.motion.animateLiquidFloat
 import com.anto426.liquidmonet.motion.rememberLiquidPredictiveBackState
 import com.anto426.liquidmonet.theme.LiquidGlassDefaults
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
 import com.kyant.shapes.RoundedRectangle
 import kotlin.math.abs
@@ -71,22 +75,27 @@ fun LiquidSheet(
     modifier: Modifier = Modifier,
     title: String? = null,
     subtitle: String? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
+    legibility: LiquidGlassLegibility = LocalLiquidGlassLegibility.current,
     containerColor: Color? = null,
     content: @Composable () -> Unit,
 ) {
     val modalOverlayState = LocalLiquidGlassModalOverlayState.current
-    val effectiveBackdrop = LocalLiquidGlassContentBackdrop.current ?: backdropState
     val hostedContent: @Composable () -> Unit = {
-        LiquidSheetLayer(
-            onDismissRequest = onDismissRequest,
-            modifier = modifier,
-            title = title,
-            subtitle = subtitle,
-            backdropState = effectiveBackdrop,
-            containerColor = containerColor,
-            content = content,
-        )
+        CompositionLocalProvider(LocalLiquidGlassLegibility provides legibility) {
+            LiquidSheetLayer(
+                onDismissRequest = onDismissRequest,
+                modifier = modifier,
+                title = title,
+                subtitle = subtitle,
+                backdrop = backdrop,
+                backdropPolicy = backdropPolicy,
+                legibility = legibility,
+                containerColor = containerColor,
+                content = content,
+            )
+        }
     }
 
     if (modalOverlayState == null) {
@@ -108,12 +117,14 @@ private fun LiquidSheetLayer(
     modifier: Modifier,
     title: String?,
     subtitle: String?,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
+    backdropPolicy: LiquidGlassBackdropPolicy,
+    legibility: LiquidGlassLegibility,
     containerColor: Color? = null,
     content: @Composable () -> Unit,
 ) {
     val performance = LocalLiquidGlassPerformance.current
-    val effectiveBackdrop = LocalLiquidGlassContentBackdrop.current ?: backdropState
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
     val contentColor = LiquidGlassDefaults.contentColorFor(containerColor, colorScheme)
@@ -257,6 +268,8 @@ private fun LiquidSheetLayer(
                                 shape = shape,
                                 role = LiquidGlassRole.Sheet,
                                 containerColor = containerColor,
+                                backdropPolicy = backdropPolicy,
+                                legibility = legibility,
                             )
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },

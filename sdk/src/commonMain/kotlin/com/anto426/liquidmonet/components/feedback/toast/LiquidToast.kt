@@ -48,8 +48,10 @@ import androidx.compose.ui.zIndex
 import com.anto426.liquidmonet.components.feedback.toast.motion.LiquidToastMotion
 import com.anto426.liquidmonet.components.feedback.toast.state.LiquidToastData
 import com.anto426.liquidmonet.components.feedback.toast.state.LiquidToastState
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LiquidGlassZIndex
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.essentialCardBaseColor
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
@@ -85,7 +87,8 @@ fun LiquidToastHost(
     state: LiquidToastState,
     modifier: Modifier = Modifier,
     alignment: Alignment = Alignment.TopCenter,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
 ) {
     val toast = state.currentToast
     val performance = LocalLiquidGlassPerformance.current
@@ -119,7 +122,8 @@ fun LiquidToastHost(
                     modifier =
                         Modifier.widthIn(max = 520.dp).fillMaxWidth().graphicsLayer(clip = false),
                     onDismiss = { state.dismiss() },
-                    backdropState = backdropState,
+                    backdrop = backdrop,
+                    backdropPolicy = backdropPolicy,
                 )
             }
         }
@@ -132,7 +136,8 @@ fun LiquidToast(
     data: LiquidToastData,
     modifier: Modifier = Modifier,
     onDismiss: (() -> Unit)? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
 ) {
     val performance = LocalLiquidGlassPerformance.current
     val density = LocalDensity.current
@@ -146,7 +151,7 @@ fun LiquidToast(
     val iconVector: ImageVector = data.icon ?: LiquidIcons.Info
 
     val shape = RoundedRectangle(20.dp)
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val toastPerformance = remember(performance) { performance.asBalancedFrostedIfEssential() }
     val effectiveTier = toastPerformance.opticalQualityTier ?: toastPerformance.qualityTier
     val isLightSurface = remember(colorScheme.surface) { colorScheme.surface.luminance() > 0.5f }
@@ -231,6 +236,7 @@ fun LiquidToast(
                 role = LiquidGlassRole.Surface,
                 containerColor = toastSurfaceColor,
                 performance = toastPerformance,
+                backdropPolicy = backdropPolicy,
             )
         }
 

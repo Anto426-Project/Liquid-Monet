@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.cards.mediacontroller
+﻿package com.anto426.liquidmonet.components.cards.mediacontroller
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -73,7 +73,7 @@ fun LiquidMediaController(
     totalTime: String = "3:45",
     onContainerClick: (() -> Unit)? = null,
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     animatePlaybackGlow: Boolean = true,
     progressState: State<Float>? = null,
     currentTimeState: State<String>? = null,
@@ -82,7 +82,7 @@ fun LiquidMediaController(
     val primaryColor = colorScheme.primary
     val glassColors = LiquidGlassTheme.colors
     val performance = LocalLiquidGlassPerformance.current
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     val shape = RoundedRectangle(28.dp)
     val albumShape = RoundedRectangle(16.dp)
@@ -165,7 +165,7 @@ fun LiquidMediaController(
                         size = 56.dp,
                         iconSize = 28.dp,
                         shape = albumShape,
-                        backdropState = effectiveBackdrop,
+                        backdrop = effectiveBackdrop,
                         containerColor =
                             primaryColor.copy(alpha = glassColors.accentContainer.alpha),
                         iconModifier =
@@ -214,7 +214,7 @@ fun LiquidMediaController(
                 // Linear Progress Indicator
                 LiquidMediaProgress(
                     progressState = effectiveProgressState,
-                    backdropState = effectiveBackdrop,
+                    backdrop = effectiveBackdrop,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -240,7 +240,7 @@ fun LiquidMediaController(
                         enabled = enabled,
                         size = 48.dp,
                         shape = controlShape,
-                        backdropState = effectiveBackdrop,
+                        backdrop = effectiveBackdrop,
                     )
                     LiquidIconButton(
                         icon = if (isPlaying) LiquidIcons.Pause else LiquidIcons.PlayArrow,
@@ -250,7 +250,7 @@ fun LiquidMediaController(
                         size = 60.dp,
                         iconSize = if (isPlaying) 28.dp else 32.dp,
                         shape = controlShape,
-                        backdropState = effectiveBackdrop,
+                        backdrop = effectiveBackdrop,
                         containerColor =
                             primaryColor.copy(alpha = glassColors.selectedContainer.alpha),
                         iconModifier =
@@ -282,7 +282,7 @@ fun LiquidMediaController(
                         enabled = enabled,
                         size = 48.dp,
                         shape = controlShape,
-                        backdropState = effectiveBackdrop,
+                        backdrop = effectiveBackdrop,
                     )
                 }
             }
@@ -293,12 +293,12 @@ fun LiquidMediaController(
 @Composable
 private fun LiquidMediaProgress(
     progressState: State<Float>,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
 ) {
     val progress by progressState
     LiquidLinearProgressIndicator(
         progress = progress,
-        backdropState = backdropState,
+        backdrop = backdrop,
     )
 }
 

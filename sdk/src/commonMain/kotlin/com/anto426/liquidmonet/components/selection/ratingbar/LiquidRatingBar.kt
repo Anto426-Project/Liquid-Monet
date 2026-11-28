@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.selection.ratingbar
+﻿package com.anto426.liquidmonet.components.selection.ratingbar
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -37,7 +37,7 @@ fun LiquidRatingBar(
     activeColor: Color = Color.Unspecified,
     inactiveColor: Color = Color.Unspecified,
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val safeMaxStars = LiquidInputNormalization.positive(maxStars, "LiquidRatingBar maxStars")
     LiquidInputNormalization.positive(starSize, "LiquidRatingBar starSize")
@@ -50,7 +50,7 @@ fun LiquidRatingBar(
         } else {
             LiquidGlassTheme.colors.inactiveTrack
         }
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     Row(
         modifier =

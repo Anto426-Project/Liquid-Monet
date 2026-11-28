@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.display.emptystate
+﻿package com.anto426.liquidmonet.components.display.emptystate
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -78,12 +78,12 @@ fun LiquidEmptyState(
     showSurfaceContainer: Boolean = false,
     contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
     shape: Shape = RoundedRectangle(24.dp),
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     customIcon: (@Composable () -> Unit)? = null,
     extraContent: (@Composable () -> Unit)? = null,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val resolvedMainIcon = icon ?: if (isError) LiquidIcons.Warning else LiquidIcons.MenuBook
     val resolvedBadgeIcon = badgeIcon ?: if (isError) LiquidIcons.Refresh else LiquidIcons.Info
     val podContainerColor = iconContainerColor ?: iconColor.copy(alpha = 0.20f)
@@ -235,7 +235,7 @@ fun LiquidEmptyState(
                                 onClick = onSecondaryActionClick,
                                 variant = LiquidButtonVariant.Secondary,
                                 size = LiquidButtonSize.Medium,
-                                backdropState = effectiveBackdrop,
+                                backdrop = effectiveBackdrop,
                             )
                         }
 
@@ -245,7 +245,7 @@ fun LiquidEmptyState(
                                 onClick = onActionClick,
                                 variant = LiquidButtonVariant.Primary,
                                 size = LiquidButtonSize.Medium,
-                                backdropState = effectiveBackdrop,
+                                backdrop = effectiveBackdrop,
                             )
                         }
                     }

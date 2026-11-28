@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.selection.chip
+﻿package com.anto426.liquidmonet.components.selection.chip
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -56,7 +56,7 @@ fun LiquidChip(
     onCloseClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     shape: Shape = Capsule(),
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     tint: Color = Color.Unspecified,
 ) {
     val interactiveHighlight = rememberLiquidControlHighlight()
@@ -64,7 +64,7 @@ fun LiquidChip(
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
 
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     val activeMonetColor = if (tint.isSpecified) tint else colorScheme.primary
 

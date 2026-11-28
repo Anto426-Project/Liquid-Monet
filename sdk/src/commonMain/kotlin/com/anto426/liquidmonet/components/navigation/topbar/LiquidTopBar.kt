@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.navigation.topbar
+﻿package com.anto426.liquidmonet.components.navigation.topbar
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -46,10 +46,12 @@ import com.anto426.liquidmonet.components.buttons.iconbutton.LiquidIconButtonVar
 import com.anto426.liquidmonet.components.inputs.searchbar.LiquidSearchBar
 import com.anto426.liquidmonet.components.menu.morphingaction.LiquidMorphingAction
 import com.anto426.liquidmonet.components.navigation.topbar.motion.LiquidTopBarMotion
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LocalLiquidGlassContainerMode
 import com.anto426.liquidmonet.glass.LocalLiquidGlassTopBarScrollBehavior
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.liquidTopBarZIndex
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
@@ -58,7 +60,6 @@ import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.glass.runtime.asBalancedFrostedIfEssential
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
 
 data class LiquidTopBarAction(
@@ -89,7 +90,8 @@ fun LiquidTopBar(
     showNavigationIcon: Boolean = false,
     onNavigationClick: (() -> Unit)? = null,
     navigationIcon: @Composable () -> Unit = {},
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     actionItems: List<LiquidTopBarAction> = emptyList(),
     isSearchActive: Boolean = false,
@@ -100,7 +102,7 @@ fun LiquidTopBar(
     onHeightChanged: ((Dp) -> Unit)? = null,
     actions: (@Composable RowScope.() -> Unit)? = null,
 ) {
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val effectiveScrollBehavior = scrollBehavior ?: LocalLiquidGlassTopBarScrollBehavior.current
     val performance = LocalLiquidGlassPerformance.current
     val topBarPerformance = remember(performance) { performance.asBalancedFrostedIfEssential() }
@@ -128,6 +130,7 @@ fun LiquidTopBar(
                         shape = RectangleShape,
                         role = LiquidGlassRole.TopBar,
                         performance = topBarPerformance,
+                        backdropPolicy = backdropPolicy,
                     )
         )
 
@@ -170,7 +173,7 @@ fun LiquidTopBar(
                             modifier = Modifier.padding(start = 12.dp, end = 4.dp),
                             iconSize = 20.dp,
                             variant = LiquidIconButtonVariant.TopBarAction,
-                            backdropState = effectiveBackdrop,
+                            backdrop = effectiveBackdrop,
                         )
                     } else {
                         navigationIcon()
@@ -182,7 +185,7 @@ fun LiquidTopBar(
                         LiquidMorphingAction(
                             action = action,
                             isLastItem = index == actionItems.lastIndex,
-                            backdropState = effectiveBackdrop,
+                            backdrop = effectiveBackdrop,
                         )
                     }
                     actions?.invoke(this)
@@ -245,7 +248,7 @@ fun LiquidTopBar(
                             query = searchQuery,
                             onQueryChange = onQueryChange,
                             placeholderText = searchPlaceholder,
-                            backdropState = effectiveBackdrop,
+                            backdrop = effectiveBackdrop,
                             onClose = {
                                 onSearchActiveChange?.invoke(false)
                                 onQueryChange("")

@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.inputs.textfield
+﻿package com.anto426.liquidmonet.components.inputs.textfield
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -135,7 +135,7 @@ fun LiquidTextField(
             LiquidTextFieldType.TextArea -> KeyboardOptions.Default
         },
     keyboardActions: KeyboardActions = KeyboardActions.Default,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val performance = LocalLiquidGlassPerformance.current
     LiquidInputNormalization.positive(maxLines, "LiquidTextField maxLines")
@@ -189,7 +189,7 @@ fun LiquidTextField(
         )
     val borderWidth = if (isFocused) 1.5.dp else 1.dp
 
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     val onValueChangeHandler: (String) -> Unit = { input ->
         val isValidNumber =
@@ -402,7 +402,7 @@ fun LiquidTextField(
                 onClick = { onValueChange("") },
                 size = minHeight,
                 shape = shape,
-                backdropState = effectiveBackdrop,
+                backdrop = effectiveBackdrop,
                 enabled = enabled,
             )
         }

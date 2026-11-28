@@ -5,8 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
@@ -19,128 +19,49 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import com.anto426.liquidmonet.components.interaction.liquidClickable
 import com.anto426.liquidmonet.components.internal.LiquidInputNormalization
 import com.anto426.liquidmonet.components.internal.motion.LiquidCardMotion
-import com.anto426.liquidmonet.components.interaction.liquidClickable
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
+import com.anto426.liquidmonet.glass.LiquidGlassLegibility
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LocalLiquidGlassContainerMode
+import com.anto426.liquidmonet.glass.LocalLiquidGlassLegibility
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.theme.LiquidGlassDefaults
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.RoundedRectangle
 
 private val LocalLiquidCardClipsContent = staticCompositionLocalOf { false }
 
 /**
- * LiquidCard - Liquid Glass Card with Snell optical refraction.
+ * LiquidCard - Canonical Liquid Glass card surface with Snell optical refraction.
  *
- * Interaction is inferred from [onClick]. Clickable cards receive the shared Liquid press response;
- * container cards remain stable so nested controls and gestures do not compete with their parent.
- * In a scrolling layout, hold briefly before dragging the card vertically or diagonally.
+ * Interaction is inferred from [onClick] / [onLongClick]. Clickable cards receive the shared
+ * Liquid press response; container cards remain stable so nested controls and gestures do not
+ * compete with their parent.
  */
 @Composable
 fun LiquidCard(
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
+    legibility: LiquidGlassLegibility = LocalLiquidGlassLegibility.current,
     shape: Shape = RoundedRectangle(24.dp),
     colors: LiquidCardColors = LiquidCardDefaults.colors(),
-    contentPadding: Dp = 16.dp,
-    onClick: (() -> Unit)? = null,
-    content: @Composable BoxScope.() -> Unit,
-) = LiquidCard(
-    modifier = modifier,
-    backdropState = backdropState,
-    shape = shape,
-    colors = colors,
-    contentPadding = contentPadding,
-    onClick = onClick,
-    onLongClick = null,
-    content = content,
-)
-
-/** Card with an optional long-press action that shares the same elastic surface as [onClick]. */
-@Composable
-fun LiquidCard(
-    modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
-    shape: Shape = RoundedRectangle(24.dp),
-    colors: LiquidCardColors = LiquidCardDefaults.colors(),
-    contentPadding: Dp = 16.dp,
-    onClick: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)?,
-    content: @Composable BoxScope.() -> Unit,
-) {
-    LiquidInputNormalization.nonNegative(contentPadding, "LiquidCard contentPadding")
-    LiquidCardContainer(
-        contentPadding = PaddingValues(contentPadding),
-        contentAlignment = Alignment.Center,
-        contentBoxAlignment = Alignment.TopStart,
-        modifier = modifier,
-        backdropState = backdropState,
-        shape = shape,
-        colors = colors,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        content = content,
-    )
-}
-
-/**
- * Configurable card container. [contentPadding] accepts independent, RTL-aware edges.
- *
- * [modifier] controls the complete card; [contentModifier] controls only its content box.
- * Set [fillWidth] to false for a card that wraps its content, or provide a width through [modifier].
- * [clipContent] keeps children inside [shape] by default. Set it to false to allow overflow.
- * [enabled] disables the card's own click response without disabling controls inside it.
- * The Dp-padding overload uses the same clipping behavior.
- */
-@Composable
-fun LiquidCard(
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
-    shape: Shape = RoundedRectangle(24.dp),
-    colors: LiquidCardColors = LiquidCardDefaults.colors(),
-    onClick: (() -> Unit)? = null,
-    border: BorderStroke? = null,
-    contentAlignment: Alignment = Alignment.TopStart,
-    fillWidth: Boolean = true,
-    contentModifier: Modifier = Modifier,
-    clipContent: Boolean = true,
-    enabled: Boolean = true,
-    propagateMinConstraints: Boolean = false,
-    content: @Composable BoxScope.() -> Unit,
-) {
-    LiquidCardContainer(
-        contentPadding = contentPadding, modifier = modifier, backdropState = backdropState,
-        shape = shape, colors = colors, onClick = onClick, border = border,
-        contentAlignment = contentAlignment, contentBoxAlignment = contentAlignment,
-        fillWidth = fillWidth, contentModifier = contentModifier, clipContent = clipContent,
-        enabled = enabled, propagateMinConstraints = propagateMinConstraints, content = content,
-    )
-}
-
-@Composable
-private fun LiquidCardContainer(
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
-    shape: Shape = RoundedRectangle(24.dp),
-    colors: LiquidCardColors = LiquidCardDefaults.colors(),
+    contentPadding: PaddingValues = PaddingValues(16.dp),
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     border: BorderStroke? = null,
     contentAlignment: Alignment = Alignment.TopStart,
-    contentBoxAlignment: Alignment = contentAlignment,
     fillWidth: Boolean = true,
     contentModifier: Modifier = Modifier,
     clipContent: Boolean = true,
@@ -149,19 +70,31 @@ private fun LiquidCardContainer(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
-    listOf(
+    LiquidInputNormalization.nonNegative(
         contentPadding.calculateStartPadding(layoutDirection),
+        "LiquidCard contentPadding",
+    )
+    LiquidInputNormalization.nonNegative(
         contentPadding.calculateEndPadding(layoutDirection),
+        "LiquidCard contentPadding",
+    )
+    LiquidInputNormalization.nonNegative(
         contentPadding.calculateTopPadding(),
+        "LiquidCard contentPadding",
+    )
+    LiquidInputNormalization.nonNegative(
         contentPadding.calculateBottomPadding(),
-    ).forEach { LiquidInputNormalization.nonNegative(it, "LiquidCard contentPadding") }
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+        "LiquidCard contentPadding",
+    )
+
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val ancestorClipsContent = LocalLiquidCardClipsContent.current
-    val cardMotion = if (ancestorClipsContent) {
-        LiquidCardMotion.Contained
-    } else {
-        LiquidCardMotion.Standalone
-    }
+    val cardMotion =
+        if (ancestorClipsContent) {
+            LiquidCardMotion.Contained
+        } else {
+            LiquidCardMotion.Standalone
+        }
 
     Box(
         modifier =
@@ -187,6 +120,8 @@ private fun LiquidCardContainer(
                         isCardSurface = true,
                         role = LiquidGlassRole.Surface,
                         containerColor = colors.containerColor,
+                        backdropPolicy = backdropPolicy,
+                        legibility = legibility,
                     )
                     .then(if (border != null) Modifier.border(border, shape) else Modifier)
         )
@@ -197,9 +132,11 @@ private fun LiquidCardContainer(
             propagateMinConstraints = propagateMinConstraints,
         ) {
             Box(
-                modifier = Modifier.then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
-                    .padding(contentPadding).then(contentModifier),
-                contentAlignment = contentBoxAlignment,
+                modifier =
+                    Modifier.then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
+                        .padding(contentPadding)
+                        .then(contentModifier),
+                contentAlignment = contentAlignment,
                 propagateMinConstraints = propagateMinConstraints,
             ) {
                 CompositionLocalProvider(

@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.pickers.timepicker
+﻿package com.anto426.liquidmonet.components.pickers.timepicker
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -18,7 +18,7 @@ fun LiquidTimePickerDialog(
     modifier: Modifier = Modifier,
     initialHour: Int = 12,
     initialMinute: Int = 0,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     if (!isOpen) return
 
@@ -28,7 +28,7 @@ fun LiquidTimePickerDialog(
         onDismissRequest = onDismissRequest,
         title = "Seleziona Ora",
         modifier = modifier,
-        backdropState = backdropState,
+        backdrop = backdrop,
         confirmButton = {
             LiquidButton(
                 text = "Conferma",
@@ -51,7 +51,7 @@ fun LiquidTimePickerDialog(
     ) {
         LiquidTimePicker(
             state = state,
-            backdropState = backdropState,
+            backdrop = backdrop,
         )
     }
 }

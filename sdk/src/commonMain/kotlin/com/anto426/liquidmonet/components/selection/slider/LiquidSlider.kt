@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.selection.slider
+﻿package com.anto426.liquidmonet.components.selection.slider
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -29,14 +29,14 @@ fun LiquidSlider(
     trackHeight: Dp = 8.dp,
     thumbSize: Dp = 24.dp,
     tint: Color = Color.Unspecified,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     requireLiquidSliderRange(valueRange)
     require(steps >= 0) { "LiquidSlider steps must be zero or positive." }
     require(value.isFinite()) { "LiquidSlider value must be finite." }
     LiquidInputNormalization.positive(trackHeight, "LiquidSlider trackHeight")
     LiquidInputNormalization.positive(thumbSize, "LiquidSlider thumbSize")
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     LiquidGlassSlider(
         value = value,

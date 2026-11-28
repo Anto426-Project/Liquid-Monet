@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.selection.checkbox
+﻿package com.anto426.liquidmonet.components.selection.checkbox
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
@@ -41,7 +41,7 @@ fun LiquidCheckbox(
     onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val performance = LocalLiquidGlassPerformance.current
     val interactiveHighlight = rememberLiquidControlHighlight()
@@ -70,7 +70,7 @@ fun LiquidCheckbox(
             label = "checkboxScalePop",
         )
 
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     Box(
         modifier =

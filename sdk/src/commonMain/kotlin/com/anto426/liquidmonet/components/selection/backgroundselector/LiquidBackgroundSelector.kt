@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.selection.backgroundselector
+﻿package com.anto426.liquidmonet.components.selection.backgroundselector
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,7 +14,7 @@ fun LiquidBackgroundSelector(
     selectedEffect: LiquidBackgroundEffect,
     onEffectSelected: (LiquidBackgroundEffect) -> Unit,
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val effects =
         listOf(
@@ -56,6 +56,6 @@ fun LiquidBackgroundSelector(
             }
         },
         modifier = modifier,
-        backdropState = backdropState,
+        backdrop = backdrop,
     )
 }

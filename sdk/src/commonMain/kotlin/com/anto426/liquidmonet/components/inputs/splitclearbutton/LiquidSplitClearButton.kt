@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.inputs.splitclearbutton
+﻿package com.anto426.liquidmonet.components.inputs.splitclearbutton
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -34,7 +34,7 @@ fun LiquidSplitClearButton(
     modifier: Modifier = Modifier,
     size: Dp = 54.dp,
     shape: Shape = Capsule(),
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     contentDescription: String = "Cancella",
     enabled: Boolean = true,
 ) {
@@ -61,7 +61,7 @@ fun LiquidSplitClearButton(
                 size = size,
                 iconSize = size * 0.38f,
                 shape = shape,
-                backdropState = backdropState,
+                backdrop = backdrop,
                 contentDescription = contentDescription,
                 enabled = enabled && visible,
             )

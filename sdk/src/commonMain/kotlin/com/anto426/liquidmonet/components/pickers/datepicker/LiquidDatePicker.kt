@@ -62,13 +62,13 @@ import com.anto426.liquidmonet.components.pickers.datepicker.state.currentLocalD
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LocalLiquidGlassContainerMode
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
 import com.kyant.shapes.RoundedRectangle
 import kotlinx.datetime.LocalDate
@@ -109,7 +109,7 @@ fun rememberLiquidDatePickerState(
 fun LiquidDatePicker(
     state: LiquidDatePickerState,
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
     labels: LiquidDatePickerLabels = LiquidDatePickerLabels.Default,
     allowYearSelection: Boolean = true,
     showTodayAction: Boolean = state.selectionMode == LiquidDateSelectionMode.Single,
@@ -128,7 +128,7 @@ fun LiquidDatePicker(
         ) {
             LiquidDatePickerContent(
                 state = state,
-                backdropState = backdropState,
+                backdrop = backdrop,
                 labels = labels,
                 allowYearSelection = allowYearSelection,
                 showTodayAction = showTodayAction,
@@ -141,9 +141,9 @@ fun LiquidDatePicker(
     } else {
         LiquidCard(
             modifier = modifier.fillMaxWidth(),
-            backdropState = backdropState,
+            backdrop = backdrop,
             shape = RoundedRectangle(24.dp),
-            contentPadding = 16.dp,
+            contentPadding = PaddingValues(16.dp),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -151,7 +151,7 @@ fun LiquidDatePicker(
             ) {
                 LiquidDatePickerContent(
                     state = state,
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                     labels = labels,
                     allowYearSelection = allowYearSelection,
                     showTodayAction = showTodayAction,
@@ -168,7 +168,7 @@ fun LiquidDatePicker(
 @Composable
 private fun LiquidDatePickerContent(
     state: LiquidDatePickerState,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
     labels: LiquidDatePickerLabels,
     allowYearSelection: Boolean,
     showTodayAction: Boolean,
@@ -179,7 +179,7 @@ private fun LiquidDatePickerContent(
 ) {
     val scheme = MaterialTheme.colorScheme
     val colors = LiquidGlassTheme.colors
-    val backdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val performance = LocalLiquidGlassPerformance.current
     val haptic = LocalHapticFeedback.current
     val today = remember { currentLocalDate() }
@@ -236,7 +236,7 @@ private fun LiquidDatePickerContent(
             contentColor = colors.content,
             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
             border = BorderStroke(1.dp, colors.outline),
-            backdropState = backdrop,
+            backdrop = effectiveBackdrop,
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -278,7 +278,7 @@ private fun LiquidDatePickerContent(
                         fontWeight = FontWeight.SemiBold,
                         fontFeatureSettings = "tnum",
                     ),
-                backdropState = backdrop,
+                backdrop = effectiveBackdrop,
                 modifier = Modifier.padding(start = 8.dp),
             )
         } else if (showTodayAction) {
@@ -297,7 +297,7 @@ private fun LiquidDatePickerContent(
                 minimumHeight = 32.dp,
                 textStyle =
                     MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                backdropState = backdrop,
+                backdrop = effectiveBackdrop,
                 modifier = Modifier.padding(start = 8.dp),
             )
         }
@@ -381,7 +381,7 @@ private fun LiquidDatePickerContent(
                 else labels.previousMonthDescription,
             variant = LiquidIconButtonVariant.Ghost,
             size = 38.dp,
-            backdropState = backdrop,
+            backdrop = effectiveBackdrop,
         )
         LiquidIconButton(
             icon = LiquidIcons.ChevronRight,
@@ -399,7 +399,7 @@ private fun LiquidDatePickerContent(
                 else labels.nextMonthDescription,
             variant = LiquidIconButtonVariant.Ghost,
             size = 38.dp,
-            backdropState = backdrop,
+            backdrop = effectiveBackdrop,
         )
     }
 
@@ -722,12 +722,12 @@ fun LiquidDatePickerField(
     label: String = labels.fieldLabel,
     placeholder: String = labels.fieldPlaceholder,
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
 ) {
     val interactiveHighlight = rememberLiquidControlHighlight()
     val colorScheme = MaterialTheme.colorScheme
     val glassColors = LiquidGlassTheme.colors
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val shape = RoundedRectangle(20.dp)
     val borderColor =
         if (enabled) glassColors.outline

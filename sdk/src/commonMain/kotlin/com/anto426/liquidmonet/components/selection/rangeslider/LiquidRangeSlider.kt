@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.selection.rangeslider
+﻿package com.anto426.liquidmonet.components.selection.rangeslider
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -70,7 +70,7 @@ fun LiquidRangeSlider(
     steps: Int = 0,
     enabled: Boolean = true,
     tint: Color = Color.Unspecified,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     trackHeight: Dp = 8.dp,
     thumbSize: Dp = 24.dp,
 ) {
@@ -82,7 +82,7 @@ fun LiquidRangeSlider(
         steps = steps,
         enabled = enabled,
         tint = tint,
-        backdropState = backdropState,
+        backdrop = backdrop,
         trackHeight = trackHeight,
         thumbSize = thumbSize,
     )
@@ -97,7 +97,7 @@ private fun LiquidRangeSliderImpl(
     steps: Int = 0,
     enabled: Boolean = true,
     tint: Color = Color.Unspecified,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     trackHeight: Dp = 8.dp,
     thumbSize: Dp = 24.dp,
 ) {
@@ -116,7 +116,7 @@ private fun LiquidRangeSliderImpl(
     val glassColors = LiquidGlassTheme.colors
     val trackColor = glassColors.inactiveTrack
 
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val performance = LocalLiquidGlassPerformance.current
     val trackBackdrop = rememberLayerBackdrop()
 

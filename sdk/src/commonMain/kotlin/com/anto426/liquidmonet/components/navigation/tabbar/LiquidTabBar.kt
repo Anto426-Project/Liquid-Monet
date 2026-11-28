@@ -31,10 +31,11 @@ import androidx.compose.ui.unit.sp
 import com.anto426.liquidmonet.components.internal.LiquidGlassBottomTab
 import com.anto426.liquidmonet.components.internal.LiquidGlassBottomTabs
 import com.anto426.liquidmonet.components.navigation.navigationbar.LiquidNavigationItem
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
 
 /**
@@ -47,12 +48,13 @@ fun LiquidTabBar(
     selectedIndex: Int,
     onTabSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
 ) {
     if (items.isEmpty()) return
     val normalizedSelectedIndex = selectedIndex.coerceIn(items.indices)
     val contentColor = LiquidGlassTheme.colors.content
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
 
     BoxWithConstraints(modifier) {
         val fontSize = if (items.size <= 3) 14.sp else 12.sp
@@ -88,6 +90,7 @@ fun LiquidTabBar(
             tabsCount = items.size,
             modifier = Modifier.width(availableWidth),
             backdrop = effectiveBackdrop,
+            backdropPolicy = backdropPolicy,
         ) {
             items.forEachIndexed { index, item ->
                 LiquidGlassBottomTab(

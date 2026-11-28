@@ -26,32 +26,34 @@ import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighligh
 import com.anto426.liquidmonet.components.menu.internal.LiquidMenuDragSelection
 import com.anto426.liquidmonet.components.menu.internal.LocalLiquidMenuDragSelection
 import com.anto426.liquidmonet.components.menu.internal.liquidMenuDragSelection
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
 import com.anto426.liquidmonet.glass.LiquidGlassContainerMode
 import com.anto426.liquidmonet.glass.LiquidGlassRole
 import com.anto426.liquidmonet.glass.LocalLiquidGlassContainerMode
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.glass.runtime.asBalancedFrostedIfEssential
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.RoundedRectangle
 
 /** Menu material with the same press, drag and return response as buttons and clickable cards. */
 @Composable
 internal fun LiquidGlassMenuSurface(
-    backdropState: Backdrop = LocalLiquidGlassContentBackdrop.current ?: emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
     modifier: Modifier = Modifier,
     minWidth: androidx.compose.ui.unit.Dp = 180.dp,
     maxWidth: androidx.compose.ui.unit.Dp = 280.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val performance = LocalLiquidGlassPerformance.current
     val menuPerformance =
         remember(performance, effectiveBackdrop) {
-            if (effectiveBackdrop != emptyBackdrop()) {
+            if (effectiveBackdrop != emptyLiquidGlassBackdrop()) {
                 performance.asBalancedFrostedIfEssential()
             } else {
                 performance
@@ -95,6 +97,7 @@ internal fun LiquidGlassMenuSurface(
                     role = LiquidGlassRole.Menu,
                     performance = menuPerformance,
                     layerBlock = menuLayerBlock,
+                    backdropPolicy = backdropPolicy,
                 )
                 .border(
                     width = 1.dp,

@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,12 +32,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anto426.liquidmonet.components.menu.internal.LocalLiquidMenuDragSelection
 import com.anto426.liquidmonet.components.menu.internal.liquidMenuDragTarget
-import com.anto426.liquidmonet.components.menu.menu.LiquidMenuItemType
 import com.anto426.liquidmonet.components.menu.menuitem.motion.LiquidMenuItemMotion
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.shapes.RoundedRectangle
+
+/** Types of items for [LiquidMenuItem]. */
+enum class LiquidMenuItemType {
+    /** Standard interactive action item. */
+    Action,
+
+    /** Selectable item featuring an active indicator check. */
+    Selectable,
+}
 
 /**
  * LiquidMenuItem - Clean, borderless menu item row with dynamic touch illumination. Deforms

@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.buttons.iconbutton
+﻿package com.anto426.liquidmonet.components.buttons.iconbutton
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -43,7 +43,7 @@ fun LiquidIconButton(
     size: Dp = 40.dp,
     iconSize: Dp = 24.dp,
     shape: Shape = LiquidControlDefaults.shape,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     variant: LiquidIconButtonVariant = LiquidIconButtonVariant.Standard,
     contentColor: Color = Color.Unspecified,
     iconModifier: Modifier = Modifier,
@@ -80,7 +80,7 @@ fun LiquidIconButton(
             label = "iconButtonContainerColor",
         )
 
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     Box(
         modifier =

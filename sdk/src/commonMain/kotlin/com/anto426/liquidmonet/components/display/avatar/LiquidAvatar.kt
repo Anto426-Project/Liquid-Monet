@@ -42,13 +42,13 @@ import com.anto426.liquidmonet.components.internal.liquidControlPressFeedback
 import com.anto426.liquidmonet.components.internal.motion.liquidControlLayer
 import com.anto426.liquidmonet.components.internal.rememberLiquidControlHighlight
 import com.anto426.liquidmonet.glass.LiquidGlassRole
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.liquidGlass
 import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.anto426.liquidmonet.icons.LiquidIcons
 import com.anto426.liquidmonet.theme.LiquidGlassDefaults
 import com.anto426.liquidmonet.theme.LiquidGlassTheme
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.Capsule
 
 enum class LiquidAvatarPresence {
@@ -59,44 +59,22 @@ enum class LiquidAvatarPresence {
     Offline,
 }
 
-/** Optical avatar; the original overload retains its circular defaults and binary API. */
-@Composable
-fun LiquidAvatar(
-    modifier: Modifier = Modifier,
-    initials: String? = null,
-    icon: ImageVector? = if (initials == null) LiquidIcons.AccountCircle else null,
-    presence: LiquidAvatarPresence = LiquidAvatarPresence.None,
-    size: Dp = 44.dp,
-    containerColor: Color? = null,
-    onClick: (() -> Unit)? = null,
-    enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
-    content: (@Composable BoxScope.() -> Unit)? = null,
-) {
-    LiquidAvatar(
-        shape = CircleShape, modifier = modifier, initials = initials, icon = icon,
-        presence = presence, size = size, containerColor = containerColor,
-        onClick = onClick, enabled = enabled, backdropState = backdropState, content = content,
-    )
-}
-
 /**
- * Custom avatar body, typography, image/content slot and independent presence indicator.
- * Pass [shape] to select this overload. Set either border to null to remove its outline.
- * Presence content can contain its own click action without activating the avatar action.
+ * Canonical optical avatar with customizable shape, typography, content slot and presence indicator.
+ * Set either border to null to remove its outline.
  */
 @Composable
 fun LiquidAvatar(
-    shape: Shape,
     modifier: Modifier = Modifier,
     initials: String? = null,
     icon: ImageVector? = if (initials == null) LiquidIcons.AccountCircle else null,
     presence: LiquidAvatarPresence = LiquidAvatarPresence.None,
     size: Dp = 44.dp,
+    shape: Shape = CircleShape,
     containerColor: Color? = null,
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
     contentColor: Color = Color.Unspecified,
     border: BorderStroke? = BorderStroke(1.dp, LiquidGlassTheme.colors.outline),
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -114,7 +92,7 @@ fun LiquidAvatar(
     LiquidInputNormalization.positive(size, "LiquidAvatar size")
     LiquidInputNormalization.positive(iconSize, "LiquidAvatar iconSize")
     LiquidInputNormalization.positive(presenceSize, "LiquidAvatar presenceSize")
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
     val colorScheme = MaterialTheme.colorScheme
     val colors = LiquidGlassTheme.colors
     val fill = containerColor ?: colors.accentContainer
@@ -169,7 +147,7 @@ fun LiquidAvatarGroup(
     size: Dp = 40.dp,
     onAvatarClick: ((Int) -> Unit)? = null,
     onOverflowClick: (() -> Unit)? = null,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
 ) {
     val safeMaxDisplay =
         LiquidInputNormalization.positive(
@@ -178,7 +156,7 @@ fun LiquidAvatarGroup(
         )
     LiquidInputNormalization.positive(size, "LiquidAvatarGroup size")
     val glassColors = LiquidGlassTheme.colors
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     val displayList = avatars.take(safeMaxDisplay)
     val overflowCount = (avatars.size - safeMaxDisplay).coerceAtLeast(0)
@@ -194,7 +172,7 @@ fun LiquidAvatarGroup(
                 initials = initials,
                 size = size,
                 onClick = { onAvatarClick?.invoke(index) },
-                backdropState = effectiveBackdrop,
+                backdrop = effectiveBackdrop,
             )
         }
 

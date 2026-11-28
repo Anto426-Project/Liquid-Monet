@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.feedback.shimmer
+﻿package com.anto426.liquidmonet.components.feedback.shimmer
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +37,7 @@ import com.kyant.shapes.RoundedRectangle
 fun LiquidShimmerBox(
     modifier: Modifier = Modifier,
     shape: Shape = RoundedRectangle(16.dp),
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     tint: Color = Color.Unspecified,
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -76,7 +76,7 @@ fun LiquidShimmerBox(
             remember { mutableFloatStateOf(0.45f) }
         }
 
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     Box(
         modifier =

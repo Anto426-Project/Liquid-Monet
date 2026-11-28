@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,13 +24,16 @@ import androidx.compose.ui.window.PopupProperties
 import com.anto426.liquidmonet.components.menu.dropdownmenu.internal.LiquidGlassMenuSurface
 import com.anto426.liquidmonet.components.menu.dropdownmenu.motion.rememberLiquidDropdownEnterTransition
 import com.anto426.liquidmonet.components.menu.dropdownmenu.motion.rememberLiquidDropdownExitTransition
+import com.anto426.liquidmonet.glass.LiquidGlassBackdropPolicy
+import com.anto426.liquidmonet.glass.LiquidGlassLegibility
+import com.anto426.liquidmonet.glass.LocalLiquidGlassLegibility
+import com.anto426.liquidmonet.glass.emptyLiquidGlassBackdrop
 import com.anto426.liquidmonet.glass.overlay.LiquidGlassDropdownPlacement
 import com.anto426.liquidmonet.glass.overlay.LiquidGlassOverlayAnchorState
-import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassOverlayState
 import com.anto426.liquidmonet.glass.overlay.liquidGlassOverlayAnchor
+import com.anto426.liquidmonet.glass.resolveLiquidGlassBackdrop
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 
 /**
  * Liquid dropdown with one canonical API. When [anchorState] is attached to the trigger through
@@ -44,47 +48,29 @@ fun LiquidDropdownMenu(
     anchorState: LiquidGlassOverlayAnchorState? = null,
     placement: LiquidGlassDropdownPlacement = LiquidGlassDropdownPlacement.BelowEnd,
     offset: DpOffset = DpOffset(0.dp, 8.dp),
-    backdropState: Backdrop = emptyBackdrop(),
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    LiquidDropdownMenuImpl(
-        expanded = expanded,
-        onDismissRequest = onDismissRequest,
-        anchorState = anchorState,
-        modifier = modifier,
-        placement = placement,
-        offset = offset,
-        backdropState = backdropState,
-        content = content,
-    )
-}
-
-@Composable
-private fun LiquidDropdownMenuImpl(
-    expanded: Boolean,
-    onDismissRequest: () -> Unit,
-    anchorState: LiquidGlassOverlayAnchorState?,
-    modifier: Modifier,
-    placement: LiquidGlassDropdownPlacement,
-    offset: DpOffset,
-    backdropState: Backdrop,
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
+    backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
+    legibility: LiquidGlassLegibility = LocalLiquidGlassLegibility.current,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val overlayState = LocalLiquidGlassOverlayState.current
-    val contentBackdrop = LocalLiquidGlassContentBackdrop.current
     val overlayKey = remember { Any() }
     val anchorBounds = anchorState?.boundsInWindow
     val canUseHostedOverlay = overlayState != null && anchorBounds != null
     val latestOnDismissRequest by rememberUpdatedState(onDismissRequest)
-    val latestBackdrop by rememberUpdatedState(contentBackdrop ?: backdropState)
+    val latestBackdrop by rememberUpdatedState(backdrop)
+    val latestPolicy by rememberUpdatedState(backdropPolicy)
+    val latestLegibility by rememberUpdatedState(legibility)
     val latestContent by rememberUpdatedState(content)
     val hostedContent: @Composable (dismiss: () -> Unit) -> Unit = {
-        val currentBackdrop = LocalLiquidGlassContentBackdrop.current ?: latestBackdrop
-        LiquidGlassMenuSurface(
-            modifier = modifier,
-            backdropState = currentBackdrop,
-        ) {
-            latestContent()
+        CompositionLocalProvider(LocalLiquidGlassLegibility provides latestLegibility) {
+            LiquidGlassMenuSurface(
+                modifier = modifier,
+                backdrop = latestBackdrop,
+                backdropPolicy = latestPolicy,
+            ) {
+                latestContent()
+            }
         }
     }
 
@@ -115,6 +101,7 @@ private fun LiquidDropdownMenuImpl(
         onDispose { overlayState?.removeImmediately(overlayKey) }
     }
 
+    val fallbackBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val fallbackVisibility = remember { MutableTransitionState(false) }
     fallbackVisibility.targetState = expanded && !canUseHostedOverlay
     if (fallbackVisibility.currentState || fallbackVisibility.targetState) {
@@ -137,7 +124,8 @@ private fun LiquidDropdownMenuImpl(
                 ) {
                     LiquidGlassMenuSurface(
                         modifier = modifier,
-                        backdropState = latestBackdrop,
+                        backdrop = fallbackBackdrop,
+                        backdropPolicy = backdropPolicy,
                     ) {
                         content()
                     }

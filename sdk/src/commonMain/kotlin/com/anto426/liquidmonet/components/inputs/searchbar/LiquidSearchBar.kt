@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.inputs.searchbar
+﻿package com.anto426.liquidmonet.components.inputs.searchbar
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -59,7 +59,7 @@ fun LiquidSearchBar(
     modifier: Modifier = Modifier,
     placeholderText: String = "Cerca...",
     enabled: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
     onClose: (() -> Unit)? = null,
     onSearch: ((String) -> Unit)? = null,
 ) {
@@ -99,7 +99,7 @@ fun LiquidSearchBar(
     val mainBodySquashX = 1f - recoilWave * 0.018f
     val mainBodyStretchY = 1f + recoilWave * 0.012f
 
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop)
 
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = 54.dp),
@@ -181,7 +181,7 @@ fun LiquidSearchBar(
             visible = query.isNotEmpty(),
             onClick = { onQueryChange("") },
             size = 54.dp,
-            backdropState = effectiveBackdrop,
+            backdrop = effectiveBackdrop,
             enabled = enabled,
         )
     }

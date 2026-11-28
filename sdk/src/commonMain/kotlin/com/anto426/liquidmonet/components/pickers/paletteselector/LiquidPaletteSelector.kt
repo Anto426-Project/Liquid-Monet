@@ -1,4 +1,4 @@
-package com.anto426.liquidmonet.components.pickers.paletteselector
+﻿package com.anto426.liquidmonet.components.pickers.paletteselector
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -69,9 +69,9 @@ fun LiquidPaletteSelector(
     selectedIndex: Int,
     onSelectIndex: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    title: String? = "Tonalità Monet Glass",
+    title: String? = "Tonalit\u00E0 Monet Glass",
     showBadge: Boolean = true,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyBackdrop(),
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val hapticFeedback = LocalHapticFeedback.current
