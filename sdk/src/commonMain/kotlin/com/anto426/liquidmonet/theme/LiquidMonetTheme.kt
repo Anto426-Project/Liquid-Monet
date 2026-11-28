@@ -15,6 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.anto426.liquidmonet.glass.LiquidGlassLegibility
+import com.anto426.liquidmonet.glass.LocalLiquidGlassLegibility
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassQualityTier
 import com.anto426.liquidmonet.glass.runtime.LocalLiquidGlassPerformance
 import com.anto426.liquidmonet.glass.runtime.rememberLiquidGlassPerformanceState
@@ -46,6 +48,7 @@ fun LiquidMonetTheme(
     glassColors: LiquidGlassColors? = null,
     maximumGlassQuality: LiquidGlassQualityTier? = null,
     reduceMotion: Boolean = false,
+    legibility: LiquidGlassLegibility = LiquidGlassLegibility.Standard,
     content: @Composable () -> Unit,
 ) {
     val colorScheme =
@@ -80,6 +83,7 @@ fun LiquidMonetTheme(
     CompositionLocalProvider(
         LocalLiquidGlassPerformance provides readyPerformance,
         LocalLiquidGlassColors provides resolvedGlassColors,
+        LocalLiquidGlassLegibility provides legibility,
     ) {
         MaterialExpressiveTheme(
             colorScheme = colorScheme,

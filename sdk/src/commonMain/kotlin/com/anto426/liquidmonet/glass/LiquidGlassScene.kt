@@ -32,6 +32,7 @@ internal val LocalLiquidGlassTopBarScrollBehavior =
 fun LiquidGlassScene(
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
+    legibility: LiquidGlassLegibility = LocalLiquidGlassLegibility.current,
     background: @Composable BoxScope.() -> Unit = {},
     topBar: (@Composable BoxScope.(backdrop: Backdrop) -> Unit)? = null,
     bottomBar: (@Composable BoxScope.(backdrop: Backdrop) -> Unit)? = null,
@@ -53,7 +54,8 @@ fun LiquidGlassScene(
         LocalLiquidGlassOverlayState provides overlayState,
         LocalLiquidGlassModalOverlayState provides modalOverlayState,
         LocalLiquidGlassContentBackdrop provides backgroundBackdrop,
-        LocalLiquidGlassTopBarScrollBehavior provides scrollBehavior
+        LocalLiquidGlassTopBarScrollBehavior provides scrollBehavior,
+        LocalLiquidGlassLegibility provides legibility
     ) {
         Box(
             modifier = modifier

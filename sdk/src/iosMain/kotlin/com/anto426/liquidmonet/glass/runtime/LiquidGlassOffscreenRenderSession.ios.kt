@@ -104,8 +104,6 @@ private constructor(
                             else BuiltinRuntimeShader.Dispersion
                         RuntimeShaderBuilder(RuntimeShaderPrewarm.obtain(kind.source)).use { builder
                             ->
-                            builder.uniform("size", cardWidth.toFloat(), cardHeight.toFloat())
-                            builder.uniform("cornerRadii", radius, radius, radius, radius)
                             Paint().use { paint ->
                                 paint.isAntiAlias = true
                                 canvas.save()
@@ -121,22 +119,32 @@ private constructor(
                                         true,
                                     )
                                     if (kind.hasBackdropInput) {
-                                        builder.uniform("offset", 0f, 0f)
-                                        builder.uniform(
-                                            "refractionHeight",
-                                            LiquidGlassPresets.Standard.refractionHeight.value *
-                                                density *
-                                                scale,
-                                        )
-                                        builder.uniform(
-                                            "refractionAmount",
-                                            -LiquidGlassPresets.Standard.refractionAmount.value *
-                                                density *
-                                                scale,
-                                        )
-                                        builder.uniform("depthEffect", 1f)
-                                        if (kind == BuiltinRuntimeShader.Dispersion)
-                                            builder.uniform("chromaticAberration", 1f)
+                                        if (kind == BuiltinRuntimeShader.AdaptiveLegibility) {
+                                            builder.uniform("darkSurface", 1f)
+                                            builder.uniform("threshold", 0.22f)
+                                            builder.uniform("targetLuma", 0.22f)
+                                            builder.uniform("strength", 0.85f)
+                                            builder.uniform("tintRgb", 0.08f, 0.09f, 0.11f)
+                                        } else {
+                                            builder.uniform("size", cardWidth.toFloat(), cardHeight.toFloat())
+                                            builder.uniform("cornerRadii", radius, radius, radius, radius)
+                                            builder.uniform("offset", 0f, 0f)
+                                            builder.uniform(
+                                                "refractionHeight",
+                                                LiquidGlassPresets.Standard.refractionHeight.value *
+                                                    density *
+                                                    scale,
+                                            )
+                                            builder.uniform(
+                                                "refractionAmount",
+                                                -LiquidGlassPresets.Standard.refractionAmount.value *
+                                                    density *
+                                                    scale,
+                                            )
+                                            builder.uniform("depthEffect", 1f)
+                                            if (kind == BuiltinRuntimeShader.Dispersion)
+                                                builder.uniform("chromaticAberration", 1f)
+                                        }
                                         ImageFilter.makeBlur(
                                                 LiquidGlassPresets.Standard.blurRadius.value *
                                                     density *
@@ -161,6 +169,8 @@ private constructor(
                                                     }
                                             }
                                     } else {
+                                        builder.uniform("size", cardWidth.toFloat(), cardHeight.toFloat())
+                                        builder.uniform("cornerRadii", radius, radius, radius, radius)
                                         builder.uniform("angle", 0.7853982f)
                                         builder.uniform("falloff", 1f)
                                         if (kind == BuiltinRuntimeShader.Highlight)

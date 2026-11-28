@@ -10,7 +10,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import org.jetbrains.skia.RuntimeEffect
 
-/** Four immutable Skia programs; builders/uniforms remain exclusive to individual render nodes. */
+/** Built-in immutable Skia programs; builders/uniforms remain exclusive to individual render nodes. */
 @OptIn(ExperimentalAtomicApi::class)
 internal object RuntimeShaderPrewarm {
     private val compiled = AtomicReference<Map<String, RuntimeEffect>>(emptyMap())

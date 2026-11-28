@@ -5,5 +5,6 @@ internal enum class BuiltinRuntimeShader(val source: String, val hasBackdropInpu
     Refraction(RoundedRectRefractionShaderString, true),
     Dispersion(RoundedRectRefractionWithDispersionShaderString, true),
     Highlight(DefaultHighlightShaderString, false),
-    Ambient(AmbientHighlightShaderString, false)
+    Ambient(AmbientHighlightShaderString, false),
+    AdaptiveLegibility(AdaptiveLegibilityShaderString, true)
 }

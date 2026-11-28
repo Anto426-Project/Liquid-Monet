@@ -46,7 +46,7 @@ internal object LiquidGlassShaderWarmup {
             if (gpuReady) prepareGpu()
             currentCoroutineContext().ensureActive()
             marker.delete()
-            Log.i("LiquidGlassCalibration", "Shader warm-up: $preparedCount/4 programs prepared; GPU=$gpuReady")
+            Log.i("LiquidGlassCalibration", "Shader warm-up: $preparedCount/${BuiltinRuntimeShader.entries.size} programs prepared; GPU=$gpuReady")
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
@@ -60,23 +60,41 @@ internal object LiquidGlassShaderWarmup {
 
     @RequiresApi(33)
     private suspend fun prepareGpu() {
-        val nodes = ArrayList<RenderNode>(4)
+        val nodes = ArrayList<RenderNode>(BuiltinRuntimeShader.entries.size)
         try {
-            LiquidGlassOffscreenRenderSession(256, 256).use { session ->
+            LiquidGlassOffscreenRenderSession(256, 384).use { session ->
                 BuiltinRuntimeShader.entries.forEachIndexed { index, kind ->
                     val shader = RuntimeShaderPrewarm.obtain(kind.source)
-                    shader.setFloatUniform("size", 128f, 128f)
-                    shader.setFloatUniform("cornerRadii", 16f, 16f, 16f, 16f)
-                    if (kind.hasBackdropInput) {
-                        shader.setFloatUniform("offset", 0f, 0f)
-                        shader.setFloatUniform("refractionHeight", 16f)
-                        shader.setFloatUniform("refractionAmount", -24f)
-                        shader.setFloatUniform("depthEffect", 1f)
-                        if (kind == BuiltinRuntimeShader.Dispersion) shader.setFloatUniform("chromaticAberration", 1f)
-                    } else {
-                        shader.setFloatUniform("angle", 0.7853982f)
-                        shader.setFloatUniform("falloff", 1f)
-                        if (kind == BuiltinRuntimeShader.Highlight) shader.setColorUniform("color", Color.WHITE)
+                    when (kind) {
+                        BuiltinRuntimeShader.Refraction,
+                        BuiltinRuntimeShader.Dispersion -> {
+                            shader.setFloatUniform("size", 128f, 128f)
+                            shader.setFloatUniform("cornerRadii", 16f, 16f, 16f, 16f)
+                            shader.setFloatUniform("offset", 0f, 0f)
+                            shader.setFloatUniform("refractionHeight", 16f)
+                            shader.setFloatUniform("refractionAmount", -24f)
+                            shader.setFloatUniform("depthEffect", 1f)
+                            if (kind == BuiltinRuntimeShader.Dispersion) {
+                                shader.setFloatUniform("chromaticAberration", 1f)
+                            }
+                        }
+                        BuiltinRuntimeShader.AdaptiveLegibility -> {
+                            shader.setFloatUniform("darkSurface", 1f)
+                            shader.setFloatUniform("threshold", 0.22f)
+                            shader.setFloatUniform("targetLuma", 0.22f)
+                            shader.setFloatUniform("strength", 0.85f)
+                            shader.setFloatUniform("tintRgb", 0.08f, 0.09f, 0.11f)
+                        }
+                        BuiltinRuntimeShader.Highlight,
+                        BuiltinRuntimeShader.Ambient -> {
+                            shader.setFloatUniform("size", 128f, 128f)
+                            shader.setFloatUniform("cornerRadii", 16f, 16f, 16f, 16f)
+                            shader.setFloatUniform("angle", 0.7853982f)
+                            shader.setFloatUniform("falloff", 1f)
+                            if (kind == BuiltinRuntimeShader.Highlight) {
+                                shader.setColorUniform("color", Color.WHITE)
+                            }
+                        }
                     }
                     val node = RenderNode("Warm${kind.name}").also { nodes += it }
                     val x = (index % 2) * 128

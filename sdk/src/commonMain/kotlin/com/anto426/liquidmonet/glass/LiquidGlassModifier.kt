@@ -30,17 +30,19 @@ import com.kyant.backdrop.BackdropEffectScope
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.adaptiveLegibility
 import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.colorControls
 import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.isRuntimeShaderSupported
 import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
 
 /** Applies the canonical stable glass pipeline and clips content with the same [shape]. */
 @Composable
 fun Modifier.liquidGlass(
-    backdrop: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
     shape: Shape,
     role: LiquidGlassRole = LiquidGlassRole.Surface,
     containerColor: Color? = null,
@@ -50,6 +52,7 @@ fun Modifier.liquidGlass(
     exportedBackdrop: LayerBackdrop? = null,
     backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
     interactive: Boolean = layerBlock != null,
+    legibility: LiquidGlassLegibility = LocalLiquidGlassLegibility.current,
 ): Modifier =
     liquidGlass(
         backdrop = backdrop,
@@ -63,12 +66,13 @@ fun Modifier.liquidGlass(
         exportedBackdrop = exportedBackdrop,
         backdropPolicy = backdropPolicy,
         interactive = interactive,
+        legibility = legibility,
     )
 
 /** Only LiquidCard selects this treatment. The flag stays local to its optical background. */
 @Composable
 internal fun Modifier.liquidGlass(
-    backdrop: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
     shape: Shape,
     isCardSurface: Boolean,
     role: LiquidGlassRole = LiquidGlassRole.Surface,
@@ -79,6 +83,7 @@ internal fun Modifier.liquidGlass(
     exportedBackdrop: LayerBackdrop? = null,
     backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
     interactive: Boolean = layerBlock != null,
+    legibility: LiquidGlassLegibility = LocalLiquidGlassLegibility.current,
 ): Modifier {
     val colorScheme = MaterialTheme.colorScheme
     val isLightSurface = remember(colorScheme.surface) { colorScheme.surface.luminance() > 0.5f }
@@ -93,44 +98,63 @@ internal fun Modifier.liquidGlass(
             (performance.opticalQualityTier ?: performance.qualityTier) ==
                 LiquidGlassQualityTier.MINIMAL &&
                 role == LiquidGlassRole.Control
+        val isNestedCardSurface = isCardSurface && containerColor == null
         val groupedSurfaceColor =
-            if (isEssentialSharedControl) {
-                remember(
-                    containerColor,
-                    isLightSurface,
-                    colorScheme.surface,
-                    colorScheme.onSurface,
-                    colorScheme.primary,
-                ) {
-                    resolveEssentialChromeSurfaceColor(
-                        containerColor = containerColor,
-                        role = role,
-                        isLightSurface = isLightSurface,
-                        surface = colorScheme.surface,
-                        onSurface = colorScheme.onSurface,
-                        primary = colorScheme.primary,
-                        sharedControl = true,
-                    )
-                }
-            } else {
-                containerColor ?: Color.Transparent
-            }
-        val sharedEssentialRim =
-            if (isEssentialSharedControl && groupedSurfaceColor.alpha > 0f) {
-                val primary = colorScheme.primary
-                val rimBrush =
-                    remember(isLightSurface, primary) {
-                        val rimTint = blend(Color.White, primary, 0.22f)
-                        Brush.verticalGradient(
-                            listOf(
-                                rimTint.copy(alpha = if (isLightSurface) 0.36f else 0.20f),
-                                rimTint.copy(alpha = if (isLightSurface) 0.12f else 0.08f),
-                            )
+            when {
+                isEssentialSharedControl ->
+                    remember(
+                        containerColor,
+                        isLightSurface,
+                        colorScheme.surface,
+                        colorScheme.onSurface,
+                        colorScheme.primary,
+                    ) {
+                        resolveEssentialChromeSurfaceColor(
+                            containerColor = containerColor,
+                            role = role,
+                            isLightSurface = isLightSurface,
+                            surface = colorScheme.surface,
+                            onSurface = colorScheme.onSurface,
+                            primary = colorScheme.primary,
+                            sharedControl = true,
                         )
                     }
-                Modifier.border(width = 1.dp, brush = rimBrush, shape = shape)
-            } else {
-                Modifier
+                isNestedCardSurface ->
+                    remember(colorScheme.onSurface, isLightSurface) {
+                        colorScheme.onSurface.copy(alpha = if (isLightSurface) 0.055f else 0.075f)
+                    }
+                else -> containerColor ?: Color.Transparent
+            }
+        val sharedRim =
+            when {
+                isEssentialSharedControl && groupedSurfaceColor.alpha > 0f -> {
+                    val primary = colorScheme.primary
+                    val rimBrush =
+                        remember(isLightSurface, primary) {
+                            val rimTint = blend(Color.White, primary, 0.22f)
+                            Brush.verticalGradient(
+                                listOf(
+                                    rimTint.copy(alpha = if (isLightSurface) 0.36f else 0.20f),
+                                    rimTint.copy(alpha = if (isLightSurface) 0.12f else 0.08f),
+                                )
+                            )
+                        }
+                    Modifier.border(width = 1.dp, brush = rimBrush, shape = shape)
+                }
+                isNestedCardSurface -> {
+                    val onSurface = colorScheme.onSurface
+                    val rimBrush =
+                        remember(isLightSurface, onSurface) {
+                            Brush.verticalGradient(
+                                listOf(
+                                    onSurface.copy(alpha = if (isLightSurface) 0.12f else 0.16f),
+                                    onSurface.copy(alpha = if (isLightSurface) 0.04f else 0.06f),
+                                )
+                            )
+                        }
+                    Modifier.border(width = 0.75.dp, brush = rimBrush, shape = shape)
+                }
+                else -> Modifier
             }
         val groupedSurface: ContentDrawScope.() -> Unit =
             remember(groupedSurfaceColor) {
@@ -141,7 +165,7 @@ internal fun Modifier.liquidGlass(
             }
         return this.then(if (layerBlock != null) Modifier.graphicsLayer(layerBlock) else Modifier)
             .clip(shape)
-            .then(sharedEssentialRim)
+            .then(sharedRim)
             .drawWithContent(groupedSurface)
     }
 
@@ -160,6 +184,28 @@ internal fun Modifier.liquidGlass(
             LiquidGlassQualityTier.MINIMAL &&
             role != LiquidGlassRole.Surface &&
             !isCardSurface
+    val legibilitySpec =
+        remember(
+            legibility,
+            role,
+            isLightSurface,
+            colorScheme.surface,
+            colorScheme.primary,
+            liquidStrength,
+        ) {
+            LiquidGlassLegibilityPolicy.resolve(
+                legibility = legibility,
+                role = role,
+                isLightSurface = isLightSurface,
+                surfaceColor = colorScheme.surface,
+                primaryColor = colorScheme.primary,
+                liquidStrength = liquidStrength,
+            )
+        }
+    val useAdaptiveLegibilityShader =
+        legibilitySpec.useShader && !isEssentialChrome && isRuntimeShaderSupported()
+    val useAdaptiveLegibilityFallback =
+        legibilitySpec.useShader && !useAdaptiveLegibilityShader
     val ambientMonetTint =
         remember(colorScheme.primary, isLightSurface, liquidStrength, isEssentialChrome) {
             if (isEssentialChrome) {
@@ -192,8 +238,17 @@ internal fun Modifier.liquidGlass(
                 )
             }
         } else {
-            containerColor
-                ?: LiquidGlassStyleManager.surfaceColor(role, isLightSurface, colorScheme.surface)
+            val baseSurface =
+                containerColor
+                    ?: LiquidGlassStyleManager.surfaceColor(role, isLightSurface, colorScheme.surface)
+            val minAlpha =
+                when {
+                    containerColor != null -> 0f
+                    useAdaptiveLegibilityShader -> legibilitySpec.shaderMinSurfaceAlpha
+                    useAdaptiveLegibilityFallback -> legibilitySpec.fallbackMinSurfaceAlpha
+                    else -> 0f
+                }
+            if (minAlpha > baseSurface.alpha) baseSurface.copy(alpha = minAlpha) else baseSurface
         }
     val essentialRim =
         if (
@@ -257,6 +312,9 @@ internal fun Modifier.liquidGlass(
             role,
             isLightSurface,
             liquidStrength,
+            legibilitySpec,
+            useAdaptiveLegibilityShader,
+            useAdaptiveLegibilityFallback,
         ) {
             {
                 val compactReference = 48.dp.toPx()
@@ -280,12 +338,29 @@ internal fun Modifier.liquidGlass(
                         LiquidGlassRole.Sheet -> 0.96f + 0.22f * sizeProgress
                     }
 
+                val baseBrightness = if (isLightSurface) style.lightBrightness * liquidStrength else 0f
                 colorControls(
-                    brightness = if (isLightSurface) style.lightBrightness * liquidStrength else 0f,
+                    brightness =
+                        if (useAdaptiveLegibilityFallback) {
+                            baseBrightness + legibilitySpec.fallbackBrightnessDelta
+                        } else {
+                            baseBrightness
+                        },
+                    contrast =
+                        if (useAdaptiveLegibilityFallback) legibilitySpec.fallbackContrast else 1f,
                     saturation = 1f + (style.saturation - 1f) * liquidStrength,
                 )
                 if (useBlur) {
-                    blur(tokens.blurRadius.toPx() * opticalThickness)
+                    blur(tokens.blurRadius.toPx() * opticalThickness * legibilitySpec.blurMultiplier)
+                }
+                if (useAdaptiveLegibilityShader) {
+                    adaptiveLegibility(
+                        darkSurface = legibilitySpec.darkSurface,
+                        threshold = legibilitySpec.threshold,
+                        targetLuma = legibilitySpec.targetLuma,
+                        strength = legibilitySpec.strength,
+                        tintColor = legibilitySpec.tintColor,
+                    )
                 }
                 if (useRefraction && size.isSpecified && size.minDimension > 0f) {
                     lens(

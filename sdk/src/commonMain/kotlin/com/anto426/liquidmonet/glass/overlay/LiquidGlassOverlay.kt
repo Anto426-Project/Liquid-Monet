@@ -50,7 +50,7 @@ class LiquidGlassOverlayState internal constructor() {
     internal fun show(
         key: Any,
         anchorBoundsInWindow: Rect,
-        placement: LiquidGlassOverlayPlacement,
+        placement: LiquidGlassDropdownPlacement,
         offset: DpOffset,
         onDismissRequest: () -> Unit,
         content: @Composable (dismiss: () -> Unit) -> Unit,
@@ -142,8 +142,6 @@ enum class LiquidGlassDropdownPlacement {
     /** Automatically determines whether to open above or below depending on available space. */
     Auto,
 }
-
-typealias LiquidGlassOverlayPlacement = LiquidGlassDropdownPlacement
 
 internal val LocalLiquidGlassOverlayState =
     staticCompositionLocalOf<LiquidGlassOverlayState?> { null }
@@ -399,7 +397,7 @@ private fun LiquidGlassOverlayPositioner(
 internal data class LiquidGlassOverlayEntry(
     val key: Any,
     val anchorBoundsInWindow: Rect,
-    val placement: LiquidGlassOverlayPlacement,
+    val placement: LiquidGlassDropdownPlacement,
     val offset: DpOffset,
     val visible: Boolean,
     val onDismissRequest: () -> Unit,

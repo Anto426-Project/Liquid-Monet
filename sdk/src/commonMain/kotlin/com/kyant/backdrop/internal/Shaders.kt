@@ -216,3 +216,51 @@ half4 main(float2 coord) {
     float t = step(0.0, d);
     return half4(t, t, t, 1.0) * intensity;
 }"""
+
+internal const val AdaptiveLegibilityShaderString = """
+uniform shader content;
+
+uniform float darkSurface;
+uniform float threshold;
+uniform float targetLuma;
+uniform float strength;
+uniform float3 tintRgb;
+
+half4 main(float2 coord) {
+    half4 sampled = content.eval(coord);
+    float alpha = float(sampled.a);
+    if (alpha <= 0.001 || strength <= 0.0001) {
+        return sampled;
+    }
+
+    float3 rgb = clamp(float3(sampled.rgb) / alpha, 0.0, 1.0);
+    float luma = dot(rgb, float3(0.2126, 0.7152, 0.0722));
+    float3 adjusted = rgb;
+    float clampedStrength = clamp(strength, 0.0, 1.0);
+
+    if (darkSurface > 0.5) {
+        float upper = max(threshold + 0.12, 0.88);
+        float excess = smoothstep(threshold, upper, luma);
+        float factor = excess * clampedStrength;
+        if (factor > 0.0001) {
+            float safeLuma = max(luma, 0.001);
+            float compressedLuma = min(luma, targetLuma);
+            float3 scaled = rgb * (compressedLuma / safeLuma);
+            float3 smoked = mix(scaled, tintRgb, 0.25);
+            adjusted = mix(rgb, smoked, factor);
+        }
+    } else {
+        float lower = min(threshold - 0.12, 0.12);
+        float deficit = 1.0 - smoothstep(lower, threshold, luma);
+        float factor = deficit * clampedStrength;
+        if (factor > 0.0001) {
+            float liftedLuma = max(luma, targetLuma);
+            float3 lifted = clamp(rgb + float3(liftedLuma - luma), 0.0, 1.0);
+            float3 frosted = mix(lifted, tintRgb, 0.22);
+            adjusted = mix(rgb, frosted, factor);
+        }
+    }
+
+    adjusted = clamp(adjusted, 0.0, 1.0);
+    return half4(half3(adjusted * alpha), half(alpha));
+}"""

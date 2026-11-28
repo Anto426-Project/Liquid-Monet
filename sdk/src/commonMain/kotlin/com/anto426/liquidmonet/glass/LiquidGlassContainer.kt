@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPreset
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.RoundedRectangle
 
 /**
@@ -36,7 +35,7 @@ enum class LiquidGlassContainerMode {
 @Composable
 fun LiquidGlassContainer(
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
     shape: Shape = RoundedRectangle(24.dp),
     role: LiquidGlassRole = LiquidGlassRole.Surface,
     containerColor: Color? = null,
@@ -45,9 +44,10 @@ fun LiquidGlassContainer(
     contentAlignment: Alignment = Alignment.TopStart,
     backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
     mode: LiquidGlassContainerMode = LiquidGlassContainerMode.Shared,
+    legibility: LiquidGlassLegibility = LocalLiquidGlassLegibility.current,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState, policy = backdropPolicy)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
     val effectiveContainerColor = containerColor ?: LiquidGlassContainerDefaults.containerColor()
 
     Box(
@@ -66,14 +66,16 @@ fun LiquidGlassContainer(
                     role = role,
                     containerColor = effectiveContainerColor,
                     preset = preset,
-                    backdropPolicy = backdropPolicy
+                    backdropPolicy = backdropPolicy,
+                    legibility = legibility
                 )
         )
 
         CompositionLocalProvider(
             LocalContentColor provides contentColor,
             LocalLiquidGlassContentBackdrop provides effectiveBackdrop,
-            LocalLiquidGlassContainerMode provides mode
+            LocalLiquidGlassContainerMode provides mode,
+            LocalLiquidGlassLegibility provides legibility
         ) {
             content()
         }

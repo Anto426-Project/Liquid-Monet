@@ -6,15 +6,17 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPreset
 import com.anto426.liquidmonet.glass.runtime.LiquidGlassPresets
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.emptyBackdrop
 import com.kyant.shapes.RoundedRectangle
 
 /**
@@ -24,7 +26,7 @@ import com.kyant.shapes.RoundedRectangle
 @Composable
 fun LiquidGlass(
     modifier: Modifier = Modifier,
-    backdropState: Backdrop = emptyBackdrop(),
+    backdrop: Backdrop = emptyLiquidGlassBackdrop(),
     shape: Shape = RoundedRectangle(24.dp),
     blurRadius: Dp = LiquidGlassPresets.Standard.blurRadius,
     refractionHeight: Dp = LiquidGlassPresets.Standard.refractionHeight,
@@ -32,28 +34,39 @@ fun LiquidGlass(
     containerColor: Color? = null,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     backdropPolicy: LiquidGlassBackdropPolicy = LiquidGlassBackdropPolicy.SceneFirst,
-    content: @Composable BoxScope.() -> Unit
+    role: LiquidGlassRole = LiquidGlassRole.Surface,
+    contentAlignment: Alignment = Alignment.TopStart,
+    legibility: LiquidGlassLegibility = LocalLiquidGlassLegibility.current,
+    content: @Composable BoxScope.() -> Unit,
 ) {
-    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdropState, policy = backdropPolicy)
+    val effectiveBackdrop = resolveLiquidGlassBackdrop(backdrop, policy = backdropPolicy)
+    val preset =
+        remember(blurRadius, refractionHeight, refractionAmount) {
+            LiquidGlassPreset(
+                blurRadius = blurRadius,
+                refractionHeight = refractionHeight,
+                refractionAmount = refractionAmount,
+                chromaticAberration = LiquidGlassPresets.Standard.chromaticAberration,
+            )
+        }
     Box(
-        modifier = modifier.liquidGlass(
+        modifier =
+            modifier.liquidGlass(
                 backdrop = effectiveBackdrop,
                 shape = shape,
-                role = LiquidGlassRole.Surface,
+                role = role,
                 containerColor = containerColor,
-                preset = LiquidGlassPreset(
-                    blurRadius = blurRadius,
-                    refractionHeight = refractionHeight,
-                    refractionAmount = refractionAmount,
-                    chromaticAberration = LiquidGlassPresets.Standard.chromaticAberration
-                ),
-                backdropPolicy = backdropPolicy
-            )
+                preset = preset,
+                backdropPolicy = backdropPolicy,
+                legibility = legibility,
+            ),
+        contentAlignment = contentAlignment,
     ) {
         CompositionLocalProvider(
             LocalContentColor provides contentColor,
-            com.anto426.liquidmonet.glass.overlay.LocalLiquidGlassContentBackdrop provides effectiveBackdrop,
-            LocalLiquidGlassContainerMode provides LiquidGlassContainerMode.Shared
+            LocalLiquidGlassContentBackdrop provides effectiveBackdrop,
+            LocalLiquidGlassContainerMode provides LiquidGlassContainerMode.Shared,
+            LocalLiquidGlassLegibility provides legibility,
         ) {
             content()
         }
