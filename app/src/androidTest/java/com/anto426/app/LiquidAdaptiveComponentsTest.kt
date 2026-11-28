@@ -1,4 +1,4 @@
-package com.anto426.app
+﻿package com.anto426.app
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
@@ -426,7 +426,7 @@ class LiquidAdaptiveComponentsTest {
         content(fontScale = 1f) {
             LiquidCard(
                 modifier = Modifier.width(360.dp).height(480.dp).testTag("hero"),
-                contentPadding = 0.dp,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
                 onClick = { taps++ },
                 onLongClick = { longPresses++ },
             ) {
@@ -782,11 +782,11 @@ class LiquidAdaptiveComponentsTest {
                     Column {
                         LiquidCard(
                             modifier = Modifier.height(64.dp).testTag("first-row"),
-                            shape = androidx.compose.ui.graphics.RectangleShape, contentPadding = 0.dp,
+                            shape = androidx.compose.ui.graphics.RectangleShape, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
                             colors = LiquidCardDefaults.colors(containerColor = Color.Transparent), onClick = { firstClicks++ },
                         ) { androidx.compose.material3.Text("Primo controllo") }
                         LiquidCard(
-                            modifier = Modifier.height(64.dp), contentPadding = 0.dp,
+                            modifier = Modifier.height(64.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
                             colors = LiquidCardDefaults.colors(containerColor = Color.Transparent), onClick = {},
                         ) { androidx.compose.material3.Text("Secondo controllo", Modifier.testTag("second-row")) }
                     }

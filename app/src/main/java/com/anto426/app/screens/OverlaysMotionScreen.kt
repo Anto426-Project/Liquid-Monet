@@ -1,4 +1,4 @@
-package com.anto426.app.screens
+﻿package com.anto426.app.screens
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +36,7 @@ import com.anto426.app.demo.displayName
 import com.anto426.liquidmonet.components.buttons.button.LiquidButton
 import com.anto426.liquidmonet.components.buttons.button.LiquidButtonSize
 import com.anto426.liquidmonet.components.buttons.button.LiquidButtonVariant
-import com.anto426.liquidmonet.components.cards.accordion.LiquidAccordionItem
+import com.anto426.liquidmonet.components.cards.accordion.LiquidExpandableCard
 import com.anto426.liquidmonet.components.cards.card.LiquidCard
 import com.anto426.liquidmonet.components.cards.preferenceitem.LiquidPreferenceItem
 import com.anto426.liquidmonet.components.display.avatar.LiquidAvatar
@@ -92,7 +92,7 @@ fun OverlaysMotionScreen(
     settings: DemoSettingsState,
     requestedSubTab: Int,
     toastState: LiquidToastState,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
     modifier: Modifier = Modifier,
 ) {
     var currentSubTab by remember { mutableIntStateOf(requestedSubTab.coerceIn(0, 3)) }
@@ -162,7 +162,7 @@ fun OverlaysMotionScreen(
             items = subTabs,
             selectedIndex = currentSubTab,
             onTabSelected = { currentSubTab = it },
-            backdropState = backdropState,
+            backdrop = backdrop,
         )
 
         LiquidAnimatedSwitcher(
@@ -176,35 +176,35 @@ fun OverlaysMotionScreen(
                         title = "Dialog, Bottom Sheet & Tooltip",
                         subtitle = "Overlay in vetro ottico con predictive back e pressione prolungata.",
                     )
-                    LiquidCard(backdropState = backdropState) {
+                    LiquidCard(backdrop = backdrop) {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                                 LiquidButton(
                                     text = "Apri Dialog",
                                     onClick = { isDialogOpen = true },
                                     variant = LiquidButtonVariant.Primary,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                     modifier = Modifier.weight(1f),
                                 )
                                 LiquidButton(
                                     text = "Apri Sheet",
                                     onClick = { isSheetOpen = true },
                                     variant = LiquidButtonVariant.Secondary,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                     modifier = Modifier.weight(1f),
                                 )
                             }
                             LiquidHorizontalDivider()
                             LiquidTooltipBox(
                                 tooltip = "Tooltip ottico in vetro liquido!",
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
                                 LiquidPreferenceItem(
                                     title = "Tieni premuto per il Tooltip",
                                     subtitle = "Pressione prolungata su questa riga per visualizzare il popup",
                                     icon = LiquidIcons.Info,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                 )
                             }
                         }
@@ -214,7 +214,7 @@ fun OverlaysMotionScreen(
                         title = "Dropdown Menu & Posizionamento",
                         subtitle = "Verifica apertura, rimbalzo e allineamento del menu rispetto all'ancora.",
                     )
-                    LiquidCard(backdropState = backdropState) {
+                    LiquidCard(backdrop = backdrop) {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text("Direzione verticale", style = MaterialTheme.typography.labelMedium)
                             LiquidTabBar(
@@ -225,7 +225,7 @@ fun OverlaysMotionScreen(
                                 ),
                                 selectedIndex = menuVerticalDir,
                                 onTabSelected = { menuVerticalDir = it },
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             )
                             if (menuVerticalDir != 2) {
                                 Text("Allineamento orizzontale", style = MaterialTheme.typography.labelMedium)
@@ -237,7 +237,7 @@ fun OverlaysMotionScreen(
                                     ),
                                     selectedIndex = menuHorizAlign,
                                     onTabSelected = { menuHorizAlign = it },
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                 )
                             }
                             LiquidHorizontalDivider()
@@ -247,7 +247,7 @@ fun OverlaysMotionScreen(
                                     text = "Apri Dropdown Menu",
                                     onClick = { isMenuOpen = !isMenuOpen },
                                     variant = LiquidButtonVariant.Tonal,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .liquidGlassOverlayAnchor(menuAnchorState),
@@ -258,7 +258,7 @@ fun OverlaysMotionScreen(
                                     anchorState = menuAnchorState,
                                     placement = selectedPlacement,
                                     offset = DpOffset(0.dp, 6.dp),
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                 ) {
                                     LiquidMenuItem(
                                         text = "Condividi",
@@ -294,7 +294,7 @@ fun OverlaysMotionScreen(
                         title = "Toast & Snackbar",
                         subtitle = "Notifiche fluttuanti in alto e banner interattivi con swipe-to-dismiss.",
                     )
-                    LiquidCard(backdropState = backdropState) {
+                    LiquidCard(backdrop = backdrop) {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                                 LiquidButton(
@@ -302,7 +302,7 @@ fun OverlaysMotionScreen(
                                     onClick = { toastState.show("Operazione riuscita", "Sincronizzazione completata", LiquidIcons.Check) },
                                     variant = LiquidButtonVariant.Primary,
                                     size = LiquidButtonSize.Small,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                     modifier = Modifier.weight(1f),
                                 )
                                 LiquidButton(
@@ -310,7 +310,7 @@ fun OverlaysMotionScreen(
                                     onClick = { toastState.show("Aggiornamento SDK", "Liquid Monet 2.0 attivo", LiquidIcons.Info) },
                                     variant = LiquidButtonVariant.Secondary,
                                     size = LiquidButtonSize.Small,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                     modifier = Modifier.weight(1f),
                                 )
                             }
@@ -320,7 +320,7 @@ fun OverlaysMotionScreen(
                                     onClick = { toastState.show("Attenzione", "Verifica i parametri ottici", LiquidIcons.Warning) },
                                     variant = LiquidButtonVariant.Tonal,
                                     size = LiquidButtonSize.Small,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                     modifier = Modifier.weight(1f),
                                 )
                                 LiquidButton(
@@ -328,7 +328,7 @@ fun OverlaysMotionScreen(
                                     onClick = { toastState.show("Connessione assente", "Riprova tra qualche istante", LiquidIcons.Close) },
                                     variant = LiquidButtonVariant.Outlined,
                                     size = LiquidButtonSize.Small,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                     modifier = Modifier.weight(1f),
                                 )
                             }
@@ -345,7 +345,7 @@ fun OverlaysMotionScreen(
                                             snackbarType = type
                                             snackbarVisible = true
                                         },
-                                        backdropState = backdropState,
+                                        backdrop = backdrop,
                                     )
                                 }
                             }
@@ -356,7 +356,7 @@ fun OverlaysMotionScreen(
                                 actionLabel = "Azione",
                                 onActionClick = { toastState.show("Azione Snackbar eseguita", icon = LiquidIcons.Check) },
                                 onDismiss = { snackbarVisible = false },
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             )
                         }
                     }
@@ -367,7 +367,7 @@ fun OverlaysMotionScreen(
                         title = "LiquidLoading & Indicatori Progressivi",
                         subtitle = "Controlla live l'avanzamento determinato e confronta gli stili animati.",
                     )
-                    LiquidCard(backdropState = backdropState) {
+                    LiquidCard(backdrop = backdrop) {
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("Progresso simulato", style = MaterialTheme.typography.bodyMedium)
@@ -376,15 +376,15 @@ fun OverlaysMotionScreen(
                             LiquidSlider(
                                 value = demoProgress,
                                 onValueChange = { demoProgress = it },
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             )
                             LiquidLinearProgressIndicator(
                                 progress = demoProgress,
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             )
                             LiquidLinearProgressIndicator(
                                 progress = null,
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             )
                             LiquidHorizontalDivider()
                             Row(
@@ -393,19 +393,19 @@ fun OverlaysMotionScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    LiquidCircularProgressIndicator(progress = demoProgress, backdropState = backdropState)
+                                    LiquidCircularProgressIndicator(progress = demoProgress, backdrop = backdrop)
                                     Text("Determinato", style = MaterialTheme.typography.labelSmall)
                                 }
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    LiquidLoading(style = LiquidLoadingStyle.Circular, backdropState = backdropState)
+                                    LiquidLoading(style = LiquidLoadingStyle.Circular, backdrop = backdrop)
                                     Text("Circular", style = MaterialTheme.typography.labelSmall)
                                 }
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    LiquidLoading(style = LiquidLoadingStyle.Dots, backdropState = backdropState)
+                                    LiquidLoading(style = LiquidLoadingStyle.Dots, backdrop = backdrop)
                                     Text("Dots", style = MaterialTheme.typography.labelSmall)
                                 }
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    LiquidLoading(style = LiquidLoadingStyle.Pulse, backdropState = backdropState)
+                                    LiquidLoading(style = LiquidLoadingStyle.Pulse, backdrop = backdrop)
                                     Text("Pulse", style = MaterialTheme.typography.labelSmall)
                                 }
                             }
@@ -416,20 +416,20 @@ fun OverlaysMotionScreen(
                         title = "Shimmer Skeleton",
                         subtitle = "Placeholder in vetro liquido animati nella sola fase di disegno.",
                     )
-                    LiquidCard(backdropState = backdropState) {
+                    LiquidCard(backdrop = backdrop) {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 LiquidShimmerBox(
                                     modifier = Modifier.size(48.dp),
                                     shape = RoundedRectangle(24.dp),
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                 )
                                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    LiquidShimmerBox(modifier = Modifier.fillMaxWidth(0.75f).height(14.dp), backdropState = backdropState)
-                                    LiquidShimmerBox(modifier = Modifier.fillMaxWidth(0.45f).height(12.dp), backdropState = backdropState)
+                                    LiquidShimmerBox(modifier = Modifier.fillMaxWidth(0.75f).height(14.dp), backdrop = backdrop)
+                                    LiquidShimmerBox(modifier = Modifier.fillMaxWidth(0.45f).height(12.dp), backdrop = backdrop)
                                 }
                             }
-                            LiquidShimmerBox(modifier = Modifier.fillMaxWidth().height(72.dp), backdropState = backdropState)
+                            LiquidShimmerBox(modifier = Modifier.fillMaxWidth().height(72.dp), backdrop = backdrop)
                         }
                     }
                 }
@@ -446,9 +446,9 @@ fun OverlaysMotionScreen(
                             LiquidBreadcrumbItem("Overlay") { toastState.show("Percorso: Overlay", icon = LiquidIcons.Notifications) },
                             LiquidBreadcrumbItem("Liste"),
                         ),
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
-                    LiquidCard(backdropState = backdropState) {
+                    LiquidCard(backdrop = backdrop) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -458,7 +458,7 @@ fun OverlaysMotionScreen(
                                 pageCount = 5,
                                 currentPage = pagerIndicatorPage,
                                 onPageSelected = { pagerIndicatorPage = it },
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                             LiquidHorizontalDivider()
@@ -466,7 +466,7 @@ fun OverlaysMotionScreen(
                                 currentPage = paginationPage,
                                 totalPages = 5,
                                 onPageChange = { paginationPage = it },
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
@@ -477,26 +477,26 @@ fun OverlaysMotionScreen(
                         subtitle = "Espansioni fluide senza ritagli di ombre o bordi.",
                     )
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        LiquidAccordionItem(
+                        LiquidExpandableCard(
                             title = "Architettura Ottica Adattiva",
                             subtitle = "Essential, Bilanciato, Alto e Ultra",
                             leadingIcon = LiquidIcons.Info,
                             isExpanded = accordion1Open,
                             onExpandedChange = { accordion1Open = it },
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         ) {
                             Text(
-                                text = "Ogni superficie adatta blur, rifrazione e costo GPU al profilo attivo senza sacrificare contrasto o leggibilità.",
+                                text = "Ogni superficie adatta blur, rifrazione e costo GPU al profilo attivo senza sacrificare contrasto o leggibilitÃ .",
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }
-                        LiquidAccordionItem(
+                        LiquidExpandableCard(
                             title = "Transizioni Schermate Expressive",
                             subtitle = "Z-order, parallasse e curve Emphasized",
                             leadingIcon = LiquidIcons.Star,
                             isExpanded = accordion2Open,
                             onExpandedChange = { accordion2Open = it },
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         ) {
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Text(
@@ -508,7 +508,7 @@ fun OverlaysMotionScreen(
                                     onClick = { inlineExpandVisible = !inlineExpandVisible },
                                     variant = LiquidButtonVariant.Tonal,
                                     size = LiquidButtonSize.Small,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                 )
                                 LiquidExpandableContent(visible = inlineExpandVisible) {
                                     Text(
@@ -528,30 +528,30 @@ fun OverlaysMotionScreen(
                     LiquidSwipeToDismissBox(
                         onDismissLeft = { toastState.show("Archiviato", icon = LiquidIcons.Info) },
                         onDismissRight = { toastState.show("Preferito", icon = LiquidIcons.Star) },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     ) {
                         LiquidPreferenceItem(
                             title = "Scorri a destra o sinistra",
                             subtitle = "Swipe to Dismiss con azioni contestuali",
                             icon = LiquidIcons.Share,
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         )
                     }
-                    LiquidCard(backdropState = backdropState) {
+                    LiquidCard(backdrop = backdrop) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                LiquidAvatar(initials = "LM", presence = LiquidAvatarPresence.Online, backdropState = backdropState)
-                                LiquidAvatar(initials = "AN", presence = LiquidAvatarPresence.Busy, backdropState = backdropState)
-                                LiquidAvatar(presence = LiquidAvatarPresence.Away, backdropState = backdropState)
+                                LiquidAvatar(initials = "LM", presence = LiquidAvatarPresence.Online, backdrop = backdrop)
+                                LiquidAvatar(initials = "AN", presence = LiquidAvatarPresence.Busy, backdrop = backdrop)
+                                LiquidAvatar(presence = LiquidAvatarPresence.Away, backdrop = backdrop)
                             }
                             LiquidAvatarGroup(
                                 avatars = listOf("AL", "MK", "ST", "DV", "RK", "PX"),
                                 maxDisplay = 3,
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             )
                         }
                     }
@@ -561,7 +561,7 @@ fun OverlaysMotionScreen(
                         icon = LiquidIcons.Check,
                         actionButtonText = "Verifica di nuovo",
                         onActionClick = { toastState.show("Controllo completato", icon = LiquidIcons.Refresh) },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
 
                     LiquidSectionHeader(
@@ -584,7 +584,7 @@ fun OverlaysMotionScreen(
                                 label = label,
                                 selected = footerState == state,
                                 onClick = { footerState = state },
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             )
                         }
                     }
@@ -597,10 +597,10 @@ fun OverlaysMotionScreen(
                         items(count = 4, key = { "lazy-item-$it" }) { idx ->
                             LiquidCard(
                                 modifier = Modifier.fillMaxWidth(),
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             ) {
                                 Text(
-                                    text = "Elemento lista #${idx + 1} · Scorri fino al footer",
+                                    text = "Elemento lista #${idx + 1} Â· Scorri fino al footer",
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
@@ -632,12 +632,12 @@ fun OverlaysMotionScreen(
                                 label = preset.displayName(),
                                 selected = labTransition == preset,
                                 onClick = { labTransition = preset },
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             )
                         }
                     }
 
-                    LiquidCard(backdropState = backdropState) {
+                    LiquidCard(backdrop = backdrop) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -661,7 +661,7 @@ fun OverlaysMotionScreen(
                                 }
                                 LiquidBadge(
                                     text = "${labPage + 1} / 4",
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                 )
                             }
 
@@ -692,7 +692,7 @@ fun OverlaysMotionScreen(
                                 }
                                 LiquidCard(
                                     modifier = Modifier.fillMaxWidth(),
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -727,7 +727,7 @@ fun OverlaysMotionScreen(
                                     },
                                     variant = LiquidButtonVariant.Outlined,
                                     size = LiquidButtonSize.Small,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                     modifier = Modifier.weight(1f),
                                 )
                                 LiquidButton(
@@ -738,14 +738,14 @@ fun OverlaysMotionScreen(
                                     },
                                     variant = LiquidButtonVariant.Primary,
                                     size = LiquidButtonSize.Small,
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                     modifier = Modifier.weight(1f),
                                 )
                             }
 
                             LiquidButton(
                                 text = if (settings.screenTransition == labTransition) {
-                                    "Già attiva su tutta l'app"
+                                    "GiÃ  attiva su tutta l'app"
                                 } else {
                                     "Applica \"${labTransition.displayName()}\" a tutta l'app"
                                 },
@@ -759,7 +759,7 @@ fun OverlaysMotionScreen(
                                     )
                                 },
                                 variant = LiquidButtonVariant.Tonal,
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
@@ -769,7 +769,7 @@ fun OverlaysMotionScreen(
                         title = "LiquidScreenEntrance",
                         subtitle = "Testa gli ingressi dedicati a schermate e sezioni indipendenti.",
                     )
-                    LiquidCard(backdropState = backdropState) {
+                    LiquidCard(backdrop = backdrop) {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -783,7 +783,7 @@ fun OverlaysMotionScreen(
                                             entrancePreviewAnim = anim
                                             entranceReplayKey++
                                         },
-                                        backdropState = backdropState,
+                                        backdrop = backdrop,
                                     )
                                 }
                             }
@@ -794,9 +794,9 @@ fun OverlaysMotionScreen(
                                 ) {
                                     LiquidPreferenceItem(
                                         title = "Ingresso: ${entrancePreviewAnim.displayName()}",
-                                        subtitle = "Curve EmphasizedDecelerate · Tocca Riproduci per rivedere",
+                                        subtitle = "Curve EmphasizedDecelerate Â· Tocca Riproduci per rivedere",
                                         icon = LiquidIcons.PlayArrow,
-                                        backdropState = backdropState,
+                                        backdrop = backdrop,
                                     )
                                 }
                             }
@@ -805,7 +805,7 @@ fun OverlaysMotionScreen(
                                 onClick = { entranceReplayKey++ },
                                 variant = LiquidButtonVariant.Secondary,
                                 size = LiquidButtonSize.Small,
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
@@ -819,8 +819,8 @@ fun OverlaysMotionScreen(
         LiquidDialog(
             onDismissRequest = { isDialogOpen = false },
             title = "Conferma Operazione",
-            text = "Questa finestra modale usa LiquidDialog con vetro ottico, predictive back e adattamento automatico alla qualità scelta.",
-            backdropState = backdropState,
+            text = "Questa finestra modale usa LiquidDialog con vetro ottico, predictive back e adattamento automatico alla qualitÃ  scelta.",
+            backdrop = backdrop,
             confirmButton = {
                 LiquidButton(
                     text = "Conferma",
@@ -829,7 +829,7 @@ fun OverlaysMotionScreen(
                         toastState.show("Dialog confermato", icon = LiquidIcons.Check)
                     },
                     variant = LiquidButtonVariant.Primary,
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                     modifier = Modifier.fillMaxWidth(),
                 )
             },
@@ -838,7 +838,7 @@ fun OverlaysMotionScreen(
                     text = "Annulla",
                     onClick = { isDialogOpen = false },
                     variant = LiquidButtonVariant.Text,
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                     modifier = Modifier.fillMaxWidth(),
                 )
             },
@@ -850,7 +850,7 @@ fun OverlaysMotionScreen(
             onDismissRequest = { isSheetOpen = false },
             title = "Liquid Bottom Sheet",
             subtitle = "Trascina verso il basso o usa il gesto indietro per chiudere",
-            backdropState = backdropState,
+            backdrop = backdrop,
         ) {
             Column(
                 modifier = Modifier
@@ -866,7 +866,7 @@ fun OverlaysMotionScreen(
                         isSheetOpen = false
                         toastState.show("Profilo esportato", icon = LiquidIcons.Share)
                     },
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
                 LiquidPreferenceItem(
                     title = "Ricarica anteprima",
@@ -876,7 +876,7 @@ fun OverlaysMotionScreen(
                         isSheetOpen = false
                         settings.replaySections()
                     },
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
             }
         }

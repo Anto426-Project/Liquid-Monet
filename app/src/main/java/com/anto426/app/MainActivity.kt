@@ -1,4 +1,4 @@
-package com.anto426.app
+﻿package com.anto426.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -164,7 +164,7 @@ class MainActivity : ComponentActivity() {
                             LiquidTopBar(
                                 title = currentTab.title,
                                 subtitle = currentTab.subtitle,
-                                backdropState = contentBackdrop,
+                                backdrop = contentBackdrop,
                                 scrollBehavior = scrollBehavior,
                                 isSearchActive = isSearchOpen,
                                 searchQuery = searchQuery,
@@ -194,7 +194,7 @@ class MainActivity : ComponentActivity() {
                                             ),
                                             LiquidTopBarAction(
                                                 icon = LiquidIcons.Star,
-                                                label = "Cambia qualità vetro (${settings.glassQuality.displayName()})",
+                                                label = "Cambia qualitÃ  vetro (${settings.glassQuality.displayName()})",
                                                 onClick = {
                                                     val cycle = listOf(
                                                         LiquidGlassQualityTier.MINIMAL,
@@ -204,7 +204,7 @@ class MainActivity : ComponentActivity() {
                                                     )
                                                     val next = cycle[(cycle.indexOf(settings.glassQuality) + 1) % cycle.size]
                                                     settings.glassQuality = next
-                                                    toastState.show("Qualità vetro", next.displayName(), LiquidIcons.Star)
+                                                    toastState.show("QualitÃ  vetro", next.displayName(), LiquidIcons.Star)
                                                 },
                                             ),
                                             LiquidTopBarAction(
@@ -229,7 +229,7 @@ class MainActivity : ComponentActivity() {
                                                 onClick = {
                                                     toastState.show(
                                                         message = "Liquid Monet 2.0",
-                                                        subtitle = "Transizione: ${settings.screenTransition.displayName()} · Vetro: ${settings.glassQuality.displayName()}",
+                                                        subtitle = "Transizione: ${settings.screenTransition.displayName()} Â· Vetro: ${settings.glassQuality.displayName()}",
                                                         icon = LiquidIcons.Info,
                                                     )
                                                 },
@@ -252,7 +252,7 @@ class MainActivity : ComponentActivity() {
                                     },
                                     items = navItems,
                                     visible = isNavBarVisible && !isSearchOpen,
-                                    backdropState = contentBackdrop,
+                                    backdrop = contentBackdrop,
                                 )
                             }
                         },
@@ -261,7 +261,7 @@ class MainActivity : ComponentActivity() {
                                 LiquidFloatingActionButton(
                                     onClick = { isQuickSettingsOpen = true },
                                     visible = isNavBarVisible && !isSearchOpen,
-                                    backdropState = contentBackdrop,
+                                    backdrop = contentBackdrop,
                                     modifier = Modifier
                                         .align(Alignment.BottomEnd)
                                         .navigationBarsPadding()
@@ -277,7 +277,7 @@ class MainActivity : ComponentActivity() {
 
                             LiquidToastHost(
                                 state = toastState,
-                                backdropState = contentBackdrop,
+                                backdrop = contentBackdrop,
                                 modifier = Modifier
                                     .align(Alignment.TopCenter)
                                     .padding(top = 84.dp),
@@ -288,11 +288,11 @@ class MainActivity : ComponentActivity() {
                                     settings = settings,
                                     onDismiss = { isQuickSettingsOpen = false },
                                     onOpenFullSettings = { navigateTo(DemoTab.Settings, 0) },
-                                    backdropState = contentBackdrop,
+                                    backdrop = contentBackdrop,
                                 )
                             }
                         },
-                    ) { backdropState ->
+                    ) { backdrop ->
                         Scaffold(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -329,16 +329,16 @@ class MainActivity : ComponentActivity() {
                                             icon = LiquidIcons.Search,
                                             actionButtonText = "Cancella ricerca",
                                             onActionClick = { searchQuery = "" },
-                                            backdropState = backdropState,
+                                            backdrop = backdrop,
                                         )
                                     } else {
                                         matches.forEach { entry ->
                                             LiquidPreferenceItem(
                                                 title = entry.title,
-                                                subtitle = "${entry.tab.label} · ${entry.description}",
+                                                subtitle = "${entry.tab.label} Â· ${entry.description}",
                                                 icon = entry.icon,
                                                 onClick = { navigateTo(entry.tab, entry.subTab) },
-                                                backdropState = backdropState,
+                                                backdrop = backdrop,
                                             )
                                         }
                                     }
@@ -365,7 +365,7 @@ class MainActivity : ComponentActivity() {
                                             DemoTab.Explore -> ExploreScreen(
                                                 settings = settings,
                                                 toastState = toastState,
-                                                backdropState = backdropState,
+                                                backdrop = backdrop,
                                                 onNavigate = navigateTo,
                                                 onOpenQuickSettings = { isQuickSettingsOpen = true },
                                             )
@@ -373,22 +373,22 @@ class MainActivity : ComponentActivity() {
                                                 settings = settings,
                                                 requestedSubTab = controlsSubTab,
                                                 toastState = toastState,
-                                                backdropState = backdropState,
+                                                backdrop = backdrop,
                                             )
                                             DemoTab.Overlays -> OverlaysMotionScreen(
                                                 settings = settings,
                                                 requestedSubTab = overlaysSubTab,
                                                 toastState = toastState,
-                                                backdropState = backdropState,
+                                                backdrop = backdrop,
                                             )
                                             DemoTab.Charts -> ChartsSurfacesScreen(
                                                 toastState = toastState,
-                                                backdropState = backdropState,
+                                                backdrop = backdrop,
                                             )
                                             DemoTab.Settings -> SettingsScreen(
                                                 settings = settings,
                                                 toastState = toastState,
-                                                backdropState = backdropState,
+                                                backdrop = backdrop,
                                             )
                                         }
                                         Spacer(modifier = Modifier.height(116.dp))

@@ -1,4 +1,4 @@
-package com.anto426.app.screens
+﻿package com.anto426.app.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,7 +47,7 @@ import com.kyant.shapes.RoundedRectangle
 @Composable
 fun ChartsSurfacesScreen(
     toastState: LiquidToastState,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
     modifier: Modifier = Modifier,
 ) {
     var lineDatasetIndex by remember { mutableIntStateOf(0) }
@@ -191,37 +191,37 @@ fun ChartsSurfacesScreen(
                         label = "Carriera (18-30)",
                         selected = lineDatasetIndex == 0,
                         onClick = { lineDatasetIndex = 0 },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     LiquidChip(
                         label = "Rendimenti (0-100)",
                         selected = lineDatasetIndex == 1,
                         onClick = { lineDatasetIndex = 1 },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     LiquidChip(
                         label = "Curve morbide",
                         selected = smoothCurves,
                         onClick = { smoothCurves = !smoothCurves },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     LiquidChip(
                         label = "Griglia",
                         selected = showGrid,
                         onClick = { showGrid = !showGrid },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     LiquidChip(
                         label = "Area",
                         selected = showArea,
                         onClick = { showArea = !showArea },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     LiquidChip(
                         label = "Dettaglio",
                         selected = showLineSelection,
                         onClick = { showLineSelection = !showLineSelection },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                 }
                 LiquidLineChart(
@@ -250,13 +250,13 @@ fun ChartsSurfacesScreen(
                         label = "Distribuzione CFU",
                         selected = barDatasetIndex == 0,
                         onClick = { barDatasetIndex = 0 },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     LiquidChip(
                         label = "Trimestri",
                         selected = barDatasetIndex == 1,
                         onClick = { barDatasetIndex = 1 },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                 }
                 LiquidBarChart(
@@ -283,10 +283,10 @@ fun ChartsSurfacesScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 LiquidChip(
-                    label = if (donutRoundCap) "Estremità arrotondate" else "Estremità nette",
+                    label = if (donutRoundCap) "EstremitÃ  arrotondate" else "EstremitÃ  nette",
                     selected = donutRoundCap,
                     onClick = { donutRoundCap = !donutRoundCap },
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
                 LiquidDonutChart(
                     entries = donutEntries,
@@ -313,34 +313,34 @@ fun ChartsSurfacesScreen(
             )
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 LiquidStatusCard(
-                    title = "Successo — Rendering Attivo",
+                    title = "Successo â€” Rendering Attivo",
                     description = "Shader e compositing hardware operativi senza frame persi.",
                     statusType = LiquidStatusType.Success,
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
                 LiquidStatusCard(
-                    title = "Informazione — Profilo Calibrato",
+                    title = "Informazione â€” Profilo Calibrato",
                     description = "I parametri ottici vengono adattati automaticamente al dispositivo.",
                     statusType = LiquidStatusType.Info,
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
                 LiquidStatusCard(
-                    title = "Avviso — Risparmio Energetico",
-                    description = "In modalità batteria ridotta puoi selezionare il profilo Essential.",
+                    title = "Avviso â€” Risparmio Energetico",
+                    description = "In modalitÃ  batteria ridotta puoi selezionare il profilo Essential.",
                     statusType = LiquidStatusType.Warning,
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
                 LiquidStatusCard(
-                    title = "Errore — Esempio Stato Critico",
+                    title = "Errore â€” Esempio Stato Critico",
                     description = "Con pulsante di recupero integrato direttamente nella card.",
                     statusType = LiquidStatusType.Error,
                     actionLabel = "Riprova",
                     onAction = { toastState.show("Recupero eseguito", icon = LiquidIcons.Refresh) },
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
             }
 
-            LiquidCard(backdropState = backdropState) {
+            LiquidCard(backdrop = backdrop) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -375,7 +375,7 @@ fun ChartsSurfacesScreen(
                         subtitle = "Tocca per testare risposta elastica e feedback",
                         icon = LiquidIcons.Settings,
                         onClick = { toastState.show("Elemento cliccato", icon = LiquidIcons.Check) },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                 }
             }

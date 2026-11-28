@@ -1,4 +1,4 @@
-package com.anto426.app
+﻿package com.anto426.app
 
 import android.os.Build
 import androidx.compose.foundation.Canvas
@@ -66,7 +66,7 @@ class LiquidCardMaterialTest {
                         val panel = Modifier.offset(43.dp, 37.dp).size(140.dp, 110.dp).testTag("material")
                         val shape = RoundedCornerShape(20.dp)
                         if (useCard) {
-                            LiquidCard(modifier = panel, backdropState = backdrop, shape = shape) {}
+                            LiquidCard(modifier = panel, backdrop = backdrop, shape = shape) {}
                         } else {
                             Box(panel.liquidGlass(backdrop = backdrop, shape = shape))
                         }

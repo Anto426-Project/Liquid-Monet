@@ -1,4 +1,4 @@
-package com.anto426.app.screens
+﻿package com.anto426.app.screens
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -52,7 +52,7 @@ import kotlin.math.roundToInt
 fun ExploreScreen(
     settings: DemoSettingsState,
     toastState: LiquidToastState,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
     onNavigate: (DemoTab, Int) -> Unit,
     onOpenQuickSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -66,7 +66,7 @@ fun ExploreScreen(
     ) {
         // 1. Live Studio Hero & Optical Telemetry
         DemoAnimatedSection(order = 0) {
-            LiquidCard(backdropState = backdropState) {
+            LiquidCard(backdrop = backdrop) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -92,7 +92,7 @@ fun ExploreScreen(
                             text = (performance.opticalQualityTier ?: performance.qualityTier).displayName(),
                             containerColor = colorScheme.primaryContainer,
                             contentColor = colorScheme.onPrimaryContainer,
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         )
                     }
 
@@ -103,22 +103,22 @@ fun ExploreScreen(
                         TelemetryPill(
                             label = "Blur",
                             value = "${(performance.blurScale * 100f).roundToInt()}%",
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         )
                         TelemetryPill(
                             label = "Rifrazione",
                             value = "${(performance.refractionScale * 100f).roundToInt()}%",
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         )
                         TelemetryPill(
                             label = "Motion",
                             value = "${(performance.motionScale * 100f).roundToInt()}%",
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         )
                         TelemetryPill(
                             label = "Scala GPU",
                             value = "${(performance.renderResolutionScale * 100f).roundToInt()}%",
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         )
                     }
 
@@ -147,7 +147,7 @@ fun ExploreScreen(
                                     label = tier.displayName(),
                                     selected = settings.glassQuality == tier,
                                     onClick = { settings.glassQuality = tier },
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                 )
                             }
                         }
@@ -176,7 +176,7 @@ fun ExploreScreen(
                                     label = preset.displayName(),
                                     selected = settings.screenTransition == preset,
                                     onClick = { settings.screenTransition = preset },
-                                    backdropState = backdropState,
+                                    backdrop = backdrop,
                                 )
                             }
                         }
@@ -191,7 +191,7 @@ fun ExploreScreen(
                             onClick = onOpenQuickSettings,
                             variant = LiquidButtonVariant.Primary,
                             size = LiquidButtonSize.Small,
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                             modifier = Modifier.weight(1f),
                         )
                         LiquidButton(
@@ -199,7 +199,7 @@ fun ExploreScreen(
                             onClick = { onNavigate(DemoTab.Overlays, 3) },
                             variant = LiquidButtonVariant.Tonal,
                             size = LiquidButtonSize.Small,
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -219,28 +219,28 @@ fun ExploreScreen(
                     subtitle = "Pulsanti, campi di testo, OTP, slider, selettori e picker",
                     icon = LiquidIcons.Edit,
                     onClick = { onNavigate(DemoTab.Controls, 0) },
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
                 LiquidPreferenceItem(
                     title = "Overlay & Motion",
                     subtitle = "Dialog, sheet, dropdown menu, toast, liste e lab transizioni",
                     icon = LiquidIcons.Notifications,
                     onClick = { onNavigate(DemoTab.Overlays, 0) },
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
                 LiquidPreferenceItem(
                     title = "Grafici & Superfici",
                     subtitle = "Line, Bar, Donut chart e status card in vetro liquido",
                     icon = LiquidIcons.Analytics,
                     onClick = { onNavigate(DemoTab.Charts, 0) },
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
                 LiquidPreferenceItem(
                     title = "Impostazioni SDK",
-                    subtitle = "Tema, palette Monet, qualità vetro, sfondo e animazioni",
+                    subtitle = "Tema, palette Monet, qualitÃ  vetro, sfondo e animazioni",
                     icon = LiquidIcons.Settings,
                     onClick = { onNavigate(DemoTab.Settings, 0) },
-                    backdropState = backdropState,
+                    backdrop = backdrop,
                 )
             }
         }
@@ -253,7 +253,7 @@ fun ExploreScreen(
             )
             ExploreMediaPlayerWidget(
                 toastState = toastState,
-                backdropState = backdropState,
+                backdrop = backdrop,
             )
         }
 
@@ -261,11 +261,11 @@ fun ExploreScreen(
         DemoAnimatedSection(order = 3) {
             LiquidStatusCard(
                 title = "Pipeline Rendering Attiva",
-                description = "Profilo ${(performance.opticalQualityTier ?: performance.qualityTier).displayName()} · Sfondo ${settings.backgroundEffect.displayName()} · Transizione ${settings.screenTransition.displayName()}.",
+                description = "Profilo ${(performance.opticalQualityTier ?: performance.qualityTier).displayName()} Â· Sfondo ${settings.backgroundEffect.displayName()} Â· Transizione ${settings.screenTransition.displayName()}.",
                 statusType = LiquidStatusType.Success,
                 actionLabel = "Apri Impostazioni",
                 onAction = { onNavigate(DemoTab.Settings, 0) },
-                backdropState = backdropState,
+                backdrop = backdrop,
             )
         }
     }
@@ -275,18 +275,18 @@ fun ExploreScreen(
 private fun TelemetryPill(
     label: String,
     value: String,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
 ) {
     LiquidBadge(
         text = "$label: $value",
-        backdropState = backdropState,
+        backdrop = backdrop,
     )
 }
 
 @Composable
 private fun ExploreMediaPlayerWidget(
     toastState: LiquidToastState,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
 ) {
     val tracks = remember {
         listOf(
@@ -341,11 +341,11 @@ private fun ExploreMediaPlayerWidget(
         onContainerClick = {
             toastState.show(
                 message = title,
-                subtitle = "$artist · ${formatSeconds(totalSec)}",
+                subtitle = "$artist Â· ${formatSeconds(totalSec)}",
                 icon = LiquidIcons.MusicNote,
             )
         },
-        backdropState = backdropState,
+        backdrop = backdrop,
     )
 }
 

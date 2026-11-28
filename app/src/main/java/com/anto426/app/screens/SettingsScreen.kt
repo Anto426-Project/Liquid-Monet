@@ -1,4 +1,4 @@
-package com.anto426.app.screens
+﻿package com.anto426.app.screens
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -53,7 +53,7 @@ import kotlin.math.roundToInt
 fun SettingsScreen(
     settings: DemoSettingsState,
     toastState: LiquidToastState,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
     modifier: Modifier = Modifier,
 ) {
     val performance = LocalLiquidGlassPerformance.current
@@ -67,9 +67,9 @@ fun SettingsScreen(
         DemoAnimatedSection(order = 0) {
             LiquidSectionHeader(
                 title = "Tema & Motore Monet",
-                subtitle = "Controlla modalità chiara/scura, colori dinamici di sistema e palette seed.",
+                subtitle = "Controlla modalitÃ  chiara/scura, colori dinamici di sistema e palette seed.",
             )
-            LiquidCard(backdropState = backdropState) {
+            LiquidCard(backdrop = backdrop) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text(
                         text = "Aspetto",
@@ -80,7 +80,7 @@ fun SettingsScreen(
                         items = DemoThemeMode.entries.map { LiquidNavigationItem(it.label) },
                         selectedIndex = settings.themeMode.ordinal,
                         onTabSelected = { settings.themeMode = DemoThemeMode.entries[it] },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     Text(
                         text = settings.themeMode.description,
@@ -99,7 +99,7 @@ fun SettingsScreen(
                         },
                         checked = settings.useSystemDynamicColor,
                         onCheckedChange = { settings.useSystemDynamicColor = it },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
 
                     LiquidHorizontalDivider()
@@ -112,19 +112,19 @@ fun SettingsScreen(
                             settings.useSystemDynamicColor = false
                         },
                         title = "Palette Seed personalizzata",
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                 }
             }
         }
 
-        // 2. Qualità Vetro & Ottica
+        // 2. QualitÃ  Vetro & Ottica
         DemoAnimatedSection(order = 1) {
             LiquidSectionHeader(
-                title = "Qualità Vetro & Ottica AGSL",
+                title = "QualitÃ  Vetro & Ottica AGSL",
                 subtitle = "Cambia live tra Essential, Bilanciato, Alto, Ultra o selezione automatica.",
             )
-            LiquidCard(backdropState = backdropState) {
+            LiquidCard(backdrop = backdrop) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     val tiers = listOf(
                         null,
@@ -142,7 +142,7 @@ fun SettingsScreen(
                                 label = tier.displayName(),
                                 selected = settings.glassQuality == tier,
                                 onClick = { settings.glassQuality = tier },
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             )
                         }
                     }
@@ -155,12 +155,12 @@ fun SettingsScreen(
                     LiquidHorizontalDivider()
 
                     SettingsSliderRow(
-                        title = "Intensità Ottica Vetro (liquidIntensity)",
+                        title = "IntensitÃ  Ottica Vetro (liquidIntensity)",
                         valueLabel = "${(settings.liquidIntensity * 100f).roundToInt()}%",
                         value = settings.liquidIntensity,
                         onValueChange = { settings.liquidIntensity = it },
                         valueRange = 0f..1f,
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
 
                     LiquidHorizontalDivider()
@@ -169,11 +169,11 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        LiquidBadge(text = "Tier: ${(performance.opticalQualityTier ?: performance.qualityTier).displayName()}", backdropState = backdropState)
-                        LiquidBadge(text = "Blur: ${(performance.blurScale * 100f).roundToInt()}%", backdropState = backdropState)
-                        LiquidBadge(text = "Snell: ${(performance.refractionScale * 100f).roundToInt()}%", backdropState = backdropState)
-                        LiquidBadge(text = "Cromatica: ${(performance.chromaticAberrationScale * 100f).roundToInt()}%", backdropState = backdropState)
-                        LiquidBadge(text = "Risoluzione: ${(performance.renderResolutionScale * 100f).roundToInt()}%", backdropState = backdropState)
+                        LiquidBadge(text = "Tier: ${(performance.opticalQualityTier ?: performance.qualityTier).displayName()}", backdrop = backdrop)
+                        LiquidBadge(text = "Blur: ${(performance.blurScale * 100f).roundToInt()}%", backdrop = backdrop)
+                        LiquidBadge(text = "Snell: ${(performance.refractionScale * 100f).roundToInt()}%", backdrop = backdrop)
+                        LiquidBadge(text = "Cromatica: ${(performance.chromaticAberrationScale * 100f).roundToInt()}%", backdrop = backdrop)
+                        LiquidBadge(text = "Risoluzione: ${(performance.renderResolutionScale * 100f).roundToInt()}%", backdrop = backdrop)
                     }
                 }
             }
@@ -183,38 +183,38 @@ fun SettingsScreen(
         DemoAnimatedSection(order = 2) {
             LiquidSectionHeader(
                 title = "Sfondo Dinamico (LiquidBackground)",
-                subtitle = "Configura effetto cromatico, intensità, velocità e vignettatura.",
+                subtitle = "Configura effetto cromatico, intensitÃ , velocitÃ  e vignettatura.",
             )
-            LiquidCard(backdropState = backdropState) {
+            LiquidCard(backdrop = backdrop) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     LiquidBackgroundSelector(
                         selectedEffect = settings.backgroundEffect,
                         onEffectSelected = { settings.backgroundEffect = it },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     SettingsSliderRow(
-                        title = "Intensità Sfondo",
+                        title = "IntensitÃ  Sfondo",
                         valueLabel = "${(settings.backgroundIntensity * 100f).roundToInt()}%",
                         value = settings.backgroundIntensity,
                         onValueChange = { settings.backgroundIntensity = it },
                         valueRange = 0f..1f,
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     SettingsSliderRow(
-                        title = "Velocità Movimento",
+                        title = "VelocitÃ  Movimento",
                         valueLabel = String.format(Locale.getDefault(), "%.1fx", settings.backgroundSpeed),
                         value = settings.backgroundSpeed,
                         onValueChange = { settings.backgroundSpeed = it },
                         valueRange = 0.1f..3.0f,
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     LiquidHorizontalDivider()
                     SettingsSwitchRow(
                         title = "Vignettatura Periferica",
-                        subtitle = "Leggero oscuramento ai bordi per profondità cinematografica",
+                        subtitle = "Leggero oscuramento ai bordi per profonditÃ  cinematografica",
                         checked = settings.showVignette,
                         onCheckedChange = { settings.showVignette = it },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                 }
             }
@@ -226,7 +226,7 @@ fun SettingsScreen(
                 title = "Animazioni & Transizioni Schermate",
                 subtitle = "Scegli la transizione usata su tutte le schermate e sotto-tab dell'app.",
             )
-            LiquidCard(backdropState = backdropState) {
+            LiquidCard(backdrop = backdrop) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     LiquidSelect(
                         items = LiquidSwitcherTransition.entries,
@@ -236,7 +236,7 @@ fun SettingsScreen(
                         itemLabel = { it.displayName() },
                         itemSubtitle = { it.description() },
                         leadingIcon = LiquidIcons.PlayArrow,
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
 
                     LiquidHorizontalDivider()
@@ -258,7 +258,7 @@ fun SettingsScreen(
                                     settings.sectionEntrance = anim
                                     settings.replaySections()
                                 },
-                                backdropState = backdropState,
+                                backdrop = backdrop,
                             )
                         }
                     }
@@ -270,18 +270,18 @@ fun SettingsScreen(
                         },
                         variant = LiquidButtonVariant.Tonal,
                         size = LiquidButtonSize.Small,
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                         modifier = Modifier.fillMaxWidth(),
                     )
 
                     LiquidHorizontalDivider()
 
                     SettingsSwitchRow(
-                        title = "Riduci Animazioni (Accessibilità)",
+                        title = "Riduci Animazioni (AccessibilitÃ )",
                         subtitle = "Azzera motionScale e disattiva le animazioni decorative continue",
                         checked = settings.reduceMotion,
                         onCheckedChange = { settings.reduceMotion = it },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                 }
             }
@@ -291,14 +291,14 @@ fun SettingsScreen(
                 title = "Comportamento Shell Demo",
                 subtitle = "Controlla barra di navigazione, FAB flottante e reset completo.",
             )
-            LiquidCard(backdropState = backdropState) {
+            LiquidCard(backdrop = backdrop) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     SettingsSwitchRow(
                         title = "Nascondi Navbar allo scorrimento",
                         subtitle = "Ritrae automaticamente navbar e FAB durante lo scroll verso il basso",
                         checked = settings.autoHideNavBar,
                         onCheckedChange = { settings.autoHideNavBar = it },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     LiquidHorizontalDivider()
                     SettingsSwitchRow(
@@ -306,7 +306,7 @@ fun SettingsScreen(
                         subtitle = "Pulsante flottante sempre accessibile per aprire il pannello rapido",
                         checked = settings.showFab,
                         onCheckedChange = { settings.showFab = it },
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                     )
                     LiquidHorizontalDivider()
                     LiquidButton(
@@ -316,7 +316,7 @@ fun SettingsScreen(
                             toastState.show("Impostazioni ripristinate", "Valori predefiniti attivi", LiquidIcons.Refresh)
                         },
                         variant = LiquidButtonVariant.Outlined,
-                        backdropState = backdropState,
+                        backdrop = backdrop,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -330,13 +330,13 @@ fun QuickSettingsSheet(
     settings: DemoSettingsState,
     onDismiss: () -> Unit,
     onOpenFullSettings: () -> Unit,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
 ) {
     LiquidSheet(
         onDismissRequest = onDismiss,
         title = "Controlli Rapidi SDK",
-        subtitle = "Modifica al volo qualità vetro, tema, sfondo e transizioni",
-        backdropState = backdropState,
+        subtitle = "Modifica al volo qualitÃ  vetro, tema, sfondo e transizioni",
+        backdrop = backdrop,
     ) {
         Column(
             modifier = Modifier
@@ -348,11 +348,11 @@ fun QuickSettingsSheet(
                 items = DemoThemeMode.entries.map { LiquidNavigationItem(it.label) },
                 selectedIndex = settings.themeMode.ordinal,
                 onTabSelected = { settings.themeMode = DemoThemeMode.entries[it] },
-                backdropState = backdropState,
+                backdrop = backdrop,
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Qualità vetro", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("QualitÃ  vetro", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -368,7 +368,7 @@ fun QuickSettingsSheet(
                             label = tier.displayName(),
                             selected = settings.glassQuality == tier,
                             onClick = { settings.glassQuality = tier },
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         )
                     }
                 }
@@ -385,7 +385,7 @@ fun QuickSettingsSheet(
                             label = preset.displayName(),
                             selected = settings.screenTransition == preset,
                             onClick = { settings.screenTransition = preset },
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         )
                     }
                 }
@@ -402,7 +402,7 @@ fun QuickSettingsSheet(
                             label = effect.displayName(),
                             selected = settings.backgroundEffect == effect,
                             onClick = { settings.backgroundEffect = effect },
-                            backdropState = backdropState,
+                            backdrop = backdrop,
                         )
                     }
                 }
@@ -413,7 +413,7 @@ fun QuickSettingsSheet(
                 subtitle = "Disattiva motion e sfondi animati",
                 checked = settings.reduceMotion,
                 onCheckedChange = { settings.reduceMotion = it },
-                backdropState = backdropState,
+                backdrop = backdrop,
             )
 
             LiquidButton(
@@ -423,7 +423,7 @@ fun QuickSettingsSheet(
                     onOpenFullSettings()
                 },
                 variant = LiquidButtonVariant.Primary,
-                backdropState = backdropState,
+                backdrop = backdrop,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -436,7 +436,7 @@ private fun SettingsSwitchRow(
     subtitle: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -453,7 +453,7 @@ private fun SettingsSwitchRow(
         LiquidSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            backdropState = backdropState,
+            backdrop = backdrop,
         )
     }
 }
@@ -465,7 +465,7 @@ private fun SettingsSliderRow(
     value: Float,
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float>,
-    backdropState: Backdrop,
+    backdrop: Backdrop,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
@@ -480,7 +480,7 @@ private fun SettingsSliderRow(
             value = value,
             onValueChange = onValueChange,
             valueRange = valueRange,
-            backdropState = backdropState,
+            backdrop = backdrop,
         )
     }
 }
